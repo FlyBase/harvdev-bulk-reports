@@ -1,0 +1,25 @@
+PANTHER/RefGenomeOrthologs
+PANTHER/RefGenomeOrthologs.tar.gz
+fbgn_NAseq_Uniprot_fb_2016_04_reporting.tsv fbgn_NAseq_Uniprot_fb_2016_04_reporting.tsv~
+mini_database.p
+*.json
+*.tsv
+*.gz
+Human/
+AGR_data_retrieval_doid_OLD.py
+disease_association.FB.fb_2017_01.txt
+temp.out
+conversions_temp.pl
+*.out
+*.gaf
+*.gff
+*vscode*
+*.gtf
+*.pyc
+*.txt
+*.jar
+__pycache__
+tmp/
+data_dumps/
+*.jar
+*.log
