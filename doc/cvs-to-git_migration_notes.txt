@@ -1,0 +1,20 @@
+Notes on git migration
+Source code from `fb_cvs/FB/scripts/reports/`
+
+Below we have scripts (or script sets) that were not migrated to GitHub because they seem to be unused.
+
+gogenes_pubmed_nc.pl
+This script has never been called correctly (see logs for past years).
+Even when called correctly, output file has only a header.
+So this has not been working and not clear how it's supposed to work.
+Since no complaints, it must not be currently used.
+
+report_gene_assessment
+The only file written to the "metrics" folder during reporting.
+Generated since 2017.
+I think this was for Bill but not currently used.
+
+run_core_reports
+A wrapper script that write core reports to the bulk_reports/core_reports folder.
+Generated since 2017.
+Originally intended for Bill and HarvCur but not currently used.
