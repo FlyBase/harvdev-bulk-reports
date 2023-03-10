@@ -6,7 +6,7 @@ Author(s):
     Gil dos Santos dossantos@morgan.harvard.edu
 
 Usage:
-    report_scrna_seq_data.py [-h] [-c CONFIG] [-t TESTING] [-v VERBOSE]
+    report_scrna_seq_data.py [-h] [-c CONFIG] [-v VERBOSE]
 
 Example:
     python report_scrna_seq_data.py -v -t -c /foo/bar/config.cfg
@@ -61,7 +61,6 @@ password = set_up_dict['password']
 output_dir = set_up_dict['output_dir']
 output_filename = set_up_dict['output_filename']
 log = set_up_dict['log']
-testing = set_up_dict['testing']
 
 # Create SQL Alchemy engines from environmental variables.
 engine_var_rep = 'postgresql://' + username + ":" + password + '@' + server + '/' + database
@@ -80,7 +79,7 @@ def main():
 
     # Instantiate the handler and run its "write_chado()" method.
     data_reporter = SingleCellRNASeqReporter()
-    db_commit_transaction(data_reporter)
+    db_query_transaction(data_reporter)
     data_to_export_as_tsv = generic_FB_tsv_dict(report_title, database)
     notes = []
     notes.append('Note: Mean_Expression is the average level of expression of the gene across all cells of the cluster in which the gene is detected at all.')
@@ -379,7 +378,7 @@ class SingleCellRNASeqReporter(object):
                     self.data_to_export.append(data_dict)
         return
 
-    def write_to_chado(self, session):
+    def query_chado(self, session):
         """Run write methods."""
         log.info('Starting "write_to_chado" method.')
         self.get_clustering_analyses(session)
@@ -393,37 +392,61 @@ class SingleCellRNASeqReporter(object):
         return
 
 
-def db_commit_transaction(object_to_execute):
-    """Query and write to chado using an object's "write_to_chado()" method.
+# def db_commit_transaction(object_to_execute):
+#     """Query and write to chado using an object's "write_to_chado()" method.
 
-    Global variable "testing" determines if changes are rolled back or committed.
+#     Global variable "testing" determines if changes are rolled back or committed.
+
+#     Args:
+#         arg1 (object_to_execute): An object that has an SQL ORM "write_chado()" method.
+
+#     Returns:
+#         None.
+
+#     Raises:
+#         Raises a RuntimeError if there are problems with executing the query.
+
+#     """
+#     log.info('Writing to chado, with testing set to "{}"'.format(testing))
+#     Session = sessionmaker(bind=engine)
+#     session = Session()
+#     try:
+#         object_to_execute.write_to_chado(session)
+#         session.flush()
+#     except RuntimeError:
+#         session.rollback()
+#         log.critical('Critical transaction error occurred, rolling back and exiting.')
+#         raise
+#     if testing is True:
+#         log.info('Since "testing" is True, rolling back all transactions.')
+#         session.rollback()
+#     else:
+#         log.info('Since "testing" is False, committing transactions.')
+#         session.commit()
+
+
+def db_query_transaction(object_to_execute):
+    """Query the chado database given an object that has a "query_chado()" method.
+
+    Function assumes a global "engine" variable for SQLAlchemy processes.
 
     Args:
-        arg1 (object_to_execute): An object that has an SQL ORM "write_chado()" method.
-
-    Returns:
-        None.
+        arg1 (class): some object that has a "query_chado()" method.
 
     Raises:
         Raises a RuntimeError if there are problems with executing the query.
 
     """
-    log.info('Writing to chado, with testing set to "{}"'.format(testing))
     Session = sessionmaker(bind=engine)
     session = Session()
     try:
-        object_to_execute.write_to_chado(session)
+        query_output = object_to_execute.query_chado(session)
         session.flush()
     except RuntimeError:
         session.rollback()
-        log.critical('Critical transaction error occurred, rolling back and exiting.')
+        log.critical('Critical transaction error occurred during chado query; rolling back and exiting.')
         raise
-    if testing is True:
-        log.info('Since "testing" is True, rolling back all transactions.')
-        session.rollback()
-    else:
-        log.info('Since "testing" is False, committing transactions.')
-        session.commit()
+    return
 
 
 if __name__ == "__main__":
