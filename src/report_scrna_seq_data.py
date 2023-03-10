@@ -107,13 +107,17 @@ class ClusteringAnalysis(object):
 
         """
         # Data from chado.
-        self.library = library                 # The Library object.
-        self.id = library.uniquename           # The FB ID.
-        self.child_clusters = []               # Will be list of child Library objects.
-        self.papers = []                       # Will be a list of Pub objects for the clustering analysis.
-        self.source_tissue_stage = None        # Will be stage name of the source tissue.
-        self.source_tissue_sex = None          # Will be sex of the source tissue.
-        self.source_tissue_anatomy = []        # Will be string of terms for source tissue anatomy.
+        self.library = library                   # The Library object.
+        self.id = library.uniquename             # The FB ID.
+        self.child_clusters = []                 # Will be list of child Library objects.
+        self.papers = []                         # Will be a list of Pub objects for the clustering analysis.
+        self.source_tissue_stage = []            # Will be source tissue stage terms.
+        self.source_tissue_sex = []              # Will be source tissue sex terms.
+        self.source_tissue_anatomy = []          # Will be source tissue anatomy terms.
+        self.source_tissue_stage_str = None      # Will be source tissue stage terms.
+        self.source_tissue_sex_str = None        # Will be source tissue sex terms.
+        self.source_tissue_anatomy_str = None    # Will be source tissue anatomy terms.
+
         # Bins for note, warning, error and action messages.
         self.warnings = []                    # Issues that may complicate analysis of the seqfeat.
         self.notes = []                       # Other notes about the seqfeat.
@@ -239,11 +243,15 @@ class SingleCellRNASeqReporter(object):
         counter = 0
         for result in results:
             try:
-                self.cluster_dict[result.Library.library_id].source_tissue_stage = result.stage_term.name
+                self.cluster_dict[result.Library.library_id].source_tissue_stage.append(result.stage_term.name)
                 counter += 1
             except KeyError:
                 pass
         log.info(f'Found source tissue stage info for {counter} clustering analyses.')
+        return
+
+    def get_source_tissue_sex(self, session):
+        """Placeholder."""
         return
 
     def get_source_tissue_anatomy(self, session):
@@ -274,6 +282,22 @@ class SingleCellRNASeqReporter(object):
             except KeyError:
                 pass
         log.info(f'Found source tissue anatomy info for {counter} clustering analyses.')
+        return
+
+    def process_source_tissue_info(self, session):
+        """Process source tissue info."""
+        log.info('Process source tissue info.')
+        for cluster_analysis in self.cluster_dict.values():
+            # Stage
+            if len(cluster_analysis.source_tissue_stage) == 1:
+                cluster_analysis.source_tissue_stage_str = cluster_analysis.source_tissue_stage[0]
+            elif len(cluster_analysis.source_tissue_stage) > 1:
+                cluster_analysis.source_tissue_stage_str = 'mixed'
+            # Anatomy
+            if len(cluster_analysis.source_tissue_anatomy) == 1:
+                cluster_analysis.source_tissue_anatomy_str = cluster_analysis.source_tissue_anatomy[0]
+            elif len(cluster_analysis.source_tissue_anatomy) > 1:
+                cluster_analysis.source_tissue_anatomy_str = 'mixed'
         return
 
     def get_cluster_cell_types(self, session):
@@ -363,9 +387,9 @@ class SingleCellRNASeqReporter(object):
                         'Pub_miniref': f'{analysis.papers[0].miniref}',
                         'Clustering_Analysis_ID': f'{analysis.library.uniquename}',
                         'Clustering_Analysis_Name': f'{analysis.library.name}',
-                        'Source_Tissue_Stage': f'{analysis.source_tissue_stage}',
-                        'Source_Tissue_Sex': f'{analysis.source_tissue_sex}',
-                        'Source_Tissue_Anatomy': f"{'|'.join(analysis.source_tissue_anatomy)}",
+                        'Source_Tissue_Stage': f'{analysis.source_tissue_stage_str}',
+                        'Source_Tissue_Sex': f'{analysis.source_tissue_sex_str}',
+                        'Source_Tissue_Anatomy': f'{analysis.source_tissue_anatomy_str}',
                         'Cluster_ID': f'{cluster.uniquename}',
                         'Cluster_Name': f'{cluster.name}',
                         'Cluster_Cell_Type_ID': f'FBbt:{self.cluster_cell_type_dict[cluster.library_id].dbxref.accession}',
@@ -384,45 +408,14 @@ class SingleCellRNASeqReporter(object):
         self.get_clustering_analyses(session)
         self.get_cluster_pubs(session)
         self.get_source_tissue_stage(session)
+        self.get_source_tissue_sex(session)
         self.get_source_tissue_anatomy(session)
+        self.process_source_tissue_info(session)
         self.get_cluster_cell_types(session)
         self.get_mean_expr_spread_values(session)
         self.process_database_info()
         log.info('Method "write_to_chado" is done.')
         return
-
-
-# def db_commit_transaction(object_to_execute):
-#     """Query and write to chado using an object's "write_to_chado()" method.
-
-#     Global variable "testing" determines if changes are rolled back or committed.
-
-#     Args:
-#         arg1 (object_to_execute): An object that has an SQL ORM "write_chado()" method.
-
-#     Returns:
-#         None.
-
-#     Raises:
-#         Raises a RuntimeError if there are problems with executing the query.
-
-#     """
-#     log.info('Writing to chado, with testing set to "{}"'.format(testing))
-#     Session = sessionmaker(bind=engine)
-#     session = Session()
-#     try:
-#         object_to_execute.write_to_chado(session)
-#         session.flush()
-#     except RuntimeError:
-#         session.rollback()
-#         log.critical('Critical transaction error occurred, rolling back and exiting.')
-#         raise
-#     if testing is True:
-#         log.info('Since "testing" is True, rolling back all transactions.')
-#         session.rollback()
-#     else:
-#         log.info('Since "testing" is False, committing transactions.')
-#         session.commit()
 
 
 def db_query_transaction(object_to_execute):
@@ -440,7 +433,7 @@ def db_query_transaction(object_to_execute):
     Session = sessionmaker(bind=engine)
     session = Session()
     try:
-        query_output = object_to_execute.query_chado(session)
+        object_to_execute.query_chado(session)
         session.flush()
     except RuntimeError:
         session.rollback()
