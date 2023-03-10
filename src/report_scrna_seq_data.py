@@ -245,18 +245,23 @@ class SingleCellRNASeqReporter(object):
         stage_counter = 0
         sex_counter = 0
         for result in results:
-            if result.Db.name == 'FBbt':
+            if result.Db.name == 'FBdv':
                 try:
                     self.cluster_dict[result.Library.library_id].source_tissue_stage.append(result.stage_term.name)
                     stage_counter += 1
                 except KeyError:
+                    log.warning('Failure to add FBdv term.')
                     pass
             elif result.Db.name == 'FBcv':
                 try:
                     self.cluster_dict[result.Library.library_id].source_tissue_sex.append(result.stage_term.name)
                     sex_counter += 1
                 except KeyError:
+                    log.warning('Failure to add FBcv term.')
                     pass
+            else:
+                log.warning(f'Cannot handle term={result.stage_term.name}, db={result.Db.name}')
+
         log.info(f'Found source tissue stage info for {stage_counter} clustering analyses.')
         log.info(f'Found source tissue sex info for {sex_counter} clustering analyses.')
         return
