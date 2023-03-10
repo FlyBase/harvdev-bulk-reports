@@ -39,8 +39,8 @@ header_list = [
     'Pub_miniref',
     'Clustering_Analysis_ID',
     'Clustering_Analysis_Name',
-    'Source_Tissue_Stage',
     'Source_Tissue_Sex',
+    'Source_Tissue_Stage',
     'Source_Tissue_Anatomy',
     'Cluster_ID',
     'Cluster_Name',
@@ -107,16 +107,16 @@ class ClusteringAnalysis(object):
 
         """
         # Data from chado.
-        self.library = library                   # The Library object.
-        self.id = library.uniquename             # The FB ID.
-        self.child_clusters = []                 # Will be list of child Library objects.
-        self.papers = []                         # Will be a list of Pub objects for the clustering analysis.
-        self.source_tissue_stage = []            # Will be source tissue stage terms.
-        self.source_tissue_sex = []              # Will be source tissue sex terms.
-        self.source_tissue_anatomy = []          # Will be source tissue anatomy terms.
-        self.source_tissue_stage_str = None      # Will be source tissue stage terms.
-        self.source_tissue_sex_str = None        # Will be source tissue sex terms.
-        self.source_tissue_anatomy_str = None    # Will be source tissue anatomy terms.
+        self.library = library                 # The Library object.
+        self.id = library.uniquename           # The FB ID.
+        self.child_clusters = []               # Will be list of child Library objects.
+        self.papers = []                       # Will be a list of Pub objects for the clustering analysis.
+        self.source_tissue_stage = []          # Will be source tissue stage terms.
+        self.source_tissue_sex = []            # Will be source tissue sex terms.
+        self.source_tissue_anatomy = []        # Will be source tissue anatomy terms.
+        self.source_tissue_stage_str = ''      # Will be source tissue stage terms.
+        self.source_tissue_sex_str = ''        # Will be source tissue sex terms.
+        self.source_tissue_anatomy_str = ''    # Will be source tissue anatomy terms.
 
         # Bins for note, warning, error and action messages.
         self.warnings = []                    # Issues that may complicate analysis of the seqfeat.
@@ -217,7 +217,7 @@ class SingleCellRNASeqReporter(object):
         log.info(f'Found {counter} papers for clustering analyses.')
         return
 
-    def get_source_tissue_stage(self, session):
+    def get_source_tissue_sex_and_stage(self, session):
         """Get source tissue stage for clustering analyses."""
         log.info('Get source tissue stage for clustering analyses.')
         lcvt1 = aliased(LibraryCvterm, name='lcvt1')
@@ -231,27 +231,34 @@ class SingleCellRNASeqReporter(object):
             lib_type.name == 'cell clustering analysis',
             term_association_type.name == 'derived_stage'
         )
-        results = session.query(Library, stage_term).\
+        results = session.query(Library, Db, stage_term).\
             join(lcvt1, (lcvt1.library_id == Library.library_id)).\
             join(lib_type, (lib_type.cvterm_id == lcvt1.cvterm_id)).\
             join(lcvt2, (lcvt2.library_id == Library.library_id)).\
             join(stage_term, (stage_term.cvterm_id == lcvt2.cvterm_id)).\
             join(LibraryCvtermprop, (LibraryCvtermprop.library_cvterm_id == lcvt2.library_cvterm_id)).\
             join(term_association_type, (term_association_type.cvterm_id == LibraryCvtermprop.type_id)).\
+            join(Dbxref, (Dbxref.dbxref_id == stage_term.dbxref_id)).\
+            join(Db, (Db.db_id == Dbxref.db_id)).\
             filter(*filters).\
             distinct()
-        counter = 0
+        stage_counter = 0
+        sex_counter = 0
         for result in results:
-            try:
-                self.cluster_dict[result.Library.library_id].source_tissue_stage.append(result.stage_term.name)
-                counter += 1
-            except KeyError:
-                pass
-        log.info(f'Found source tissue stage info for {counter} clustering analyses.')
-        return
-
-    def get_source_tissue_sex(self, session):
-        """Placeholder."""
+            if result.Db.name == 'FBbt':
+                try:
+                    self.cluster_dict[result.Library.library_id].source_tissue_stage.append(result.stage_term.name)
+                    stage_counter += 1
+                except KeyError:
+                    pass
+            elif result.Db.name == 'FBcv':
+                try:
+                    self.cluster_dict[result.Library.library_id].source_tissue_sex.append(result.stage_term.name)
+                    sex_counter += 1
+                except KeyError:
+                    pass
+        log.info(f'Found source tissue stage info for {stage_counter} clustering analyses.')
+        log.info(f'Found source tissue sex info for {sex_counter} clustering analyses.')
         return
 
     def get_source_tissue_anatomy(self, session):
@@ -298,6 +305,20 @@ class SingleCellRNASeqReporter(object):
                 cluster_analysis.source_tissue_anatomy_str = cluster_analysis.source_tissue_anatomy[0]
             elif len(cluster_analysis.source_tissue_anatomy) > 1:
                 cluster_analysis.source_tissue_anatomy_str = 'mixed'
+            # Sex
+            male = False
+            female = False
+            for sex_term in cluster_analysis.source_tissue_sex:
+                if 'female' in sex_term:
+                    female = True
+                elif 'male' in sex_term:
+                    male = True
+            if male and female:
+                cluster_analysis.source_tissue_sex_str = 'mixed'
+            elif female:
+                cluster_analysis.source_tissue_sex_str = 'female'
+            elif male:
+                cluster_analysis.source_tissue_sex_str = 'male'
         return
 
     def get_cluster_cell_types(self, session):
@@ -387,8 +408,8 @@ class SingleCellRNASeqReporter(object):
                         'Pub_miniref': f'{analysis.papers[0].miniref}',
                         'Clustering_Analysis_ID': f'{analysis.library.uniquename}',
                         'Clustering_Analysis_Name': f'{analysis.library.name}',
-                        'Source_Tissue_Stage': f'{analysis.source_tissue_stage_str}',
                         'Source_Tissue_Sex': f'{analysis.source_tissue_sex_str}',
+                        'Source_Tissue_Stage': f'{analysis.source_tissue_stage_str}',
                         'Source_Tissue_Anatomy': f'{analysis.source_tissue_anatomy_str}',
                         'Cluster_ID': f'{cluster.uniquename}',
                         'Cluster_Name': f'{cluster.name}',
@@ -407,8 +428,7 @@ class SingleCellRNASeqReporter(object):
         log.info('Starting "write_to_chado" method.')
         self.get_clustering_analyses(session)
         self.get_cluster_pubs(session)
-        self.get_source_tissue_stage(session)
-        self.get_source_tissue_sex(session)
+        self.get_source_tissue_sex_and_stage(session)
         self.get_source_tissue_anatomy(session)
         self.process_source_tissue_info(session)
         self.get_cluster_cell_types(session)
