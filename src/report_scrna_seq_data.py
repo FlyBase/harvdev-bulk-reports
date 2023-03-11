@@ -269,7 +269,7 @@ class SingleCellRNASeqReporter(object):
             ec_type.name.in_((ec_types)),
             Db.name.in_((db_names))
         )
-        results = session.query(Library, Db.name, ec_type, cvterm).\
+        results = session.query(Library, Db, ec_type, cvterm).\
             join(LibraryCvterm, (LibraryCvterm.library_id == Library.library_id)).\
             join(lib_type, (lib_type.cvterm_id == LibraryCvterm.cvterm_id)).\
             join(LibraryExpression, (LibraryExpression.library_id == Library.library_id)).\
