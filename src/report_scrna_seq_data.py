@@ -32,7 +32,7 @@ from harvdev_utils.psycopg_functions import set_up_db_reading
 
 
 # Global variables for the output file. Header order will match list order below.
-report_label = 'BOB_scRNA-seq'
+report_label = 'scRNA-seq'
 report_title = 'FlyBase scRNA-seq gene expression'
 header_list = [
     'Pub_ID',
@@ -154,7 +154,9 @@ class SingleCellRNASeqReporter(object):
         lcvt2 = aliased(LibraryCvterm, name='lcvt2')
         analysis_type = aliased(Cvterm, name='analysis_type')
         cluster_type = aliased(Cvterm, name='cluster_type')
-        sample_set = ['FBlc0003731', 'FBlc0004622', 'FBlc0004140']
+        # For development, use a sample set for faster run times.
+        # sample_set = ['FBlc0003731', 'FBlc0004622', 'FBlc0004140']
+        # analysis.uniquename.in_((sample_set)),
         filters = (
             analysis.is_obsolete.is_(False),
             analysis.uniquename.op('~')(self.lib_regex),
@@ -164,7 +166,6 @@ class SingleCellRNASeqReporter(object):
             cluster.uniquename.op('~')(self.lib_regex),
             cluster.type_id == analysis.type_id,
             cluster_type.name == 'transcriptional cell cluster',
-            analysis.uniquename.in_((sample_set)),    # BOB: DEV
             lib_rel_type.name == 'belongs_to'
         )
         results = session.query(analysis, cluster).\
