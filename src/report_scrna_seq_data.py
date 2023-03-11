@@ -283,13 +283,13 @@ class SingleCellRNASeqReporter(object):
         anatomy_counter = 0
         sex_counter = 0
         for result in results:
-            if result.ec_type.name == 'anatomy' and Db.name == 'FBbt':
+            if result.ec_type.name == 'anatomy' and result.Db.name == 'FBbt':
                 try:
                     self.cluster_dict[result.Library.library_id].source_tissue_anatomy.append(result.cvterm.name)
                     anatomy_counter += 1
                 except KeyError:
                     pass
-            elif result.ec_type.name == 'stage' and Db.name == 'FBcv':
+            elif result.ec_type.name == 'stage' and result.Db.name == 'FBcv':
                 try:
                     self.cluster_dict[result.Library.library_id].source_tissue_sex.append(result.cvterm.name)
                     sex_counter += 1
