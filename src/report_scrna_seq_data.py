@@ -32,7 +32,7 @@ from harvdev_utils.psycopg_functions import set_up_db_reading
 
 
 # Global variables for the output file. Header order will match list order below.
-report_label = 'scRNA-Seq'
+report_label = 'scRNA-Seq_gene_expression'
 report_title = 'FlyBase scRNA-Seq gene expression'
 header_list = [
     'Pub_ID',
