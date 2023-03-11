@@ -218,7 +218,7 @@ class SingleCellRNASeqReporter(object):
         log.info(f'Found {counter} papers for clustering analyses.')
         return
 
-    def get_source_tissue_sex_and_stage(self, session):
+    def get_source_tissue_stage(self, session):
         """Get source tissue stage for clustering analyses."""
         log.info('Get source tissue stage for clustering analyses.')
         lcvt1 = aliased(LibraryCvterm, name='lcvt1')
@@ -230,9 +230,10 @@ class SingleCellRNASeqReporter(object):
             Library.is_obsolete.is_(False),
             Library.uniquename.op('~')(self.lib_regex),
             lib_type.name == 'cell clustering analysis',
-            term_association_type.name == 'derived_stage'
+            term_association_type.name == 'derived_stage',
+            Db.name == 'FBdv'
         )
-        results = session.query(Library, Db, stage_term).\
+        results = session.query(Library, stage_term).\
             join(lcvt1, (lcvt1.library_id == Library.library_id)).\
             join(lib_type, (lib_type.cvterm_id == lcvt1.cvterm_id)).\
             join(lcvt2, (lcvt2.library_id == Library.library_id)).\
@@ -244,57 +245,58 @@ class SingleCellRNASeqReporter(object):
             filter(*filters).\
             distinct()
         stage_counter = 0
-        sex_counter = 0
         for result in results:
-            if result.Db.name == 'FBdv':
-                try:
-                    self.cluster_dict[result.Library.library_id].source_tissue_stage.append(result.stage_term.name)
-                    stage_counter += 1
-                except KeyError:
-                    log.warning('Failure to add FBdv term.')
-                    pass
-            elif result.Db.name == 'FBcv':
-                try:
-                    self.cluster_dict[result.Library.library_id].source_tissue_sex.append(result.stage_term.name)
-                    sex_counter += 1
-                except KeyError:
-                    log.warning('Failure to add FBcv term.')
-                    pass
-            else:
-                log.warning(f'Cannot handle term={result.stage_term.name}, db={result.Db.name}')
-
+            try:
+                self.cluster_dict[result.Library.library_id].source_tissue_stage.append(result.stage_term.name)
+                stage_counter += 1
+            except KeyError:
+                pass
         log.info(f'Found source tissue stage info for {stage_counter} clustering analyses.')
-        log.info(f'Found source tissue sex info for {sex_counter} clustering analyses.')
         return
 
-    def get_source_tissue_anatomy(self, session):
-        """Get source tissue anatomy for clustering analyses."""
-        log.info('Get source tissue anatomy for clustering analyses.')
+    def get_source_tissue_sex_and_anatomy(self, session):
+        """Get source tissue sex and anatomy terms for clustering analyses."""
+        log.info('Get source tissue sex and anatomy terms for clustering analyses.')
         lib_type = aliased(Cvterm, name='lib_type')
         ec_type = aliased(Cvterm, name='ec_type')
-        anatomy = aliased(Cvterm, name='anatomy')
+        cvterm = aliased(Cvterm, name='cvterm')
+        ec_types = ['stage', 'anatomy']
+        db_names = ['FBbt', 'FBcv']
         filters = (
             Library.is_obsolete.is_(False),
             Library.uniquename.op('~')(self.lib_regex),
             lib_type.name == 'cell clustering analysis',
-            ec_type.name == 'anatomy'
+            ec_type.name.in_((ec_types)),
+            Db.name.in_((db_names))
         )
-        results = session.query(Library, anatomy).\
+        results = session.query(Library, Db.name, ec_type, cvterm).\
             join(LibraryCvterm, (LibraryCvterm.library_id == Library.library_id)).\
             join(lib_type, (lib_type.cvterm_id == LibraryCvterm.cvterm_id)).\
             join(LibraryExpression, (LibraryExpression.library_id == Library.library_id)).\
             join(ExpressionCvterm, (ExpressionCvterm.expression_id == LibraryExpression.expression_id)).\
             join(ec_type, (ec_type.cvterm_id == ExpressionCvterm.cvterm_type_id)).\
-            join(anatomy, (anatomy.cvterm_id == ExpressionCvterm.cvterm_id)).\
+            join(cvterm, (cvterm.cvterm_id == ExpressionCvterm.cvterm_id)).\
+            join(Dbxref, (Dbxref.dbxref_id == cvterm.dbxref_id)).\
+            join(Db, (Db.db_id == Dbxref.db_id)).\
             filter(*filters).\
             distinct()
-        counter = 0
+        anatomy_counter = 0
+        sex_counter = 0
         for result in results:
-            try:
-                self.cluster_dict[result.Library.library_id].source_tissue_anatomy.append(result.anatomy.name)
-            except KeyError:
-                pass
-        log.info(f'Found source tissue anatomy info for {counter} clustering analyses.')
+            if result.ec_type.name == 'anatomy' and Db.name == 'FBbt':
+                try:
+                    self.cluster_dict[result.Library.library_id].source_tissue_anatomy.append(result.cvterm.name)
+                    anatomy_counter += 1
+                except KeyError:
+                    pass
+            elif result.ec_type.name == 'stage' and Db.name == 'FBcv':
+                try:
+                    self.cluster_dict[result.Library.library_id].source_tissue_sex.append(result.cvterm.name)
+                    sex_counter += 1
+                except KeyError:
+                    pass
+        log.info(f'Found {anatomy_counter} anatomy terms for clustering analysis tissue sources.')
+        log.info(f'Found {sex_counter} sex terms for clustering analysis tissue sources.')
         return
 
     def process_source_tissue_info(self, session):
@@ -319,7 +321,7 @@ class SingleCellRNASeqReporter(object):
                     female = True
                 elif 'male' in sex_term:
                     male = True
-            if male and female:
+            if female and male:
                 cluster_analysis.source_tissue_sex_str = 'mixed'
             elif female:
                 cluster_analysis.source_tissue_sex_str = 'female'
@@ -434,8 +436,8 @@ class SingleCellRNASeqReporter(object):
         log.info('Starting "write_to_chado" method.')
         self.get_clustering_analyses(session)
         self.get_cluster_pubs(session)
-        self.get_source_tissue_sex_and_stage(session)
-        self.get_source_tissue_anatomy(session)
+        self.get_source_tissue_stage(session)
+        self.get_source_tissue_sex_and_anatomy(session)
         self.process_source_tissue_info(session)
         self.get_cluster_cell_types(session)
         self.get_mean_expr_spread_values(session)
