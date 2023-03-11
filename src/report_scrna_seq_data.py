@@ -82,9 +82,9 @@ def main():
     db_query_transaction(data_reporter)
     data_to_export_as_tsv = generic_FB_tsv_dict(report_title, database)
     notes = []
-    notes.append('Note: Mean_Expression is the average level of expression of the gene across all cells of the cluster in which the gene is detected at all.')
-    notes.append('Note: Spread is the proportion of cells in the cluster in which the gene is detected.')
-    notes.append('Note: In "Source_Tissue_*" columns, "mixed" is shown when there are many applicable terms - please see the dataset report for details.')
+    notes.append('Mean_Expression is the average level of expression of the gene across all cells of the cluster in which the gene is detected at all.')
+    notes.append('Spread is the proportion of cells in the cluster in which the gene is detected.')
+    notes.append('In "Source_Tissue_*" columns, "mixed" is shown when there are many applicable terms - please see the dataset report for details.')
     data_to_export_as_tsv['metaData']['note'] = notes
     data_to_export_as_tsv['data'] = data_reporter.data_to_export
     tsv_report_dump(data_to_export_as_tsv, output_filename, headers=header_list)
