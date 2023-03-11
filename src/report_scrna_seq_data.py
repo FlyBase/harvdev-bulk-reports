@@ -375,7 +375,6 @@ class SingleCellRNASeqReporter(object):
                 lib_counter += 1
                 if lib_counter % 100 == 0:
                     log.info(f'Getting data for cluster #{lib_counter}.')
-                log.debug(f'Getting mean_expr and spread data for {cluster.name} ({cluster.uniquename}).')
                 self.mean_expr_spread_dict[cluster.library_id] = []
                 filters = (
                     LibraryFeature.library_id == cluster.library_id,
