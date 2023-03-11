@@ -409,7 +409,6 @@ class SingleCellRNASeqReporter(object):
         for analysis in self.cluster_dict.values():
             for cluster in analysis.child_clusters:
                 data_key = cluster.library_id
-                log.debug(f'Export data for {cluster.name} ({cluster.uniquename})')
                 for datum in self.mean_expr_spread_dict[data_key]:
                     data_dict = {
                         'Pub_ID': f'{analysis.papers[0].uniquename}',
