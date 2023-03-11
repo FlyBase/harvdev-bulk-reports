@@ -1,6 +1,6 @@
 # !/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Report scRNA-seq data.
+"""Report scRNA-Seq data.
 
 Author(s):
     Gil dos Santos dossantos@morgan.harvard.edu
@@ -12,7 +12,7 @@ Example:
     python report_scrna_seq_data.py -v -t -c /foo/bar/config.cfg
 
 Notes:
-    This script reports mean expression and spread for scRNA-seq clusters.
+    This script reports mean expression and spread for scRNA-Seq clusters.
 
 """
 
@@ -32,8 +32,8 @@ from harvdev_utils.psycopg_functions import set_up_db_reading
 
 
 # Global variables for the output file. Header order will match list order below.
-report_label = 'scRNA-seq'
-report_title = 'FlyBase scRNA-seq gene expression'
+report_label = 'scRNA-Seq'
+report_title = 'FlyBase scRNA-Seq gene expression'
 header_list = [
     'Pub_ID',
     'Pub_miniref',
@@ -128,7 +128,7 @@ class ClusteringAnalysis(object):
 
 
 class SingleCellRNASeqReporter(object):
-    """An object that gets scRNA-seq data and exports it to file."""
+    """An object that gets scRNA-Seq data and exports it to file."""
 
     def __init__(self):
         """Create the SingleCellRNASeqReporter object."""
@@ -194,8 +194,8 @@ class SingleCellRNASeqReporter(object):
         return
 
     def get_cluster_pubs(self, session):
-        """Get publication for scRNA-seq clustering analysis."""
-        log.info('Get publication for scRNA-seq clustering analysis.')
+        """Get publication for scRNA-Seq clustering analysis."""
+        log.info('Get publication for scRNA-Seq clustering analysis.')
         filters = (
             Library.is_obsolete.is_(False),
             Library.uniquename.op('~')(self.lib_regex),
@@ -362,8 +362,8 @@ class SingleCellRNASeqReporter(object):
         return
 
     def get_mean_expr_spread_values(self, session):
-        """Get mean_expr and spread values for scRNA-seq data."""
-        log.info('Get mean_expr and spread values for scRNA-seq data.')
+        """Get mean_expr and spread values for scRNA-Seq data."""
+        log.info('Get mean_expr and spread values for scRNA-Seq data.')
         mean_expr = aliased(LibraryFeatureprop, name='mean_expr')
         spread = aliased(LibraryFeatureprop, name='spread')
         mean_expr_type = aliased(Cvterm, name='mean_expr_type')
@@ -400,12 +400,12 @@ class SingleCellRNASeqReporter(object):
                     }
                     self.mean_expr_spread_dict[cluster.library_id].append(datum)
                     data_counter += 1
-        log.info(f'Found {data_counter} scRNA-seq "spread" data points.')
+        log.info(f'Found {data_counter} scRNA-Seq "spread" data points.')
         return
 
     def process_database_info(self):
-        """Print out scRNA-seq data."""
-        log.info('Print out scRNA-seq data.')
+        """Print out scRNA-Seq data."""
+        log.info('Print out scRNA-Seq data.')
         for analysis in self.cluster_dict.values():
             for cluster in analysis.child_clusters:
                 data_key = cluster.library_id
