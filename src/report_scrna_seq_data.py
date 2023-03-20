@@ -1,18 +1,18 @@
 # !/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Report scRNA-Seq data.
+"""Report scRNA-seq data.
 
 Author(s):
     Gil dos Santos dossantos@morgan.harvard.edu
 
 Usage:
-    report_scrna_seq_data.py [-h] [-c CONFIG] [-v VERBOSE]
+    report_scrna_seq_data.py [-h] [-c CONFIG] [-t TESTING] [-v VERBOSE]
 
 Example:
     python report_scrna_seq_data.py -v -t -c /foo/bar/config.cfg
 
 Notes:
-    This script reports mean expression and spread for scRNA-Seq clusters.
+    This script reports mean expression and spread for scRNA-seq clusters.
 
 """
 
@@ -32,15 +32,15 @@ from harvdev_utils.psycopg_functions import set_up_db_reading
 
 
 # Global variables for the output file. Header order will match list order below.
-report_label = 'scRNA-Seq_gene_expression'
-report_title = 'FlyBase scRNA-Seq gene expression'
+report_label = 'scRNA-seq'
+report_title = 'FlyBase scRNA-seq gene expression'
 header_list = [
     'Pub_ID',
     'Pub_miniref',
     'Clustering_Analysis_ID',
     'Clustering_Analysis_Name',
-    'Source_Tissue_Sex',
     'Source_Tissue_Stage',
+    'Source_Tissue_Sex',
     'Source_Tissue_Anatomy',
     'Cluster_ID',
     'Cluster_Name',
@@ -61,6 +61,7 @@ password = set_up_dict['password']
 output_dir = set_up_dict['output_dir']
 output_filename = set_up_dict['output_filename']
 log = set_up_dict['log']
+testing = set_up_dict['testing']
 
 # Create SQL Alchemy engines from environmental variables.
 engine_var_rep = 'postgresql://' + username + ":" + password + '@' + server + '/' + database
@@ -79,12 +80,12 @@ def main():
 
     # Instantiate the handler and run its "write_chado()" method.
     data_reporter = SingleCellRNASeqReporter()
-    db_query_transaction(data_reporter)
+    db_commit_transaction(data_reporter)
     data_to_export_as_tsv = generic_FB_tsv_dict(report_title, database)
     notes = []
-    notes.append('Mean_Expression is the average level of expression of the gene across all cells of the cluster in which the gene is detected at all.')
-    notes.append('Spread is the proportion of cells in the cluster in which the gene is detected.')
-    notes.append('In "Source_Tissue_*" columns, "mixed" is shown when there are many applicable terms - please see the dataset report for details.')
+    notes.append('Note: Mean_Expression is the average level of expression of the gene across all cells of the cluster in which the gene is detected at all.')
+    notes.append('Note: Spread is the proportion of cells in the cluster in which the gene is detected.')
+    notes.append('Note: In "Source_Tissue_*" columns, "mixed" is shown when there are many applicable terms - please see the dataset report for details.')
     data_to_export_as_tsv['metaData']['note'] = notes
     data_to_export_as_tsv['data'] = data_reporter.data_to_export
     tsv_report_dump(data_to_export_as_tsv, output_filename, headers=header_list)
@@ -111,13 +112,9 @@ class ClusteringAnalysis(object):
         self.id = library.uniquename           # The FB ID.
         self.child_clusters = []               # Will be list of child Library objects.
         self.papers = []                       # Will be a list of Pub objects for the clustering analysis.
-        self.source_tissue_stage = []          # Will be source tissue stage terms.
-        self.source_tissue_sex = []            # Will be source tissue sex terms.
-        self.source_tissue_anatomy = []        # Will be source tissue anatomy terms.
-        self.source_tissue_stage_str = ''      # Will be source tissue stage terms.
-        self.source_tissue_sex_str = ''        # Will be source tissue sex terms.
-        self.source_tissue_anatomy_str = ''    # Will be source tissue anatomy terms.
-
+        self.source_tissue_stage = None        # Will be stage name of the source tissue.
+        self.source_tissue_sex = None          # Will be sex of the source tissue.
+        self.source_tissue_anatomy = []        # Will be string of terms for source tissue anatomy.
         # Bins for note, warning, error and action messages.
         self.warnings = []                    # Issues that may complicate analysis of the seqfeat.
         self.notes = []                       # Other notes about the seqfeat.
@@ -128,7 +125,7 @@ class ClusteringAnalysis(object):
 
 
 class SingleCellRNASeqReporter(object):
-    """An object that gets scRNA-Seq data and exports it to file."""
+    """An object that gets scRNA-seq data and exports it to file."""
 
     def __init__(self):
         """Create the SingleCellRNASeqReporter object."""
@@ -154,9 +151,6 @@ class SingleCellRNASeqReporter(object):
         lcvt2 = aliased(LibraryCvterm, name='lcvt2')
         analysis_type = aliased(Cvterm, name='analysis_type')
         cluster_type = aliased(Cvterm, name='cluster_type')
-        # For development, use a sample set for faster run times.
-        # sample_set = ['FBlc0003731', 'FBlc0004622', 'FBlc0004140']
-        # analysis.uniquename.in_((sample_set)),
         filters = (
             analysis.is_obsolete.is_(False),
             analysis.uniquename.op('~')(self.lib_regex),
@@ -166,6 +160,7 @@ class SingleCellRNASeqReporter(object):
             cluster.uniquename.op('~')(self.lib_regex),
             cluster.type_id == analysis.type_id,
             cluster_type.name == 'transcriptional cell cluster',
+            analysis.uniquename == 'FBlc0003731',    # BOB: DEV
             lib_rel_type.name == 'belongs_to'
         )
         results = session.query(analysis, cluster).\
@@ -194,8 +189,8 @@ class SingleCellRNASeqReporter(object):
         return
 
     def get_cluster_pubs(self, session):
-        """Get publication for scRNA-Seq clustering analysis."""
-        log.info('Get publication for scRNA-Seq clustering analysis.')
+        """Get publication for scRNA-seq clustering analysis."""
+        log.info('Get publication for scRNA-seq clustering analysis.')
         filters = (
             Library.is_obsolete.is_(False),
             Library.uniquename.op('~')(self.lib_regex),
@@ -231,8 +226,7 @@ class SingleCellRNASeqReporter(object):
             Library.is_obsolete.is_(False),
             Library.uniquename.op('~')(self.lib_regex),
             lib_type.name == 'cell clustering analysis',
-            term_association_type.name == 'derived_stage',
-            Db.name == 'FBdv'
+            term_association_type.name == 'derived_stage'
         )
         results = session.query(Library, stage_term).\
             join(lcvt1, (lcvt1.library_id == Library.library_id)).\
@@ -241,93 +235,46 @@ class SingleCellRNASeqReporter(object):
             join(stage_term, (stage_term.cvterm_id == lcvt2.cvterm_id)).\
             join(LibraryCvtermprop, (LibraryCvtermprop.library_cvterm_id == lcvt2.library_cvterm_id)).\
             join(term_association_type, (term_association_type.cvterm_id == LibraryCvtermprop.type_id)).\
-            join(Dbxref, (Dbxref.dbxref_id == stage_term.dbxref_id)).\
-            join(Db, (Db.db_id == Dbxref.db_id)).\
             filter(*filters).\
             distinct()
-        stage_counter = 0
+        counter = 0
         for result in results:
             try:
-                self.cluster_dict[result.Library.library_id].source_tissue_stage.append(result.stage_term.name)
-                stage_counter += 1
+                self.cluster_dict[result.Library.library_id].source_tissue_stage = result.stage_term.name
+                counter += 1
             except KeyError:
                 pass
-        log.info(f'Found source tissue stage info for {stage_counter} clustering analyses.')
+        log.info(f'Found source tissue stage info for {counter} clustering analyses.')
         return
 
-    def get_source_tissue_sex_and_anatomy(self, session):
-        """Get source tissue sex and anatomy terms for clustering analyses."""
-        log.info('Get source tissue sex and anatomy terms for clustering analyses.')
+    def get_source_tissue_anatomy(self, session):
+        """Get source tissue anatomy for clustering analyses."""
+        log.info('Get source tissue anatomy for clustering analyses.')
         lib_type = aliased(Cvterm, name='lib_type')
         ec_type = aliased(Cvterm, name='ec_type')
-        cvterm = aliased(Cvterm, name='cvterm')
-        ec_types = ['stage', 'anatomy']
-        db_names = ['FBbt', 'FBcv']
+        anatomy = aliased(Cvterm, name='anatomy')
         filters = (
             Library.is_obsolete.is_(False),
             Library.uniquename.op('~')(self.lib_regex),
             lib_type.name == 'cell clustering analysis',
-            ec_type.name.in_((ec_types)),
-            Db.name.in_((db_names))
+            ec_type.name == 'anatomy'
         )
-        results = session.query(Library, Db, ec_type, cvterm).\
+        results = session.query(Library, anatomy).\
             join(LibraryCvterm, (LibraryCvterm.library_id == Library.library_id)).\
             join(lib_type, (lib_type.cvterm_id == LibraryCvterm.cvterm_id)).\
             join(LibraryExpression, (LibraryExpression.library_id == Library.library_id)).\
             join(ExpressionCvterm, (ExpressionCvterm.expression_id == LibraryExpression.expression_id)).\
             join(ec_type, (ec_type.cvterm_id == ExpressionCvterm.cvterm_type_id)).\
-            join(cvterm, (cvterm.cvterm_id == ExpressionCvterm.cvterm_id)).\
-            join(Dbxref, (Dbxref.dbxref_id == cvterm.dbxref_id)).\
-            join(Db, (Db.db_id == Dbxref.db_id)).\
+            join(anatomy, (anatomy.cvterm_id == ExpressionCvterm.cvterm_id)).\
             filter(*filters).\
             distinct()
-        anatomy_counter = 0
-        sex_counter = 0
+        counter = 0
         for result in results:
-            if result.ec_type.name == 'anatomy' and result.Db.name == 'FBbt':
-                try:
-                    self.cluster_dict[result.Library.library_id].source_tissue_anatomy.append(result.cvterm.name)
-                    anatomy_counter += 1
-                except KeyError:
-                    pass
-            elif result.ec_type.name == 'stage' and result.Db.name == 'FBcv':
-                try:
-                    self.cluster_dict[result.Library.library_id].source_tissue_sex.append(result.cvterm.name)
-                    sex_counter += 1
-                except KeyError:
-                    pass
-        log.info(f'Found {anatomy_counter} anatomy terms for clustering analysis tissue sources.')
-        log.info(f'Found {sex_counter} sex terms for clustering analysis tissue sources.')
-        return
-
-    def process_source_tissue_info(self, session):
-        """Process source tissue info."""
-        log.info('Process source tissue info.')
-        for cluster_analysis in self.cluster_dict.values():
-            # Stage
-            if len(cluster_analysis.source_tissue_stage) == 1:
-                cluster_analysis.source_tissue_stage_str = cluster_analysis.source_tissue_stage[0]
-            elif len(cluster_analysis.source_tissue_stage) > 1:
-                cluster_analysis.source_tissue_stage_str = 'mixed'
-            # Anatomy
-            if len(cluster_analysis.source_tissue_anatomy) == 1:
-                cluster_analysis.source_tissue_anatomy_str = cluster_analysis.source_tissue_anatomy[0]
-            elif len(cluster_analysis.source_tissue_anatomy) > 1:
-                cluster_analysis.source_tissue_anatomy_str = 'mixed'
-            # Sex
-            male = False
-            female = False
-            for sex_term in cluster_analysis.source_tissue_sex:
-                if 'female' in sex_term:
-                    female = True
-                elif 'male' in sex_term:
-                    male = True
-            if female and male:
-                cluster_analysis.source_tissue_sex_str = 'mixed'
-            elif female:
-                cluster_analysis.source_tissue_sex_str = 'female'
-            elif male:
-                cluster_analysis.source_tissue_sex_str = 'male'
+            try:
+                self.cluster_dict[result.Library.library_id].source_tissue_anatomy.append(result.anatomy.name)
+            except KeyError:
+                pass
+        log.info(f'Found source tissue anatomy info for {counter} clustering analyses.')
         return
 
     def get_cluster_cell_types(self, session):
@@ -362,8 +309,8 @@ class SingleCellRNASeqReporter(object):
         return
 
     def get_mean_expr_spread_values(self, session):
-        """Get mean_expr and spread values for scRNA-Seq data."""
-        log.info('Get mean_expr and spread values for scRNA-Seq data.')
+        """Get mean_expr and spread values for scRNA-seq data."""
+        log.info('Get mean_expr and spread values for scRNA-seq data.')
         mean_expr = aliased(LibraryFeatureprop, name='mean_expr')
         spread = aliased(LibraryFeatureprop, name='spread')
         mean_expr_type = aliased(Cvterm, name='mean_expr_type')
@@ -375,6 +322,7 @@ class SingleCellRNASeqReporter(object):
                 lib_counter += 1
                 if lib_counter % 100 == 0:
                     log.info(f'Getting data for cluster #{lib_counter}.')
+                log.debug(f'Getting mean_expr and spread data for {cluster.name} ({cluster.uniquename}).')
                 self.mean_expr_spread_dict[cluster.library_id] = []
                 filters = (
                     LibraryFeature.library_id == cluster.library_id,
@@ -400,24 +348,25 @@ class SingleCellRNASeqReporter(object):
                     }
                     self.mean_expr_spread_dict[cluster.library_id].append(datum)
                     data_counter += 1
-        log.info(f'Found {data_counter} scRNA-Seq "spread" data points.')
+        log.info(f'Found {data_counter} scRNA-seq "spread" data points.')
         return
 
     def process_database_info(self):
-        """Print out scRNA-Seq data."""
-        log.info('Print out scRNA-Seq data.')
+        """Print out scRNA-seq data."""
+        log.info('Print out scRNA-seq data.')
         for analysis in self.cluster_dict.values():
             for cluster in analysis.child_clusters:
                 data_key = cluster.library_id
+                log.debug(f'Export data for {cluster.name} ({cluster.uniquename})')
                 for datum in self.mean_expr_spread_dict[data_key]:
                     data_dict = {
                         'Pub_ID': f'{analysis.papers[0].uniquename}',
                         'Pub_miniref': f'{analysis.papers[0].miniref}',
                         'Clustering_Analysis_ID': f'{analysis.library.uniquename}',
                         'Clustering_Analysis_Name': f'{analysis.library.name}',
-                        'Source_Tissue_Sex': f'{analysis.source_tissue_sex_str}',
-                        'Source_Tissue_Stage': f'{analysis.source_tissue_stage_str}',
-                        'Source_Tissue_Anatomy': f'{analysis.source_tissue_anatomy_str}',
+                        'Source_Tissue_Stage': f'{analysis.source_tissue_stage}',
+                        'Source_Tissue_Sex': f'{analysis.source_tissue_sex}',
+                        'Source_Tissue_Anatomy': f"{'|'.join(analysis.source_tissue_anatomy)}",
                         'Cluster_ID': f'{cluster.uniquename}',
                         'Cluster_Name': f'{cluster.name}',
                         'Cluster_Cell_Type_ID': f'FBbt:{self.cluster_cell_type_dict[cluster.library_id].dbxref.accession}',
@@ -430,14 +379,13 @@ class SingleCellRNASeqReporter(object):
                     self.data_to_export.append(data_dict)
         return
 
-    def query_chado(self, session):
+    def write_to_chado(self, session):
         """Run write methods."""
         log.info('Starting "write_to_chado" method.')
         self.get_clustering_analyses(session)
         self.get_cluster_pubs(session)
         self.get_source_tissue_stage(session)
-        self.get_source_tissue_sex_and_anatomy(session)
-        self.process_source_tissue_info(session)
+        self.get_source_tissue_anatomy(session)
         self.get_cluster_cell_types(session)
         self.get_mean_expr_spread_values(session)
         self.process_database_info()
@@ -445,28 +393,37 @@ class SingleCellRNASeqReporter(object):
         return
 
 
-def db_query_transaction(object_to_execute):
-    """Query the chado database given an object that has a "query_chado()" method.
+def db_commit_transaction(object_to_execute):
+    """Query and write to chado using an object's "write_to_chado()" method.
 
-    Function assumes a global "engine" variable for SQLAlchemy processes.
+    Global variable "testing" determines if changes are rolled back or committed.
 
     Args:
-        arg1 (class): some object that has a "query_chado()" method.
+        arg1 (object_to_execute): An object that has an SQL ORM "write_chado()" method.
+
+    Returns:
+        None.
 
     Raises:
         Raises a RuntimeError if there are problems with executing the query.
 
     """
+    log.info('Writing to chado, with testing set to "{}"'.format(testing))
     Session = sessionmaker(bind=engine)
     session = Session()
     try:
-        object_to_execute.query_chado(session)
+        object_to_execute.write_to_chado(session)
         session.flush()
     except RuntimeError:
         session.rollback()
-        log.critical('Critical transaction error occurred during chado query; rolling back and exiting.')
+        log.critical('Critical transaction error occurred, rolling back and exiting.')
         raise
-    return
+    if testing is True:
+        log.info('Since "testing" is True, rolling back all transactions.')
+        session.rollback()
+    else:
+        log.info('Since "testing" is False, committing transactions.')
+        session.commit()
 
 
 if __name__ == "__main__":
