@@ -1,5 +1,5 @@
 strict_rfc3339==0.7
-psycopg2>=2.6.2
+psycopg2
 nested_dict>=1.61
 jsonschema>=3.0.1
 git+https://github.com/FlyBase/harvdev-utils.git@master#egg=harvdev_utils
