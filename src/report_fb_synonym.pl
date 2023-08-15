@@ -194,9 +194,7 @@ foreach my $id ( keys(%fbids) ) {
 # This trims off flanking double-quote characters that are usually curated unintentionally.
 sub trim_quote_chars{
     my $input_string = shift;
-    print "Have this input: $input_string\n";
     if ( $input_string =~ /(^"|"$)/ ) {
-        print "Trim flanking double-quote chars!\n";
         $input_string =~ s/(^"|"$)//g;
     }
     return $input_string;
