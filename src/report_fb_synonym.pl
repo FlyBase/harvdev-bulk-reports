@@ -14,7 +14,6 @@
 #-----------------------------------------------------------------------------#
 use DBI;
 require "conversions.pm";
-
 # require "/users/emmert/work/perl-sub/conversions.pm";
 
 if ( @ARGV < 5 ) {
@@ -128,7 +127,7 @@ foreach my $id ( keys(%fbids) ) {
                 next if ( $sr{sname} eq 'unnamed' );
 ##		print "\t\tsynonym: $sr{sname}\t$sr{stype} ($sr{is_current})\n";
                 if ( ( $sr{is_current} == 1 ) && ( $sr{stype} eq 'symbol' ) ) {
-                    $curr_symbol = $sr{synonym_sgml};
+                    $curr_symbol = $sr{sname};
                     $curr_symbol =~ s/<up>/[/g;
                     $curr_symbol =~ s/<\/up>/]/g;
                     $curr_fname  =~ s/<down>/[[/g;
@@ -139,7 +138,7 @@ foreach my $id ( keys(%fbids) ) {
                 elsif (( $sr{is_current} == 1 )
                     && ( $sr{stype} eq 'fullname' ) )
                 {
-                    $curr_fname = $sr{synonym_sgml};
+                    $curr_fname = $sr{sname};
                     $curr_fname =~ s/<up>/[/g;
                     $curr_fname =~ s/<\/up>/]/g;
                     $curr_fname =~ s/<down>/[[/g;
@@ -150,24 +149,28 @@ foreach my $id ( keys(%fbids) ) {
                 elsif (( $sr{is_current} == 0 )
                     && ( $sr{stype} eq 'fullname' ) )
                 {
-                    push( @fullnames, $sr{sname} );
+                    my $synonym_string = trim_quote_chars($sr{sname});
+                    push( @fullnames, $synonym_string );
                     if ( $sr{synonym_sgml} ne $sr{sname} ) {
                         $sr{synonym_sgml} =~ s/<up>/[/g;
                         $sr{synonym_sgml} =~ s/<\/up>/]/g;
                         $sr{synonym_sgml} =~ s/<down>/[[/g;
                         $sr{synonym_sgml} =~ s/<\/down>/]]/g;
-                        push( @fullnames, $sr{synonym_sgml} );
+                        my $synonym_sgml_string = trim_quote_chars($sr{synonym_sgml});
+                        push( @fullnames, $synonym_sgml_string );
                     }
                 }
                 elsif ( ( $sr{is_current} == 0 ) && ( $sr{stype} eq 'symbol' ) )
                 {
-                    push( @syns, $sr{sname} );
+                    my $synonym_string = trim_quote_chars($sr{sname});
+                    push( @syns, $synonym_string );
                     if ( $sr{synonym_sgml} ne $sr{sname} ) {
                         $sr{synonym_sgml} =~ s/<up>/[/g;
                         $sr{synonym_sgml} =~ s/<\/up>/]/g;
                         $sr{synonym_sgml} =~ s/<down>/[[/g;
                         $sr{synonym_sgml} =~ s/<\/down>/]]/g;
-                        push( @syns, $sr{synonym_sgml} );
+                        my $synonym_sgml_string = trim_quote_chars($sr{synonym_sgml});
+                        push( @syns, $synonym_sgml_string );
                     }
 
                    #		    print "\t\tpushing synonym: $sr{sname}\t$sr{stype}\n";
@@ -186,6 +189,17 @@ foreach my $id ( keys(%fbids) ) {
             )
         );
     }
+}
+
+# This trims off flanking double-quote characters that are usually curated unintentionally.
+sub trim_quote_chars{
+    my $input_string = shift;
+    print "Have this input: $input_string\n";
+    if ( $input_string =~ /(^"|"$)/ ) {
+        print "Trim flanking double-quote chars!\n";
+        $input_string =~ s/(^"|"$)//g;
+    }
+    return $input_string;
 }
 
 ## print "\nFinished fb_synonym $jetzt\n\n";
