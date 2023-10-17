@@ -210,7 +210,6 @@ my $ga_query = $dbh->prepare
 
 # hash to store the feature_cvterms with qualifiers
 my %quals;
-
 # set up the query
 my $qual_query = $dbh->prepare
   (sprintf
@@ -222,13 +221,27 @@ my $qual_query = $dbh->prepare
                          'located_in', 'part_of', 'is_active_in', 'colocalizes_with')"
    )
   );
-
 # build the quals hash
 print "Getting the qualifier information\n";
 $qual_query->execute or die "Can't query for qualifiers\n";
-
 while ( my ($fcvtid, $qual) = $qual_query->fetchrow_array()) {
   $quals{$fcvtid} = $qual;
+}
+
+# DB-893: Hash to store GO extensions.
+my %go_xtns;
+my $go_xtn_query = $dbh->prepare(
+    sprintf(
+        "SELECT fcvtp.feature_cvterm_id, fcvtp.value
+         FROM feature_cvtermprop fcvtp
+         JOIN cvterm cvt ON cvt.cvterm_id = fcvtp.type_id
+         WHERE cvt.name = 'BOB_placeholder_for_whatever_we_call_these_props'"
+    )
+);
+print "Getting the GO extension information\n";
+$qual_query->execute or die "Can't query for GO extensions\n";
+while ( my ( $fcvtid, $go_xtn ) = $go_xtn_query->fetchrow_array() ) {
+    $go_xtns{$fcvtid} = $go_xtn;
 }
 
 # here is a query to build a lookup hash to exclude genes annotated with 'transposable_element_gene' term
@@ -528,8 +541,16 @@ while ( my ($fid, $fbid, $symb, $fcvtid, $asp, $goid, $pub, $orgn, $evid, $src, 
   # col 15
   $line .= "$src";
 
-  # new cols 16 and 17 for GAF2 (currently empty)
-  $line .= "\t\t";
+
+  # handle GO annotation extensions (part of col BOB????).
+  if (exists($go_xtns{$fcvtid})) {
+      $line .= "$go_xtns{$fcvtid}\t";
+  } else {
+      $line .+ "\t";
+  }
+
+  # new col 17 for GAF2 (currently empty)
+  $line .= "\t";    # BOB - AFTER addition of GO extensions, how many empty columns do we add to the end of the line?
 
   # end of line
   $line .= "\n";
