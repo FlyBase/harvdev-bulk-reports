@@ -82,15 +82,15 @@ def get_image_metadata():
                 this_image['pubFigure'] = line.split('\t')[3]
                 this_image['permission'] = line.split('\t')[4].rstrip()
                 # REJECT cases where...
-                # 1. imageFilename has unexpected file extension.
+                # 1. Reject if imageFilename has unexpected file extension.
                 if not re.search(r'^fbal[0-9]{7}_[0-9]{1,2}(\.jpg|\.jpeg|\.png|\.tif|\.tiff)$', this_filename.lower()):
                     logging.warning(f'IMAGES: Line {line_counter} "imageFileName" has unexpected file extension: {this_filename}.')
                     key_checks_failed_counter += 1
-                # 2. publicationId is specified (not empty string) but is not an FBrf ID.
+                # 2. Reject if publicationId is specified (not empty string) but is not an FBrf ID.
                 if this_image['publicationId'] and not re.search(r'^FBrf[0-9]{7}$', this_image['publicationId']):
                     logging.warning(f'IMAGES: Line {line_counter} "publicationId" has unexpected pub ID: {this_image["publicationId"]}')
                     key_checks_failed_counter += 1
-                # 3. permission not granted
+                # 3. Reject if permission not granted.
                 permission_granted = False
                 permission_keywords = ['open', 'grant', 'provid', 'give', 'vfb', 'virtual fly brain', 'virtualflybrain']
                 for keyword in permission_keywords:
@@ -100,12 +100,12 @@ def get_image_metadata():
                     logging.warning(f'IMAGES: Line {line_counter} "permission" is not correctly indicated: {this_image["permission"]}')
                     key_checks_failed_counter += 1
                 # FLAG cases where ...
-                # 1. imageDescription appears many times.
+                # 1. Flag if imageDescription appears many times.
                 if this_image['imageDescription'] in files_processed:
                     logging.warning(f'IMAGES: Line {line_counter} lists "imageFileName" {this_image["imageDescription"]} again.')
                 else:
                     files_processed.append(this_image['imageDescription'])
-                # 2. pubFigure does not contain "Figure" string.
+                # 2. Flag if pubFigure does not contain "Fig" string.
                 if 'fig' not in this_image['pubFigure'].lower():
                     logging.warning(f'IMAGES: Line {line_counter} "pubFigure" does not mention any "fig": {this_image["pubFigure"]}')
                 # FINAL assessment of image metadata.
