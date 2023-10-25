@@ -73,7 +73,7 @@ def get_image_metadata():
                 continue
             else:
                 logging.debug('IMAGES: Line %d has 5 fields and so it was parsed.' % (line_counter)) 
-                checks_passed_counter = 0
+                key_checks_failed_counter = 0
                 this_image = {}
                 this_image['imageDescription'] = line.split('\t')[0]
                 this_filename = line.split('\t')[1]
@@ -81,51 +81,46 @@ def get_image_metadata():
                 this_image['publicationId'] = line.split('\t')[2]
                 this_image['pubFigure'] = line.split('\t')[3]
                 this_image['permission'] = line.split('\t')[4].rstrip()
-                if re.search(r'(\.jpg|\.jpeg|\.png|\.tif|\.TIF)$', this_image['imageDescription']):
-                    logging.debug('IMAGES: Line %d "imageDescription" passes validation: %s' % (line_counter, this_image['imageDescription']))
-                    checks_passed_counter += 1
-                    if this_image['imageDescription'] in files_processed:
-                        logging.warning('IMAGES: Line %d lists %s again. Are you sure about this?' % (line_counter, this_image['imageDescription']))
-                    else:
-                        files_processed.append(this_image['imageDescription'])
+                # REJECT cases where...
+                # 1. Reject if imageFilename has unexpected file extension.
+                if not re.search(r'^fbal[0-9]{7}_[0-9]{1,2}(\.jpg|\.jpeg|\.gif|\.png|\.tif|\.tiff)$', this_filename.lower()):
+                    logging.warning(f'IMAGES: Line {line_counter} "imageFileName" has unexpected file extension: {this_filename}.')
+                    key_checks_failed_counter += 1
+                # 2. Reject if publicationId is specified (not empty string) but is not an FBrf ID.
+                if this_image['publicationId'] and not re.search(r'^FBrf[0-9]{7}$', this_image['publicationId']):
+                    logging.warning(f'IMAGES: Line {line_counter} "publicationId" has unexpected pub ID: {this_image["publicationId"]}')
+                    key_checks_failed_counter += 1
+                # 3. Reject if permission not granted.
+                permission_granted = False
+                permission_keywords = ['open', 'grant', 'provid', 'give', 'vfb', 'virtual fly brain', 'virtualflybrain']
+                for keyword in permission_keywords:
+                    if keyword in this_image['permission'].lower():
+                        permission_granted = True
+                if permission_granted is False:
+                    logging.warning(f'IMAGES: Line {line_counter} "permission" is not correctly indicated: {this_image["permission"]}')
+                    key_checks_failed_counter += 1
+                # FLAG cases where ...
+                # 1. Flag if imageDescription appears many times.
+                if this_image['imageDescription'] in files_processed:
+                    logging.warning(f'IMAGES: Line {line_counter} lists "imageFileName" {this_image["imageDescription"]} again.')
                 else:
-                    logging.warning('IMAGES: Line %d "imageDescription" fails validation: %s' % (line_counter, this_image['imageDescription']))
-                if re.search(r'^FBal[0-9]{7}_[0-9]{1,2}(\.jpg|\.jpeg|\.png|\.tif|\.TIF)$', this_filename):
-                    logging.debug('IMAGES: Line %d "imageFileName" passes validation: %s' % (line_counter, this_filename))
-                    checks_passed_counter += 1
-                else:
-                    logging.warning('IMAGES: Line %d "imageFileName" fails validation: %s' % (line_counter, this_filename))
-                if re.search(r'^FBrf[0-9]{7}$', this_image['publicationId']):
-                    logging.debug('IMAGES: Line %d "publicationId" passes validation: %s' % (line_counter, this_image['publicationId']))
-                    checks_passed_counter += 1
-                else:
-                    logging.warning('IMAGES: Line %d "publicationId" fails validation: %s' % (line_counter, this_image['publicationId']))
-                if re.search(r'^Figure\s', this_image['pubFigure']):
-                    logging.debug('IMAGES: Line %d "pubFigure" passes validation: %s' % (line_counter, this_image['pubFigure']))
-                    checks_passed_counter += 1
-                else:
-                    logging.warning('IMAGES: Line %d "pubFigure" fails validation: %s' % (line_counter, this_image['pubFigure']))
-                if re.search(r'^Image\sprovided\sby\s', this_image['permission']):
-                    logging.debug('IMAGES: Line %d "permission" passes validation: %s' % (line_counter, this_image['permission']))
-                    checks_passed_counter += 1
-                elif len(this_image['permission']) == 0:
-                    logging.debug('IMAGES: Line %d "permission" passes validation: %s' % (line_counter, this_image['permission']))
-                    checks_passed_counter += 1                    
-                else:
-                    logging.warning('IMAGES: Line %d "permission" fails validation: %s' % (line_counter, this_image['permission']))
-                if checks_passed_counter != 5:
-                    logging.warning('IMAGES: Line %d passed only %d of 5 initial checks. Line was not processed.' % (line_counter, checks_passed_counter))
+                    files_processed.append(this_image['imageDescription'])
+                # 2. Flag if pubFigure does not contain "Fig" string.
+                if 'fig' not in this_image['pubFigure'].lower():
+                    logging.warning(f'IMAGES: Line {line_counter} "pubFigure" does not mention any "fig": {this_image["pubFigure"]}')
+                # FINAL assessment of image metadata.
+                if key_checks_failed_counter > 0:
+                    logging.warning(f'IMAGES: Line {line_counter} was NOT processed: failed {key_checks_failed_counter} checks.')
                     rejected_lines_counter += 1
                 else:
-                    logging.debug('IMAGES: Line %d passed all 5 checks. Line was processed.' % (line_counter))
-                    accepted_lines_counter += 1
+                    logging.debug(f'IMAGES: Line {line_counter} was processed.')
                     logging.debug(this_image)
+                    accepted_lines_counter += 1
                     if this_allele in image_dict.keys():
                         image_dict[this_allele][this_filename] = this_image
                     else:
                         image_dict[this_allele] = {}
                         image_dict[this_allele][this_filename] = this_image
-                    
     logging.info('IMAGES: SUMMARY: Accepted metadata for %d images.' % (accepted_lines_counter))
     logging.info('IMAGES: SUMMARY: Rejected metadata for %d images.' % (rejected_lines_counter))
     logging.info('IMAGES: SUMMARY: Ignored %d lines.' % (ignored_lines_counter))
