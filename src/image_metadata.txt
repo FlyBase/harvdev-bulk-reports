@@ -1,4 +1,4 @@
-#Last updated: 20231017
+#Last updated: 20231025
 #imageDescription	imageFileName	publicationId	pubFigure	permission
 GAL4[path-c135] carpet glia.jpg	FBal0042565_1.jpg	FBrf0242008	Figure 1B-C (top panels)	open access
 GAL4[path-c135] DH31 and copper cells.tiff	FBal0042565_2.tiff	FBrf0211737	Figure 1B	open access
@@ -214,3 +214,63 @@ GAL4[smid-C161].jpg	FBal0230516_1.jpg	FBrf0209127	Figure 8A	open access
 GAL4[T155].png	FBal0042559_1.png	FBrf0213770	Figure S7	open access
 GAL4[Tab2-201Y].jpeg	FBal0048768_1.jpeg	FBrf0207600	Figure 5B	open access
 GAL4[Ugt36A1.PK] PDF neuron.png	FBal0138419_1.png	FBrf0209505	Figure S2	open access
+GAL4[12.1] embryonic/larval peripheral nervous system, sensory neuron	FBal0118377_2.png	FBrf0219665	Figure 5B	open access
+GAL4[12.1] embryonic/larval peripheral nervous system, sensory neuron	FBal0118377_1.png	FBrf0174703	Figure 6	granted access
+GAL4[332.3] amnioserosa, embryonic/larval salivary gland	FBal0042549_1.jpeg	FBrf0147105	Figure 1F, 1H	granted access
+GAL4[455.2] embryonic hindgut	FBal0040464_1.png	FBrf0132294	Figure 2E, 2F	granted access
+GAL4[48Y] embryonic midgut	FBal0063393_1.png	FBrf0111966	Figure 1A-F'	granted access
+GAL4[69B] ectoderm	FBal0040470_1.jpeg	FBrf0135803	Figure 2C	open access
+GAL4[71B] wing hinge, wing cell,wing pouch	FBal0040471_1.jpeg	FBrf0219175	Figure 1B	granted access
+GAL4[AB1] salivary gland	FBal0094753_1.jpeg	FBrf0235445	Figure 1I	granted access
+GAL4[Abd-B-LDN] embryonic genital disc	FBal0191375_2.jpeg	FBrf0190286	Figure 1H-I	granted access
+GAL4[Abd-B-LDN] genital disc, abdominal segment	FBal0191375_1.jpeg	FBrf0211045	Figure 7B	granted access
+GAL4[Abd-B-LDN] female genitalia	FBal0191375_3.jpeg	FBrf0190286	Figure 6I-J	granted access
+GAL4[Akh.PL] ring gland, corpus cardiacum	FBal0155893_1.jpeg	FBrf0178933	Figure 4A	granted access
+GAL4[alrm.PD] reticular neuropil associated glial cell  ADD LARVAL STAGE TO FUG4 CURATION	FBal0260884_1.jpg	FBrf0223753	Figure 1A	open access
+GAL4[alrm.PD] reticular neuropil associated glial cell  ADD LARVAL STAGE TO FUG4 CURATION	FBal0260884_2.gif	FBrf0228044	Figure 1	open access
+GAL4[bab1-Agal4-5] somatic cell of ovary germarium cap cell  terminal filament	FBal0141491_1.jpeg	FBrf0223237	Figure 1B	granted access
+GAL4[bs-1348] wing cell  presumptive intervein	FBal0060675_1.png	FBrf0092741	Figure 6A	granted access
+GAL4[btl.PS] tracheal system, tracheal primordium	FBal0052380_1.jpeg	FBrf0234014	Figure 1A, 1A', 1B, 1B'	granted access
+GAL4[byn-Gal4] embryonic hindgut	FBal0123098_1.tiff	FBrf0219128	Figure S5B	open access
+GAL4[C-765] wing disc, leg disc	FBal0047057_1.jpg	FBrf0220378	Figure 2D	granted access
+GAL4[c381] amnioserosa	FBal0063335_1.jpeg	FBrf0203016	Figure 1A, 1B	granted access
+GAL4[C587] cyst cell	FBal0150629_2.tiff	FBrf0234508	Figure 1B, 1D	open access
+GAL4[C855a] optic lobe neuroepithelial cell	FBal0141530_1.jpeg	FBrf0223182	Figure 2A, A'	granted access
+GAL4[C855a] optic lobe neuroepithelial cell	FBal0141530_2.jpeg	FBrf0223182	Figure 1B-E	granted access
+GAL4[Cg.PA] hemocyte	FBal0104726_1.jpeg	FBrf0187467	Figure 2A	granted access
+GAL4[Desat1.PB] oenocyte	FBal0243539_3.png	FBrf0232723	Figure 6A	open access
+GAL4[Desat1.PB] oenocyte	FBal0243539_4.png	FBrf0232723	Figure 6C	open access
+GAL4[Dll-md23] presumptive arista, presumptive second segment of antenna, presumptive third segment of antenna, presumptive tarsal segment 2-5, presumptive wing margin	FBal0052388_1.jpeg	FBrf0200370	Figure 6A	granted access
+GAL4[Dll-md23] presumptive arista, presumptive second segment of antenna, presumptive third segment of antenna, presumptive tarsal segment 2-5, presumptive wing margin	FBal0052388_2.jpeg	FBrf0211845	Figure 1c	granted access
+GAL4[dome-PG14] medullary zone of lymph gland primary lobe ; prohemocyte	FBal0130657_1.jpeg	FBrf0187467	Figure 3B	granted access
+GAL4[dpp.PS] 	FBal0138409_1.jpeg	FBrf0216551	Figure 1G	granted access
+GAL4[eg-Mz360] EG neuron, EW neuron	FBal0061871_1.png	FBrf0214030	Figure 3E-F	open access
+GAL4[en-e16E] segment polarity expression pattern	FBal0052377_2.jpeg	FBrf0223464	Figure 2A, 2D, 2G	open access
+GAL4[ey.PH] eye disc	FBal0093300_1.jpeg	FBrf0218825	Figure 8B	granted access
+GAL4[fkh.PH] salivary gland, salivary gland primordium	FBal0103972_1.jpeg	FBrf0151924	Figure 7A	granted access
+GAL4[ftz.ng] embryonic/larval motor neuron; ring neuron R4	FBal0047073_1.png	FBrf0098258	Figure 3A	granted access
+GAL4[GMR.long] eye photoreceptor cell	FBal0152221_1.jpg	FBrf0241587	Figure 4f	open access
+GAL4[h-1J3] pair rule expression pattern, eye disc anterior to the morphogenetic furrow	FBal0040482_1.png	FBrf0064375	Figure 3A	granted access
+GAL4[HCH.Hand] cardial cell, embryonic/larval heart, cardioblast, adult heart, pericardial cell	FBal0190607_1.jpg	FBrf0190292	Figure 2E	granted access
+GAL4[hh-Gal4] embryonic brain, foregut wing disc posterior compartment	FBal0121962_1.jpg	FBrf0180154	Figure 7A	granted access
+GAL4[how-24B] muscle system	FBal0279489_2.jpg	FBrf0226516	Figure 3A	open access
+GAL4[how-24B] mesoderm	FBal0279489_1.png	FBrf0064375	Figure 3B	granted access
+GAL4[insc-Mz1407] nervous system, neuroblast	FBal0278258_1.png	FBrf0239793	Figure S6D	granted access
+GAL4[kirre-rP298-G4] muscle cell, muscle founder cell	FBal0147459_1.jpg	FBrf0222439	Figure 2A	granted access
+GAL4[nanos.PG] female germline cell	FBal0085988_1.png	FBrf0227449	Figure 2A	open access
+GAL4[NP2222] cortex glia	FBal0260979_1.tiff	FBrf0242895	Figure 3C	open access
+GAL4[NPF.1] peptidergic neuron; LNd neuron	FBal0152204_1.png	FBrf0235424	Figure S1B	open access
+GAL4[nrv2.PS] neuron	FBal0101539_1.png	FBrf0224459	Figure S5D	open access
+GAL4[nSyb.PS] neuron	FBal0230185_1.png	FBrf0234999	Figure S2	granted access
+GAL4[nub-AC-62] wing pouch	FBal0117644_1.png	FBrf0217590	Figure 2C	open access
+GAL4[Or22a.7.717] antennal lobe glomerulus DM2; adult olfactory receptor neuron Or22	FBal0118366_1.png	FBrf0235102	Figure S3	open access
+GAL4[Or22a.7.717] antennal lobe glomerulus DM2; adult olfactory receptor neuron Or22	FBal0118366_2.png	FBrf0220272	Figure 3A1	open access
+GAL4[Orco.2.642.Hsim\VP22] antennal lobe projection neuron; olfactory receptor neuron	FBal0144592_1.png	FBrf0192657	Figure 3A	open access
+GAL4[P2.4.Pdf] LNv neuron; Pdf neuron	FBal0102840_1.tiff	FBrf0204940	Figure S3	open access
+GAL4[Pan-R7] photoreceptor cell R7	FBal0124010_1.jpg	FBrf0226257	Figure 2	open access
+GAL4[per.PK] pacemaker neuron; l-LNv neuron; s-LNv neuron	FBal0060668_1.tiff	FBrf0213838	Figure 7A	open access
+GAL4[ptc-559.1] pair rule expression pattern; anterior-posterior compartment boundary of the wing disc	FBal0040487_1.jpeg	FBrf0135803	Figure 2K, K', K''	granted access
+GAL4[Rh5.PT] 	FBal0117649_3.png	FBrf0134582	Figure 4H	granted access
+GAL4[Rh5.PT] 	FBal0117649_2.jpg	FBrf0144829	Figure 7C-D	granted access
+GAL4[Rh5.PT] 	FBal0117649_1.jpeg	FBrf0144829	Figure 1D	granted access
+GAL4[yolk] fat body	FBal0126479_1.jpg	FBrf0226737	Figure S1A'	granted access
