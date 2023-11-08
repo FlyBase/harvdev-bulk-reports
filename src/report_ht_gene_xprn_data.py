@@ -9,7 +9,7 @@ Usage:
     report_ht_gene_xprn_data.py [-h] [-c CONFIG] [-v VERBOSE]
 
 Example:
-    python report_ht_gene_xprn_data.py -v -t -c /foo/bar/config.cfg
+    python report_ht_gene_xprn_data.py -v -c /foo/bar/config.cfg
 
 Notes:
     This script reports gene expression values (with units) from various high-
@@ -142,7 +142,7 @@ class HTXprnReporter(object):
             join(value, (value.library_feature_id == LibraryFeature.library_feature_id)).\
             join(unit, (unit.cvterm_id == value.type_id)).\
             join(LibraryRelationship, (LibraryRelationship.subject_id == sample.library_id)).\
-			join(lib_rel_type, (lib_rel_type.cvterm_id == LibraryRelationship.type_id)).\
+            join(lib_rel_type, (lib_rel_type.cvterm_id == LibraryRelationship.type_id)).\
             join(dataset, (dataset.library_id == LibraryRelationship.object_id)).\
             filter(*filters).\
             distinct()
