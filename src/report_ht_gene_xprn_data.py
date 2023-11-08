@@ -1,0 +1,198 @@
+# !/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""Report high-throughput gene expression data.
+
+Author(s):
+    Gil dos Santos dossantos@morgan.harvard.edu
+
+Usage:
+    report_ht_gene_xprn_data.py [-h] [-c CONFIG] [-v VERBOSE]
+
+Example:
+    python report_ht_gene_xprn_data.py -v -t -c /foo/bar/config.cfg
+
+Notes:
+    This script reports gene expression values (with units) from various high-
+    -throughput expression datasets featured in gene report bar graphs. It is
+    limited to cases where there is a single value type per sample, which
+    excludes scRNA-seq (for which we have a separate file).
+
+"""
+
+import argparse
+from sqlalchemy import create_engine, inspect
+from sqlalchemy.orm import aliased, sessionmaker
+# from harvdev_utils.chado_functions import get_or_create
+from harvdev_utils.general_functions import (
+    generic_FB_tsv_dict, tsv_report_dump
+)
+from harvdev_utils.production import (
+    Cvterm, Feature, Library, LibraryFeature, LibraryFeatureprop, LibraryRelationship
+)
+from harvdev_utils.psycopg_functions import set_up_db_reading
+
+
+# Global variables for the output file. Header order will match list order below.
+report_label = 'high-throughput_gene_expression'
+report_title = 'FlyBase high-throughput gene expression'
+header_list = [
+    'Dataset_ID',
+    'Dataset_Name',
+    'Sample_ID',
+    'Sample_Name',
+    'Gene_ID',
+    'Gene_Symbol',
+    'Expression_Unit',
+    'Expression_Value'
+]
+
+# Now proceed with generic setup.
+set_up_dict = set_up_db_reading(report_label)
+server = set_up_dict['server']
+database = set_up_dict['database']
+username = set_up_dict['username']
+password = set_up_dict['password']
+output_dir = set_up_dict['output_dir']
+output_filename = set_up_dict['output_filename']
+log = set_up_dict['log']
+
+# Create SQL Alchemy engines from environmental variables.
+engine_var_rep = 'postgresql://' + username + ":" + password + '@' + server + '/' + database
+engine = create_engine(engine_var_rep)
+insp = inspect(engine)
+
+# Process additional input parameters not handled by the set_up_db_reading() function above.
+parser = argparse.ArgumentParser(description='inputs')
+
+
+# The main process.
+def main():
+    """Run the steps for updating gene associations to sequence targeting reagents."""
+    log.info('Running script "{}"'.format(__file__))
+    log.info('Started main function.')
+
+    # Instantiate the handler and run its "write_chado()" method.
+    data_reporter = HTXprnReporter()
+    db_query_transaction(data_reporter)
+    data_to_export_as_tsv = generic_FB_tsv_dict(report_title, database)
+    data_to_export_as_tsv['data'] = data_reporter.data_to_export
+    tsv_report_dump(data_to_export_as_tsv, output_filename, headers=header_list)
+
+    # Close
+    log.info('Ended main function.\n')
+
+
+class HTXprnReporter(object):
+    """An object that gets high-throughput expression data and exports it to file."""
+
+    def __init__(self):
+        """Create the HTXprnReporter object."""
+        # Data bins.
+        self.data_to_export = []
+
+    # Uniquename regexes.
+    lib_regex = r'^FBlc[0-9]{7}$'
+    gene_regex = r'^FBgn[0-9]{7}$'
+    # Parental datasets to report.
+    datasets_to_report = {
+        'FlyAtlas2': 'FlyAtlas2 Anatomy RNA-Seq',
+        'modENCODE_mRNA-Seq_tissues': 'modENCODE Anatomy RNA-Seq',
+        'modENCODE_mRNA-Seq_development': 'modENCODE Development RNA-Seq',
+        'modENCODE_mRNA-Seq_cell.B': 'modENCODE Cell Lines RNA-Seq',
+        'modENCODE_mRNA-Seq_treatments': 'modENCODE Treatments RNA-Seq',
+        'Knoblich_Neural_Cell_RNA-Seq': 'Knoblich Neural Cell RNA-Seq',
+        'Lai_miRNA_RPMM_expression_development': 'Anatomy miRNA RNA-Seq',
+        'Lai_miRNA_RPMM_expression_tissues': 'Development miRNA RNA-Seq',
+        'Lai_miRNA_RPMM_expression_cells': 'Cell Lines miRNA RNA-Seq',
+        'Casas-Vila_proteome_life_cycle': 'Developmental Proteome: Life Cycle',
+        'Casas-Vila_proteome_embryogenesis': 'Developmental Proteome: Embryogenesis'
+    }
+    # Data types to report.
+    xprn_types_to_report = [
+        'RPKM',
+        'RPMM',
+        'TPM',
+        'LFQ_geom_mean_intensity'
+    ]
+
+    def get_ht_data(self, session):
+        """Get high-throughput data."""
+        log.info('Get high-throughput data.')
+        dataset = aliased(Library, name='dataset')
+        sample = aliased(Library, name='sample')
+        gene = aliased(Feature, name='gene')
+        value = aliased(LibraryFeatureprop, name='value')
+        unit = aliased(Cvterm, name='unit')
+        lib_rel_type = aliased(Cvterm, name='lib_rel_type')
+        filters = (
+            gene.is_obsolete.is_(False),
+            gene.uniquename.op('~')(self.gene_regex),
+            sample.is_obsolete.is_(False),
+            sample.uniquename.op('~')(self.lib_regex),
+            dataset.is_obsolete.is_(False),
+            dataset.uniquename.op('~')(self.lib_regex),
+            dataset.name.in_((self.datasets_to_report.keys())),
+            unit.name.in_((self.xprn_types_to_report)),
+            lib_rel_type.name == 'belongs_to'
+        )
+        results = session.query(dataset, sample, gene, unit, value).\
+            select_from(gene).\
+            join(LibraryFeature, (LibraryFeature.feature_id == gene.feature_id)).\
+            join(sample, (sample.library_id == LibraryFeature.library_id)).\
+            join(value, (value.library_feature_id == LibraryFeature.library_feature_id)).\
+            join(unit, (unit.cvterm_id == value.type_id)).\
+            join(LibraryRelationship, (LibraryRelationship.subject_id == sample.library_id)).\
+			join(lib_rel_type, (lib_rel_type.cvterm_id == LibraryRelationship.type_id)).\
+            join(dataset, (dataset.library_id == LibraryRelationship.object_id)).\
+            filter(*filters).\
+            distinct()
+        counter = 0
+        for result in results:
+            data_dict = {
+                'Dataset_ID': result.dataset.uniquename,
+                'Dataset_Name': result.dataset.name,
+                'Sample_ID': result.sample.uniquename,
+                'Sample_Name': result.sample.name,
+                'Gene_ID': result.gene.uniquename,
+                'Gene_Symbol': result.gene.name,
+                'Expression_Unit': result.unit.name,
+                'Expression_Value': result.value.value
+            }
+            self.data_to_export.append(data_dict)
+        log.info(f'Found {counter} expression values.')
+        return
+
+    def query_chado(self, session):
+        """Run write methods."""
+        log.info('Starting "write_to_chado" method.')
+        self.get_ht_data(session)
+        log.info('Method "write_to_chado" is done.')
+        return
+
+
+def db_query_transaction(object_to_execute):
+    """Query the chado database given an object that has a "query_chado()" method.
+
+    Function assumes a global "engine" variable for SQLAlchemy processes.
+
+    Args:
+        arg1 (class): some object that has a "query_chado()" method.
+
+    Raises:
+        Raises a RuntimeError if there are problems with executing the query.
+
+    """
+    Session = sessionmaker(bind=engine)
+    session = Session()
+    try:
+        object_to_execute.query_chado(session)
+        session.flush()
+    except RuntimeError:
+        session.rollback()
+        log.critical('Critical transaction error occurred during chado query; rolling back and exiting.')
+        raise
+    return
+
+
+if __name__ == "__main__":
+    main()
