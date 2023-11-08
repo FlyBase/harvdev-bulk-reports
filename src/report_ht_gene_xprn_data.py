@@ -124,41 +124,47 @@ class HTXprnReporter(object):
         value = aliased(LibraryFeatureprop, name='value')
         unit = aliased(Cvterm, name='unit')
         lib_rel_type = aliased(Cvterm, name='lib_rel_type')
-        filters = (
-            gene.is_obsolete.is_(False),
-            gene.uniquename.op('~')(self.gene_regex),
-            sample.is_obsolete.is_(False),
-            sample.uniquename.op('~')(self.lib_regex),
-            dataset.is_obsolete.is_(False),
-            dataset.uniquename.op('~')(self.lib_regex),
-            dataset.name.in_((self.datasets_to_report.keys())),
-            unit.name.in_((self.xprn_types_to_report)),
-            lib_rel_type.name == 'belongs_to'
-        )
-        results = session.query(dataset, sample, gene, unit, value).\
-            select_from(gene).\
-            join(LibraryFeature, (LibraryFeature.feature_id == gene.feature_id)).\
-            join(sample, (sample.library_id == LibraryFeature.library_id)).\
-            join(value, (value.library_feature_id == LibraryFeature.library_feature_id)).\
-            join(unit, (unit.cvterm_id == value.type_id)).\
-            join(LibraryRelationship, (LibraryRelationship.subject_id == sample.library_id)).\
-            join(lib_rel_type, (lib_rel_type.cvterm_id == LibraryRelationship.type_id)).\
-            join(dataset, (dataset.library_id == LibraryRelationship.object_id)).\
-            filter(*filters).\
-            distinct()
         counter = 0
-        for result in results:
-            data_dict = {
-                'Dataset_ID': result.dataset.uniquename,
-                'Dataset_Name': result.dataset.name,
-                'Sample_ID': result.sample.uniquename,
-                'Sample_Name': result.sample.name,
-                'Gene_ID': result.gene.uniquename,
-                'Gene_Symbol': result.gene.name,
-                'Expression_Unit': result.unit.name,
-                'Expression_Value': result.value.value
-            }
-            self.data_to_export.append(data_dict)
+        for dataset_name in self.datasets_to_report.keys():
+            log.info(f'Get expression data for {dataset_name}.')
+            filters = (
+                gene.is_obsolete.is_(False),
+                gene.uniquename.op('~')(self.gene_regex),
+                sample.is_obsolete.is_(False),
+                sample.uniquename.op('~')(self.lib_regex),
+                dataset.is_obsolete.is_(False),
+                dataset.uniquename.op('~')(self.lib_regex),
+                dataset.name == dataset_name,
+                unit.name.in_((self.xprn_types_to_report)),
+                lib_rel_type.name == 'belongs_to'
+            )
+            results = session.query(dataset, sample, gene, unit, value).\
+                select_from(gene).\
+                join(LibraryFeature, (LibraryFeature.feature_id == gene.feature_id)).\
+                join(sample, (sample.library_id == LibraryFeature.library_id)).\
+                join(value, (value.library_feature_id == LibraryFeature.library_feature_id)).\
+                join(unit, (unit.cvterm_id == value.type_id)).\
+                join(LibraryRelationship, (LibraryRelationship.subject_id == sample.library_id)).\
+                join(lib_rel_type, (lib_rel_type.cvterm_id == LibraryRelationship.type_id)).\
+                join(dataset, (dataset.library_id == LibraryRelationship.object_id)).\
+                filter(*filters).\
+                distinct()
+            this_counter = 0
+            for result in results:
+                data_dict = {
+                    'Dataset_ID': result.dataset.uniquename,
+                    'Dataset_Name': result.dataset.name,
+                    'Sample_ID': result.sample.uniquename,
+                    'Sample_Name': result.sample.name,
+                    'Gene_ID': result.gene.uniquename,
+                    'Gene_Symbol': result.gene.name,
+                    'Expression_Unit': result.unit.name,
+                    'Expression_Value': result.value.value
+                }
+                self.data_to_export.append(data_dict)
+                this_counter += 1
+            counter += this_counter
+            log.info(f'Found {this_counter} expression values for {dataset_name}.')
         log.info(f'Found {counter} expression values.')
         return
 
