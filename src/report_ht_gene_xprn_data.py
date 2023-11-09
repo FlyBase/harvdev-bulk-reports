@@ -36,7 +36,7 @@ from harvdev_utils.psycopg_functions import set_up_db_reading
 report_label = 'high-throughput_gene_expression'
 report_title = 'FlyBase high-throughput gene expression'
 header_list = [
-    'High-Throughput_Expression_Section'
+    'High_Throughput_Expression_Section',
     'Dataset_ID',
     'Dataset_Name',
     'Sample_ID',
@@ -93,7 +93,7 @@ class HTXprnReporter(object):
         """Create the HTXprnReporter object."""
         # Data bins.
         self.all_data_dict = {}         # Will be the data, keyed by (expression section rank, gene uniquename).
-        self.data_to_export = []    # Will be the data, sorted by key in self.data_dict above.
+        self.data_to_export = []    # Will be the data, sorted by key in self.all_data_dict above.
 
     # Uniquename regexes.
     lib_regex = r'^FBlc[0-9]{7}$'
@@ -182,7 +182,7 @@ class HTXprnReporter(object):
                     continue
                 data_dict_key = (xprn_section_rank, result.gene.uniquename)
                 data_dict = {
-                    'High-Throughput_Expression_Section': xprn_section,
+                    'High_Throughput_Expression_Section': xprn_section,
                     'Dataset_ID': result.dataset.uniquename,
                     'Dataset_Name': result.dataset.name,
                     'Sample_ID': result.sample.uniquename,
