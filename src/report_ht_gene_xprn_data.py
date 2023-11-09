@@ -173,15 +173,14 @@ class HTXprnReporter(object):
             this_counter = 0
             this_data_dict = {}
             for result in results:
-                # Record the xprn_section, sample id and gene id as the data dict key for sorting.
                 # Make an adjustment for FlyAtlas2 bar graphs.
                 if dataset_name == 'FlyAtlas2' and result.sample.name.startswith('microRNA'):
-                    log.debug('BOB: Found sample ok.')
                     xprn_section_to_use = 'FlyAtlas2 Anatomy miRNA RNA-Seq'
                     xprn_section_rank_to_use = self.xprn_section_order['FlyAtlas2 Anatomy miRNA RNA-Seq']
                 else:
                     xprn_section_to_use = xprn_section
                     xprn_section_rank_to_use = xprn_section_rank
+                # Record the xprn_section, sample id and gene id as the data dict key for sorting.
                 data_dict_key = (xprn_section_rank_to_use, result.sample.uniquename, result.gene.uniquename)
                 # Build the dict itself.
                 data_dict = {
