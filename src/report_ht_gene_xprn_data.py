@@ -36,6 +36,7 @@ from harvdev_utils.psycopg_functions import set_up_db_reading
 report_label = 'high-throughput_gene_expression'
 report_title = 'FlyBase high-throughput gene expression'
 header_list = [
+    'High-Throughput_Expression_Section'
     'Dataset_ID',
     'Dataset_Name',
     'Sample_ID',
@@ -76,6 +77,9 @@ def main():
     db_query_transaction(data_reporter)
     data_to_export_as_tsv = generic_FB_tsv_dict(report_title, database)
     data_to_export_as_tsv['data'] = data_reporter.data_to_export
+    notes = ['This file reports high-throughput gene expression, as reported in the "High-Throughput Expression Data" section of FlyBase gene reports.']
+    data_to_export_as_tsv['metaData']['note'] = notes
+    data_to_export_as_tsv['data'] = data_reporter.data_to_export
     tsv_report_dump(data_to_export_as_tsv, output_filename, headers=header_list)
 
     # Close
@@ -88,14 +92,15 @@ class HTXprnReporter(object):
     def __init__(self):
         """Create the HTXprnReporter object."""
         # Data bins.
-        self.data_to_export = []
+        self.all_data_dict = {}         # Will be the data, keyed by (expression section rank, gene uniquename).
+        self.data_to_export = []    # Will be the data, sorted by key in self.data_dict above.
 
     # Uniquename regexes.
     lib_regex = r'^FBlc[0-9]{7}$'
     gene_regex = r'^FBgn[0-9]{7}$'
     # Parental datasets to report.
     datasets_to_report = {
-        'FlyAtlas2': 'FlyAtlas2 Anatomy RNA-Seq',
+        'FlyAtlas2': 'FlyAtlas2 Anatomy RNA-Seq',    # FlyAtlas2 spans two graphs: RNA-seq (RPMM) and miRNA-seq (TPM), adjustment below.
         'modENCODE_mRNA-Seq_tissues': 'modENCODE Anatomy RNA-Seq',
         'modENCODE_mRNA-Seq_development': 'modENCODE Development RNA-Seq',
         'modENCODE_mRNA-Seq_cell.B': 'modENCODE Cell Lines RNA-Seq',
@@ -106,6 +111,20 @@ class HTXprnReporter(object):
         'Lai_miRNA_RPMM_expression_cells': 'Cell Lines miRNA RNA-Seq',
         'Casas-Vila_proteome_life_cycle': 'Developmental Proteome: Life Cycle',
         'Casas-Vila_proteome_embryogenesis': 'Developmental Proteome: Embryogenesis'
+    }
+    xprn_section_order = {
+        'FlyAtlas2 Anatomy RNA-Seq': 0,
+        'FlyAtlas2 Anatomy miRNA RNA-Seq': 1,
+        'modENCODE Anatomy RNA-Seq': 2,
+        'modENCODE Development RNA-Seq': 3,
+        'modENCODE Cell Lines RNA-Seq': 4,
+        'modENCODE Treatments RNA-Seq': 5,
+        'Knoblich Neural Cell RNA-Seq': 6,
+        'Anatomy miRNA RNA-Seq': 7,
+        'Development miRNA RNA-Seq': 8,
+        'Cell Lines miRNA RNA-Seq': 9,
+        'Developmental Proteome: Life Cycle': 10,
+        'Developmental Proteome: Embryogenesis': 11
     }
     # Data types to report.
     xprn_types_to_report = [
@@ -151,7 +170,19 @@ class HTXprnReporter(object):
                 distinct()
             this_counter = 0
             for result in results:
+                try:
+                    xprn_section = self.datasets_to_report[result.dataset.name]
+                    # Adjust for the fact that FlyAtlas2 dataset covers two bar graphs.
+                    # I could avoid this issue by making a dedicated parent dataset for miRNA data.
+                    # But then that would require IUDev web update. So, have this adjustment in for now.
+                    if dataset_name == 'FlyAtlas2' and sample.name.startswith('microRNA'):
+                        xprn_section == 'FlyAtlas2 Anatomy miRNA RNA-Seq'
+                    xprn_section_rank = self.xprn_section_order[xprn_section]
+                except KeyError:
+                    continue
+                data_dict_key = (xprn_section_rank, result.gene.uniquename)
                 data_dict = {
+                    'High-Throughput_Expression_Section': xprn_section,
                     'Dataset_ID': result.dataset.uniquename,
                     'Dataset_Name': result.dataset.name,
                     'Sample_ID': result.sample.uniquename,
@@ -161,11 +192,16 @@ class HTXprnReporter(object):
                     'Expression_Unit': result.unit.name,
                     'Expression_Value': result.value.value
                 }
-                self.data_to_export.append(data_dict)
+                self.all_data_dict[data_dict_key] = data_dict
                 this_counter += 1
             counter += this_counter
             log.info(f'Found {this_counter} expression values for {dataset_name}.')
-        log.info(f'Found {counter} expression values.')
+        # Now sort data by data_key and send it to the final export list.
+        data_keys = list(self.all_data_dict.keys())
+        data_keys.sort()
+        for i in data_keys:
+            self.data_to_export.append(self.all_data_dict[i])
+        log.info(f'Found {counter} expression values overall.')
         return
 
     def query_chado(self, session):
