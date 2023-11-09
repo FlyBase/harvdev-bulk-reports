@@ -189,7 +189,7 @@ class HTXprnReporter(object):
                     'Expression_Unit': result.unit.name,
                     'Expression_Value': result.value.value
                 }
-                self.this_data_dict[data_dict_key] = data_dict
+                this_data_dict[data_dict_key] = data_dict
                 this_counter += 1
             # Sort all data before sending it to the export list.
             data_keys = list(this_data_dict.keys())
