@@ -145,6 +145,7 @@ class HTXprnReporter(object):
         counter = 0
         for dataset_name, xprn_section in self.datasets_to_report.items():
             log.info(f'Get expression data for {dataset_name}.')
+            xprn_section_rank = self.xprn_section_order[xprn_section]
             # Get the data.
             filters = (
                 gene.is_obsolete.is_(False),
@@ -173,13 +174,18 @@ class HTXprnReporter(object):
             this_data_dict = {}
             for result in results:
                 # Record the xprn_section, sample id and gene id as the data dict key for sorting.
+                # Make an adjustment for FlyAtlas2 bar graphs.
                 if dataset_name == 'FlyAtlas2' and result.sample.name.startswith('microRNA'):
-                    xprn_section == 'FlyAtlas2 Anatomy miRNA RNA-Seq'
-                xprn_section_rank = self.xprn_section_order[xprn_section]
-                data_dict_key = (xprn_section_rank, result.sample.uniquename, result.gene.uniquename)
+                    log.debug('BOB: Found sample ok.')
+                    xprn_section_to_use = 'FlyAtlas2 Anatomy miRNA RNA-Seq'
+                    xprn_section_rank_to_use = self.xprn_section_order['FlyAtlas2 Anatomy miRNA RNA-Seq']
+                else:
+                    xprn_section_to_use = xprn_section
+                    xprn_section_rank_to_use = xprn_section_rank
+                data_dict_key = (xprn_section_rank_to_use, result.sample.uniquename, result.gene.uniquename)
                 # Build the dict itself.
                 data_dict = {
-                    'High_Throughput_Expression_Section': xprn_section,
+                    'High_Throughput_Expression_Section': xprn_section_to_use,
                     'Dataset_ID': result.dataset.uniquename,
                     'Dataset_Name': result.dataset.name,
                     'Sample_ID': result.sample.uniquename,
@@ -189,6 +195,8 @@ class HTXprnReporter(object):
                     'Expression_Unit': result.unit.name,
                     'Expression_Value': result.value.value
                 }
+
+
                 this_data_dict[data_dict_key] = data_dict
                 this_counter += 1
             # Sort all data before sending it to the export list.
