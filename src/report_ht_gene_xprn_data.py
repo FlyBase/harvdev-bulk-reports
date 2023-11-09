@@ -92,7 +92,6 @@ class HTXprnReporter(object):
     def __init__(self):
         """Create the HTXprnReporter object."""
         # Data bins.
-        self.all_data_dict = {}         # Will be the data, keyed by (expression section rank, gene uniquename).
         self.data_to_export = []    # Will be the data, sorted by key in self.all_data_dict above.
 
     # Uniquename regexes.
@@ -100,7 +99,7 @@ class HTXprnReporter(object):
     gene_regex = r'^FBgn[0-9]{7}$'
     # Parental datasets to report.
     datasets_to_report = {
-        'FlyAtlas2': 'FlyAtlas2 Anatomy RNA-Seq',    # FlyAtlas2 spans two graphs: RNA-seq (RPMM) and miRNA-seq (TPM), adjustment below.
+        'FlyAtlas2': 'FlyAtlas2 Anatomy RNA-Seq',    # FlyAtlas2 spans two graphs: RNA-seq & miRNA-seq (TPM).
         'modENCODE_mRNA-Seq_tissues': 'modENCODE Anatomy RNA-Seq',
         'modENCODE_mRNA-Seq_development': 'modENCODE Development RNA-Seq',
         'modENCODE_mRNA-Seq_cell.B': 'modENCODE Cell Lines RNA-Seq',
@@ -144,8 +143,9 @@ class HTXprnReporter(object):
         unit = aliased(Cvterm, name='unit')
         lib_rel_type = aliased(Cvterm, name='lib_rel_type')
         counter = 0
-        for dataset_name in self.datasets_to_report.keys():
+        for dataset_name, xprn_section in self.datasets_to_report.items():
             log.info(f'Get expression data for {dataset_name}.')
+            # Get the data.
             filters = (
                 gene.is_obsolete.is_(False),
                 gene.uniquename.op('~')(self.gene_regex),
@@ -168,19 +168,16 @@ class HTXprnReporter(object):
                 join(dataset, (dataset.library_id == LibraryRelationship.object_id)).\
                 filter(*filters).\
                 distinct()
+            # Process the data into data dicts for export.
             this_counter = 0
+            this_data_dict = {}
             for result in results:
-                try:
-                    xprn_section = self.datasets_to_report[result.dataset.name]
-                    # Adjust for the fact that FlyAtlas2 dataset covers two bar graphs.
-                    # I could avoid this issue by making a dedicated parent dataset for miRNA data.
-                    # But then that would require IUDev web update. So, have this adjustment in for now.
-                    if result.dataset.name == 'FlyAtlas2' and result.sample.name.startswith('microRNA'):
-                        xprn_section == 'FlyAtlas2 Anatomy miRNA RNA-Seq'
-                    xprn_section_rank = self.xprn_section_order[xprn_section]
-                except KeyError:
-                    continue
-                data_dict_key = (xprn_section_rank, result.gene.uniquename)
+                # Record the xprn_section, sample id and gene id as the data dict key for sorting.
+                if dataset_name == 'FlyAtlas2' and result.sample.name.startswith('microRNA'):
+                    xprn_section == 'FlyAtlas2 Anatomy miRNA RNA-Seq'
+                xprn_section_rank = self.xprn_section_order[xprn_section]
+                data_dict_key = (xprn_section_rank, result.sample.uniquename, result.gene.uniquename)
+                # Build the dict itself.
                 data_dict = {
                     'High_Throughput_Expression_Section': xprn_section,
                     'Dataset_ID': result.dataset.uniquename,
@@ -192,15 +189,15 @@ class HTXprnReporter(object):
                     'Expression_Unit': result.unit.name,
                     'Expression_Value': result.value.value
                 }
-                self.all_data_dict[data_dict_key] = data_dict
+                self.this_data_dict[data_dict_key] = data_dict
                 this_counter += 1
+            # Sort all data before sending it to the export list.
+            data_keys = list(this_data_dict.keys())
+            data_keys.sort()
+            for i in data_keys:
+                self.data_to_export.append(this_data_dict[i])
             counter += this_counter
             log.info(f'Found {this_counter} expression values for {dataset_name}.')
-        # Now sort data by data_key and send it to the final export list.
-        data_keys = list(self.all_data_dict.keys())
-        data_keys.sort()
-        for i in data_keys:
-            self.data_to_export.append(self.all_data_dict[i])
         log.info(f'Found {counter} expression values overall.')
         return
 
