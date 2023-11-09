@@ -78,6 +78,7 @@ def main():
     data_to_export_as_tsv = generic_FB_tsv_dict(report_title, database)
     data_to_export_as_tsv['data'] = data_reporter.data_to_export
     notes = ['This file reports high-throughput gene expression, as reported in the "High-Throughput Expression Data" section of FlyBase gene reports.']
+    notes.append('This file does not include scRNA-Seq data, which is structured differently and available in other download files.')
     data_to_export_as_tsv['metaData']['note'] = notes
     data_to_export_as_tsv['data'] = data_reporter.data_to_export
     tsv_report_dump(data_to_export_as_tsv, output_filename, headers=header_list)
@@ -194,8 +195,6 @@ class HTXprnReporter(object):
                     'Expression_Unit': result.unit.name,
                     'Expression_Value': result.value.value
                 }
-
-
                 this_data_dict[data_dict_key] = data_dict
                 this_counter += 1
             # Sort all data before sending it to the export list.
