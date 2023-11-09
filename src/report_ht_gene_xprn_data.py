@@ -175,7 +175,7 @@ class HTXprnReporter(object):
                     # Adjust for the fact that FlyAtlas2 dataset covers two bar graphs.
                     # I could avoid this issue by making a dedicated parent dataset for miRNA data.
                     # But then that would require IUDev web update. So, have this adjustment in for now.
-                    if dataset_name == 'FlyAtlas2' and sample.name.startswith('microRNA'):
+                    if result.dataset.name == 'FlyAtlas2' and result.sample.name.startswith('microRNA'):
                         xprn_section == 'FlyAtlas2 Anatomy miRNA RNA-Seq'
                     xprn_section_rank = self.xprn_section_order[xprn_section]
                 except KeyError:
