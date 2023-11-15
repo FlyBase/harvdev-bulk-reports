@@ -181,6 +181,11 @@ class HTXprnReporter(object):
                 else:
                     xprn_section_to_use = xprn_section
                     xprn_section_rank_to_use = xprn_section_rank
+                # Make an adjustment for FlyAtlas2 FPKM data (temporarily in chado as RPKM so as to not break web).
+                if dataset_name == 'FlyAtlas2' and result.unit.name == 'RPKM':
+                    unit_to_use = 'FPKM'
+                else:
+                    unit_to_use = result.unit.name
                 # Record the xprn_section, sample id and gene id as the data dict key for sorting.
                 data_dict_key = (xprn_section_rank_to_use, result.sample.uniquename, result.gene.uniquename)
                 # Build the dict itself.
@@ -192,7 +197,7 @@ class HTXprnReporter(object):
                     'Sample_Name': result.sample.name,
                     'Gene_ID': result.gene.uniquename,
                     'Gene_Symbol': result.gene.name,
-                    'Expression_Unit': result.unit.name,
+                    'Expression_Unit': unit_to_use,
                     'Expression_Value': result.value.value
                 }
                 this_data_dict[data_dict_key] = data_dict
