@@ -126,15 +126,14 @@ while ( my ($fid, $uniquename, $transcript_type) = $pcgq->fetchrow_array()) {
          and fs.feature_id = $fid"));
 
   # sub to do logic to get wanted UniProts as it could change
+  my $uline = '';
   if ( $transcript_type eq 'mRNA') {
     my @upids = get_uniprots($dbh, $fid);
-    my $uline = '';
     $uline .= "UniProtKB:$_|" for @upids;
     $uline =~ s/\|$//;
   }
   else {
     my @rnacids = get_rnacentral_xrefs($dbh, $fid);
-    my $uline = '';
     $uline .= "RNAcentral:$_|" for @rnacids;
     $uline =~ s/\|$//;
   }
