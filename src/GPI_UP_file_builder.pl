@@ -10,7 +10,6 @@ use DBI;
 
 # constant strings
 my $FB = 'FB';
-my $OTYPE = 'protein';
 my $TAXID = 'taxon:7227';
 
 if (@ARGV < 5) {
@@ -73,7 +72,7 @@ my $annidq = $dbh->prepare(
 # query for annotated protein-coding genes - results fetched in main loop
 my $pcgq = $dbh->prepare(
     ("
-    SELECT DISTINCT g.feature_id, g.uniquename
+    SELECT DISTINCT g.feature_id, g.uniquename, tty.name
     FROM feature g
     JOIN organism o ON o.organism_id = g.organism_id
     JOIN feature_relationship fr ON fr.object_id = g.feature_id
@@ -88,7 +87,7 @@ my $pcgq = $dbh->prepare(
       AND o.abbreviation = 'Dmel'
       AND t.is_obsolete = false 
       AND t.uniquename LIKE 'FBtr%'
-      AND tty.name = 'mRNA'
+      AND tty.name IN ('mRNA', 'rRNA', 'ncRNA', 'miRNA', 'tRNA', 'snoRNA', 'snRNA')
       AND rty.name = 'partof'"
     ));
 
@@ -99,7 +98,7 @@ my $rows;
 $pcgq->execute or die "Can't do PCG query\n";
 
 print "Processing results of PCG query\n";
-while ( my ($fid, $uniquename) = $pcgq->fetchrow_array()) {
+while ( my ($fid, $uniquename, $transcript_type) = $pcgq->fetchrow_array()) {
   $rows++;
 
   # get info from fid specific queries use direct select for those with only one 
@@ -127,15 +126,29 @@ while ( my ($fid, $uniquename) = $pcgq->fetchrow_array()) {
          and fs.feature_id = $fid"));
 
   # sub to do logic to get wanted UniProts as it could change
-  my @upids = get_uniprots($dbh, $fid);
-  my $uline = '';
-  $uline .= "UniProtKB:$_|" for @upids;
-  $uline =~ s/\|$//;
+  if ( $transcript_type eq 'mRNA') {
+    my @upids = get_uniprots($dbh, $fid);
+    my $uline = '';
+    $uline .= "UniProtKB:$_|" for @upids;
+    $uline =~ s/\|$//;
+  }
+  else {
+    my @rnacids = get_rnacentral_xrefs($dbh, $fid);
+    my $uline = '';
+    $uline .= "RNAcentral:$_|" for @rnacids;
+    $uline =~ s/\|$//;
+  }
 
   # print the line to file
   print OUT "$FB\t$uniquename\t$symb\t";
   print OUT $fullname if $fullname;
-  print OUT "\t$cgid\t$OTYPE\t$TAXID\t\t$uline\t\n";
+  if ( $transcript_type eq 'mRNA') {
+    print OUT "\t$cgid\tprotein\t$TAXID\t\t$uline\t\n";
+  }
+  else {
+    print OUT "\t$cgid\t$transcript_type\t$TAXID\t\t$uline\t\n";
+  }
+
 }
 my $end = localtime();
 print "STARTED: $start\tENDED: $end\n";
@@ -159,6 +172,21 @@ sub get_uniprots {
     # Combine the two lists (Jira DB-752).
     push(@sp, @tr);
     return @sp;
+}
+
+# returns uniprot ids based on specification provided 
+# may evolve 
+# initially checks for SwissProt IDs associated with gene and returns if found
+# if not then return all TrEMBL IDs
+sub get_rnacentral_xrefs {
+    my $dbh = shift;
+    my $fid = shift;
+    my $DB = 'RNAcentral';
+
+    # Get RNAcentral IDs.
+    my @rc = get_up_acc4id_by_db($dbh, $DB, $fid);
+
+    return @rc;
 }
 
 sub get_up_acc4id_by_db {
