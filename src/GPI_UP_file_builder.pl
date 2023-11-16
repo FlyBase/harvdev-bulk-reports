@@ -87,8 +87,25 @@ my $pcgq = $dbh->prepare(
       AND o.abbreviation = 'Dmel'
       AND t.is_obsolete = false 
       AND t.uniquename LIKE 'FBtr%'
-      AND tty.name IN ('mRNA', 'rRNA', 'ncRNA', 'miRNA', 'tRNA', 'snoRNA', 'snRNA')
-      AND rty.name = 'partof'"
+      AND tty.name IN ('mRNA', 'rRNA', 'ncRNA', 'pre_miRNA', 'tRNA', 'snoRNA', 'snRNA')
+      AND rty.name = 'partof'
+    UNION
+    SELECT DISTINCT g.feature_id, g.uniquename, 'gene_product'
+    FROM feature g
+    JOIN cvterm cvtg ON cvtg.cvterm_id = g.type_id
+    LEFT OUTER JOIN featureloc fl ON fl.feature_id = g.feature_id
+    JOIN organism o ON o.organism_id = g.organism_id
+    JOIN feature_cvterm fcvt ON fcvt.feature_id = g.feature_id
+    JOIN cvterm cvt ON cvt.cvterm_id = fcvt.cvterm_id
+    JOIN dbxref dbx ON dbx.dbxref_id = cvt.dbxref_id
+    JOIN db ON db.db_id = dbx.db_id
+    WHERE g.is_obsolete = false
+      AND cvtg.name = 'gene'
+      AND g.uniquename LIKE 'FBgn%'
+      AND o.abbreviation = 'Dmel'
+      AND fl.featureloc_id IS NULL
+      AND cvt.is_obsolete = 0
+      AND db.name = 'GO'"
     ));
 
 # fetch the results
@@ -132,6 +149,13 @@ while ( my ($fid, $uniquename, $transcript_type) = $pcgq->fetchrow_array()) {
     $uline .= "UniProtKB:$_|" for @upids;
     $uline =~ s/\|$//;
   }
+  elsif ( $transcript_type eq 'gene_product') {
+    my @upids = get_uniprots($dbh, $fid);
+    $uline .= "UniProtKB:$_|" for @upids;
+    $uline =~ s/\|$//;
+  }
+
+
   else {
     my @rnacids = get_rnacentral_xrefs($dbh, $fid);
     $uline .= "RNAcentral:$_|" for @rnacids;
@@ -143,6 +167,9 @@ while ( my ($fid, $uniquename, $transcript_type) = $pcgq->fetchrow_array()) {
   print OUT $fullname if $fullname;
   if ( $transcript_type eq 'mRNA') {
     print OUT "\t$cgid\tprotein\t$TAXID\t\t$uline\t\n";
+  }
+  elsif ( $transcript_type eq 'pre_miRNA') {
+    print OUT "\t$cgid\tmiRNA\t$TAXID\t\t$uline\t\n";
   }
   else {
     print OUT "\t$cgid\t$transcript_type\t$TAXID\t\t$uline\t\n";
