@@ -235,7 +235,7 @@ my $go_xtn_query = $dbh->prepare(
         "SELECT fcvtp.feature_cvterm_id, fcvtp.value
          FROM feature_cvtermprop fcvtp
          JOIN cvterm cvt ON cvt.cvterm_id = fcvtp.type_id
-         WHERE cvt.name = 'BOB_placeholder_for_whatever_we_call_these_props'"
+         WHERE cvt.name = 'go_annotation_extension'"
     )
 );
 print "Getting the GO extension information\n";
