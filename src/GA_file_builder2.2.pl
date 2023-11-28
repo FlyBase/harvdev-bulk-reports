@@ -80,7 +80,8 @@ my $syn_query = $dbh->prepare
 my %synonyms; # hash keyed by fbid with array of synonyms as value
 
 # execute the query
-print "Querying for synonyms\n";
+my $now = localtime();
+print "$now: Querying for synonyms\n";
 $syn_query->execute or die "Can't fetch synonyms\n";
 
 # retrieve the results and build the hash
@@ -104,7 +105,8 @@ my $fn_query = $dbh->prepare
   );
 
 # execute the query
-print "Querying for fullnames\n";
+$now = localtime();
+print "$now: Querying for fullnames\n";
 $fn_query->execute or die "Can't fetch fullnames\n";
 
 while ((my $fbid, my $fn) = $fn_query->fetchrow_array()) {
@@ -222,7 +224,8 @@ my $qual_query = $dbh->prepare
    )
   );
 # build the quals hash
-print "Getting the qualifier information\n";
+$now = localtime();
+print "$now: Getting the qualifier information.\n";
 $qual_query->execute or die "Can't query for qualifiers\n";
 while ( my ($fcvtid, $qual) = $qual_query->fetchrow_array()) {
   $quals{$fcvtid} = $qual;
@@ -230,19 +233,24 @@ while ( my ($fcvtid, $qual) = $qual_query->fetchrow_array()) {
 
 # DB-893: Hash to store GO extensions.
 my %go_xtns;
-my $go_xtn_query = $dbh->prepare(
-    sprintf(
-        "SELECT fcvtp.feature_cvterm_id, fcvtp.value
-         FROM feature_cvtermprop fcvtp
-         JOIN cvterm cvt ON cvt.cvterm_id = fcvtp.type_id
-         WHERE cvt.name = 'go_annotation_extension'"
+my $go_xtn_query = $dbh->prepare
+  (sprintf
+    ("SELECT fcvtp.feature_cvterm_id, fcvtp.value
+      FROM feature_cvtermprop fcvtp
+      JOIN cvterm cvt ON cvt.cvterm_id = fcvtp.type_id
+      WHERE cvt.name = 'go_annotation_extension'"
     )
-);
-print "Getting the GO extension information\n";
-$qual_query->execute or die "Can't query for GO extensions\n";
+  );
+$now = localtime();
+print "$now: Getting the GO extension information.\n";
+my $go_xtn_counter = 0;
+$go_xtn_query->execute or die "Can't query for GO extensions\n";
 while ( my ( $fcvtid, $go_xtn ) = $go_xtn_query->fetchrow_array() ) {
     $go_xtns{$fcvtid} = $go_xtn;
+    $go_xtn_counter += 1;
 }
+$now = localtime();
+print "$now: Found $go_xtn_counter GO annotation extensions.\n";
 
 # here is a query to build a lookup hash to exclude genes annotated with 'transposable_element_gene' term
 my %te_genes;
@@ -335,7 +343,8 @@ my $partyq = $dbh->prepare
         and t.type_id = c.cvterm_id and fr.object_id = ?", $regex));
 
 # execute the big query
-print "Querying for ga info\n";
+$now = localtime();
+print "$now: Querying for ga info\n";
 $ga_query->execute or die "Can't get ga info\n";
 
 # fetch the results
@@ -351,7 +360,8 @@ my $rows;
 # note I am explicitly declaring all variables in results
 # we could also just fetch an array and refer to array index numbers which might be slightly
 # more efficient but harder to keep track of
-print "Processing results of GA query\n";
+$now = localtime();
+print "$now: Processing results of GA query\n";
 while ( my ($fid, $fbid, $symb, $fcvtid, $asp, $goid, $pub, $orgn, $evid, $src, $date, $is_not)
 	= $ga_query->fetchrow_array()) {
   $rows++;
@@ -541,7 +551,6 @@ while ( my ($fid, $fbid, $symb, $fcvtid, $asp, $goid, $pub, $orgn, $evid, $src, 
   # col 15
   $line .= "$src";
 
-
   # handle GO annotation extensions (part of col BOB????).
   if (exists($go_xtns{$fcvtid})) {
       $line .= "$go_xtns{$fcvtid}\t";
@@ -615,7 +624,8 @@ while ( my ($fid, $fbid, $symb, $fcvtid, $asp, $goid, $pub, $orgn, $evid, $src, 
 }
 
 # and here we output the sorted lines sorted first by symbol and then by FBrf number
-print "Producing output file\n";
+$now = localtime();
+print "$now: Producing output file\n";
 my $lcnt;
 foreach my $s (sort keys %GA_results) {
   foreach my $r (sort keys %{$GA_results{$s}}) {
