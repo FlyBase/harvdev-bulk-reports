@@ -732,7 +732,7 @@ sub get_dbxrefs {
     if ($parts[0] =~ /FLYBASE:(.+)/) { # check to see if pairs match
       my $symb = $1;
       $symb = decon($symb);
-      print STDERR "WARING - missing Symbol in evidence code line $inline\n" unless ($symb);
+      print STDERR "WARNING - missing Symbol in evidence code line $inline\n" unless ($symb);
       if ($parts[1] =~ /FB:(FBgn[0-9]{7})/) {
 	my $fbgn = $1;
 	# print "CHECKING FOR MATCH BETWEEN $symb and $fbgn\n";
