@@ -555,11 +555,11 @@ while ( my ($fid, $fbid, $symb, $fcvtid, $asp, $goid, $pub, $orgn, $evid, $src, 
   if (exists($go_xtns{$fcvtid})) {
       $line .= "$go_xtns{$fcvtid}\t";
   } else {
-      $line .+ "\t";
+      $line .= "\t";
   }
 
   # new col 17 for GAF2 (currently empty)
-  $line .= "\t";    # BOB - AFTER addition of GO extensions, how many empty columns do we add to the end of the line?
+  # $line .= "\t";    # BOB - AFTER addition of GO extensions, how many empty columns do we add to the end of the line?
 
   # end of line
   $line .= "\n";
