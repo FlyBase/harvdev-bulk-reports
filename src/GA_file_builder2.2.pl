@@ -549,20 +549,14 @@ while ( my ($fid, $fbid, $symb, $fcvtid, $asp, $goid, $pub, $orgn, $evid, $src, 
   $line .= "$date\t";
 
   # col 15
-  $line .= "$src";
+  $line .= "$src\t";
 
   # handle GO annotation extensions (part of col BOB????).
   if (exists($go_xtns{$fcvtid})) {
-      $line .= "$go_xtns{$fcvtid}\t";
+      $line .= "$go_xtns{$fcvtid}\n";
   } else {
-      $line .= "\t";
+      $line .= "\n";
   }
-
-  # new col 17 for GAF2 (currently empty)
-  # $line .= "\t";    # BOB - AFTER addition of GO extensions, how many empty columns do we add to the end of the line?
-
-  # end of line
-  $line .= "\n";
 
   # add the evidence and with cols to as many lines as needed
   print STDERR "MISSING EVIDENCE for:\nt$line" and next unless @cols_7_8;
