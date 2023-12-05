@@ -552,7 +552,7 @@ while ( my ($fid, $fbid, $symb, $fcvtid, $asp, $goid, $pub, $orgn, $evid, $src, 
   $line .= "$src\t";
 
   # col 16
-  # handle GO annotation extensions (part of col BOB????).
+  # handle GO annotation extensions.
   if (exists($go_xtns{$fcvtid})) {
       $line .= "$go_xtns{$fcvtid}\n";
   } else {
