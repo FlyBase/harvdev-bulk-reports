@@ -227,7 +227,7 @@ GAL4[Abd-B-LDN] genital disc, abdominal segment	FBal0191375_1.jpeg	FBrf0211045	F
 GAL4[Abd-B-LDN] female genitalia	FBal0191375_3.jpeg	FBrf0190286	Figure 6I-J	granted access
 GAL4[Akh.PL] ring gland, corpus cardiacum	FBal0155893_1.jpeg	FBrf0178933	Figure 4A	granted access
 GAL4[alrm.PD] reticular neuropil associated glial cell  ADD LARVAL STAGE TO FUG4 CURATION	FBal0260884_1.jpg	FBrf0223753	Figure 1A	open access
-GAL4[alrm.PD] reticular neuropil associated glial cell  ADD LARVAL STAGE TO FUG4 CURATION	FBal0260884_2.gif	FBrf0228044	Figure 1	open access
+GAL4[alrm.PD] reticular neuropil associated glial cell  ADD LARVAL STAGE TO FUG4 CURATION	FBal0260884_2.png	FBrf0228044	Figure 1	open access
 GAL4[bab1-Agal4-5] somatic cell of ovary germarium cap cell  terminal filament	FBal0141491_1.jpeg	FBrf0223237	Figure 1B	granted access
 GAL4[bs-1348] wing cell  presumptive intervein	FBal0060675_1.png	FBrf0092741	Figure 6A	granted access
 GAL4[btl.PS] tracheal system, tracheal primordium	FBal0052380_1.jpeg	FBrf0234014	Figure 1A, 1A', 1B, 1B'	granted access
@@ -249,7 +249,7 @@ GAL4[en-e16E] segment polarity expression pattern	FBal0052377_2.jpeg	FBrf0223464
 GAL4[ey.PH] eye disc	FBal0093300_1.jpeg	FBrf0218825	Figure 8B	granted access
 GAL4[fkh.PH] salivary gland, salivary gland primordium	FBal0103972_1.jpeg	FBrf0151924	Figure 7A	granted access
 GAL4[ftz.ng] embryonic/larval motor neuron; ring neuron R4	FBal0047073_1.png	FBrf0098258	Figure 3A	granted access
-GAL4[GMR.long] eye photoreceptor cell	FBal0152221_1.jpg	FBrf0241587	Figure 4f	open access
+GAL4[GMR.long] eye photoreceptor cell	FBal0152221_1.png	FBrf0241587	Figure 4f	open access
 GAL4[h-1J3] pair rule expression pattern, eye disc anterior to the morphogenetic furrow	FBal0040482_1.png	FBrf0064375	Figure 3A	granted access
 GAL4[HCH.Hand] cardial cell, embryonic/larval heart, cardioblast, adult heart, pericardial cell	FBal0190607_1.jpg	FBrf0190292	Figure 2E	granted access
 GAL4[hh-Gal4] embryonic brain, foregut wing disc posterior compartment	FBal0121962_1.jpg	FBrf0180154	Figure 7A	granted access
