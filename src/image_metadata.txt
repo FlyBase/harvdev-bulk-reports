@@ -1,12 +1,12 @@
 #Last updated: 20231025
 #imageDescription	imageFileName	publicationId	pubFigure	permission
 GAL4[path-c135] carpet glia.jpg	FBal0042565_1.jpg	FBrf0242008	Figure 1B-C (top panels)	open access
-GAL4[path-c135] DH31 and copper cells.tiff	FBal0042565_2.tiff	FBrf0211737	Figure 1B	open access
+GAL4[path-c135] DH31 and copper cells.png	FBal0042565_2.png	FBrf0211737	Figure 1B	open access
 GAL4[c355].png	FBal0042567_1.png	FBrf0240513	Figure 1A	open access
 Scer\GAL4[e33C].png	FBal0042576_1.png	FBrf0103015	Figure 4A	granted access
 GAL4[Alp4-c507] EB.JPEG	FBal0061883_1.JPEG	FBrf0240929	Suppl Figure 1H1. H2 (object 8)	open access
 GAL4[Alp4-c507] MT.jpg	FBal0061883_2.jpg	FBrf0123252	Figure 1d	granted access
-GAL4[Mz709].tiff	FBal0061890_1.tiff	FBrf0241587	Figure 4h	open access
+GAL4[Mz709].png	FBal0061890_1.png	FBrf0241587	Figure 4h	open access
 GAL4[c42] ellipsoid body 2.png	FBal0065105_1.png	FBrf0247049	suppl Figure 9B-j	open access
 GAL4[Dll-em212] L3 leg.PNG	FBal0065172_1.PNG	FBrf0250313	Figure 11E	open access
 GAL4[Eh.2.4]_PA.jpg	FBal0083453_1.jpg	FBrf0245728	Figure 1A	open access
@@ -16,20 +16,20 @@ GAL4[Or47a.8.239]antenna.jpeg	FBal0118363_1.jpeg	FBrf0155701	Figure 6G	granted a
 GAL4[shakB.lethal.4.1].jpeg	FBal0120627_1.jpeg	FBrf0160808	Figure 1B2	granted access
 GAL4[Gr66a.3.153].jpg	FBal0125296_1.jpg	FBrf0240975	Figure 5 suppl 8 (3rd column)	open access
 GAL4[c819] brain.png	FBal0126480_1.png	FBrf0247049	suppl Figure 9B-m	open access
-GAL4[EB1].tiff	FBal0134165_1.tiff	FBrf0247746	Figure 1G (top left)	open access
+GAL4[EB1].png	FBal0134165_1.png	FBrf0247746	Figure 1G (top left)	open access
 GAL4[drm7.1].jpg	FBal0141439_1.jpg	FBrf0222086	Figure 1E	open access
 GAL4[Vsx1-MzVum] OPC.jpeg	FBal0150624_1.jpeg	FBrf0254941	Figure 4a, 4b	granted access
 GAL4[Vsx1-MzVum] TM5b.jpeg	FBal0150624_2.jpeg	FBrf0213643	Figure 2E	granted access
 GAL4[r4].jpg	FBal0155834_1.jpg	FBrf0178933	Figure 5E	granted access
 GAL4[nullo.PG].png	FBal0155835_1.png	FBrf0167988	Figure 6C	open access
-GAL4[eve.RRa].tiff	FBal0155842_1.tiff	FBrf0230353	Figure 1B	open access
+GAL4[eve.RRa].png	FBal0155842_1.png	FBrf0230353	Figure 1B	open access
 GAL4[exex-Gal4] embryo st16.jpeg	FBal0181612_1.jpeg	FBrf0225353	Figure 2E	granted access
 GAL4[exex-Gal4] larval.jpg	FBal0181612_2.jpg	FBrf0246743	Figure 1A (right)	open access
 GAL4[crq.PO].jpg	FBal0181615_1.jpg	FBrf0251726	Figure 3D	open access
 GAL4[A58].png	FBal0181674_1.png	FBrf0233664	Figure 4A (left)	open access
 GAL4[Cyp6g1.HR].jpg	FBal0190357_1.jpg	FBrf0200035	Figure 3E-F	granted access
 GAL4[Or42b.PF]_antenna.png	FBal0190493_1.png	FBrf0253894	Figure S9b (left)	open access
-GAL4[Or42b.PF]_lobes.tiff	FBal0190493_2.tiff	FBrf0253894	Figure 3B (middle)	open access
+GAL4[Or42b.PF]_lobes.png	FBal0190493_2.png	FBrf0253894	Figure 3B (middle)	open access
 GAL4[Or42b.PF]_neurons.png	FBal0190493_3.png	FBrf0253894	Figure S9a (middle)	open access
 GAL4[c205]_brain.png	FBal0190689_1.png	FBrf0247049	suppl Figure 9B-p	open access
 GAL4[c205]_FSB.jpg	FBal0190689_2.jpg	FBrf0239742	Figure 2a (bottom panels)	open access
@@ -38,22 +38,22 @@ GAL4[repo.PL] embryo.jpg	FBal0191674_2.jpg	FBrf0227872	Figure 1C	open access
 GAL4[NP6510]ExFl1.jpg	FBal0191706_1.jpg	FBrf0234474	Figure 5B	open access
 GAL4[NP6510]MB.jpg	FBal0191706_2.jpg	FBrf0238579	Figure 1E	open access
 GAL4[NP6510]midbrain.jpg	FBal0191706_3.jpg	FBrf0223397	Figure 1E panels 7-9	open access
-GAL4[NP6510]PAM DN.tif	FBal0191706_4.tif	FBrf0218860	Figure 7C	open access
+GAL4[NP6510]PAM DN.png	FBal0191706_4.png	FBrf0218860	Figure 7C	open access
 GAL4[ci.PC].png	FBal0193963_1.png	FBrf0246058	Figure 5 C&E	open access
-GAL4[Orco.PK].tif	FBal0194262_1.tif	FBrf0213437	Figure 2I	open access
+GAL4[Orco.PK].png	FBal0194262_1.png	FBrf0213437	Figure 2I	open access
 GAL4[moody.PS] adult brain.jpg	FBal0196074_1.jpg	FBrf0237902	Figure 2	open access
 Gal4[moody.PS] eye disc.png	FBal0196074_2.png	FBrf0237977	Figure 6A	open access
 GAL4[kn-col85-GAL4].jpg	FBal0197210_1.jpg	FBrf0248223	Figure 1B	open access
-GAL4[S3.Hug] adult.tif	FBal0198094_1.tif	FBrf0188215	Figure 5B	open access
-GAL4[S3.Hug] larval.tif	FBal0198094_2.tif	FBrf0188215	Figure 4G	open access
+GAL4[S3.Hug] adult.png	FBal0198094_1.png	FBrf0188215	Figure 5B	open access
+GAL4[S3.Hug] larval.png	FBal0198094_2.png	FBrf0188215	Figure 4G	open access
 GAL4[Or67d-GAL4-1] ant + brain.png	FBal0210953_1.png	FBrf0232120	Figure 2D top panel	open access
 GAL4[Or67d-GAL4-1] brain.jpg	FBal0210953_2.jpg	FBrf0256607	Figure 6C, middle panel	open access
 GAL4[Or67d-GAL4-1] ORN.png	FBal0210953_3.png	FBrf0254762	Figure 3I, left panel	open access
-GAL4[NP3084].tif	FBal0221040_1.tif	FBrf0234803	Figure S1A (bottom)	open access
-GAL4[5-40].tiff	FBal0221791_1.tiff	FBrf0247048	Figure 3D	open access
+GAL4[NP3084].png	FBal0221040_1.png	FBrf0234803	Figure S1A (bottom)	open access
+GAL4[5-40].png	FBal0221791_1.png	FBrf0247048	Figure 3D	open access
 GAL4[sns.PK].jpeg	FBal0230396_1.jpeg	FBrf0212349	Figure 1 C	open access
 GAL4[Ptth.cMa]_larval.jpeg	FBal0243026_1.jpeg	FBrf0238358	Figure 4C	open access
-GAL4[Ptth.cMa]_PA.tiff	FBal0243026_2.tiff	FBrf0235642	Figure 1A-E	open access
+GAL4[Ptth.cMa]_PA.png	FBal0243026_2.png	FBrf0235642	Figure 1A-E	open access
 GAL4[Gr33a-GAL4] labellum GRNs.jpg	FBal0243785_1.jpg	FBrf0237676	Figure 2 supplement 1E	open access
 GAL4[Gr33a-GAL4] tarsal GRNs.jpg	FBal0243785_2.jpg	FBrf0237676	Figure 2E	open access
 GAL4[c202a].jpg	FBal0243980_1.jpg	FBrf0243999	Figure 4 suppl 2C	open access
@@ -69,9 +69,9 @@ GAL4[Ir25a.PA]AL adult.jpg	FBal0249373_3.jpg	FBrf0253272	Figure 3D (third panel)
 GAL4[Ir25a.PA]larval.jpg	FBal0249373_4.jpg	FBrf0255204	Figure 2E	open access
 GAL4[Ir25a.PA]sacculus.jpg	FBal0249373_5.jpg	FBrf0240352	Figure 2 (top row second panel)	open access
 GAL4[Gr61a.4.9]leg_ganglion.png	FBal0249502_1.png	FBrf0231007	Figure 2g,n	open access
-GAL4[Gr66a.1.8].tif	FBal0249510_1.tif	FBrf0241580	Figure 4C (middle)	open access
+GAL4[Gr66a.1.8].png	FBal0249510_1.png	FBrf0241580	Figure 4C (middle)	open access
 GAL4[GMR11F02] dorsal organ.jpg	FBal0249674_1.jpg	FBrf0232228	Figure 1 suppl 1b	open access
-GAL4[GMR13F02].tiff	FBal0249860_1.tiff	FBrf0235522	Figure 1E	open access
+GAL4[GMR13F02].png	FBal0249860_1.png	FBrf0235522	Figure 1E	open access
 GAL4[GMR13F02]VFB.png	FBal0249860_2.png	FBrf0255719	Virtual Fly Brain	Virtual Fly Brain
 GAL4[GMR18H11].jpg	FBal0250346_1.png	FBrf0255719	Virtual Fly Brain	Virtual Fly Brain
 GAL4[GMR23E10] adult.jpg	FBal0250760_1.jpg	FBrf0241449	Figure 3H	open access
@@ -84,7 +84,7 @@ GAL4[GMR56F03] adult.png	FBal0253673_1.png	FBrf0245107	Figure 1E,I	granted acces
 GAL4[GMR56F03] larval.png	FBal0253673_2.png	FBrf0245107	Figure 1D	granted access
 GAL4[GMR71G01]male.jpg	FBal0254464_1.jpg	FBrf0253326	Figure 5A	open access
 GAL4[NP7397].png	FBal0256623_1.PNG	FBrf0253012	Figure 1B (top left)	open access
-GAL4[Delta-05151-G].tiff	FBal0256629_1.tiff	FBrf0235373	Figure 1B	open access
+GAL4[Delta-05151-G].png	FBal0256629_1.png	FBrf0235373	Figure 1B	open access
 GAL4[19-12].jpeg	FBal0258681_1.jpeg	FBrf0213078	Figure 1E	granted access
 GAL4[Uro.PT] adult.png	FBal0260624_1.png	FBrf0240721	Figure S1B (right panel)	open access
 GAL4[Uro.PT] larva.jpeg	FBal0260624_2.jpeg	FBrf0240721	Figure 1C (right panel)	open access
@@ -103,7 +103,7 @@ GAL4[dsx.K] adult CNS.png	FBal0277019_1.png	FBrf0234261	Figure 2B	open access
 GAL4[dsx.K] adult female.jpg	FBal0277019_2.jpg	FBrf0218941	Figure 4A	open access
 GAL4[dsx.K] larval male.png	FBal0277019_3.png	FBrf0243282	Figure 1B	granted access
 GAL4[Dvir\Pdf.1.9] green.jpg	FBal0279528_1.jpg	FBrf0226376	Figure 1A (right)	open access
-GAL4[Dvir\Pdf.1.9].tiff	FBal0279528_2.tiff	FBrf0240322	Figure 4C	open access
+GAL4[Dvir\Pdf.1.9].png	FBal0279528_2.png	FBrf0240322	Figure 4C	open access
 GAL4[VP16.osk].png	FBal0282702_1.png	FBrf0220348	Figure S4	granted access
 GAL4[VT030604]a'B'.png	FBal0308863_1.png	FBrf0242469	Figure 3A	open access
 GAL4[VT030604]MB.jpg	FBal0308863_2.jpg	FBrf0249782	Figure 3 S1F	open access
@@ -231,10 +231,10 @@ GAL4[alrm.PD] reticular neuropil associated glial cell  ADD LARVAL STAGE TO FUG4
 GAL4[bab1-Agal4-5] somatic cell of ovary germarium cap cell  terminal filament	FBal0141491_1.jpeg	FBrf0223237	Figure 1B	granted access
 GAL4[bs-1348] wing cell  presumptive intervein	FBal0060675_1.png	FBrf0092741	Figure 6A	granted access
 GAL4[btl.PS] tracheal system, tracheal primordium	FBal0052380_1.jpeg	FBrf0234014	Figure 1A, 1A', 1B, 1B'	granted access
-GAL4[byn-Gal4] embryonic hindgut	FBal0123098_1.tiff	FBrf0219128	Figure S5B	open access
+GAL4[byn-Gal4] embryonic hindgut	FBal0123098_1.png	FBrf0219128	Figure S5B	open access
 GAL4[C-765] wing disc, leg disc	FBal0047057_1.jpg	FBrf0220378	Figure 2D	granted access
 GAL4[c381] amnioserosa	FBal0063335_1.jpeg	FBrf0203016	Figure 1A, 1B	granted access
-GAL4[C587] cyst cell	FBal0150629_2.tiff	FBrf0234508	Figure 1B, 1D	open access
+GAL4[C587] cyst cell	FBal0150629_2.png	FBrf0234508	Figure 1B, 1D	open access
 GAL4[C855a] optic lobe neuroepithelial cell	FBal0141530_1.jpeg	FBrf0223182	Figure 2A, A'	granted access
 GAL4[C855a] optic lobe neuroepithelial cell	FBal0141530_2.jpeg	FBrf0223182	Figure 1B-E	granted access
 GAL4[Cg.PA] hemocyte	FBal0104726_1.jpeg	FBrf0187467	Figure 2A	granted access
@@ -258,7 +258,7 @@ GAL4[how-24B] mesoderm	FBal0279489_1.png	FBrf0064375	Figure 3B	granted access
 GAL4[insc-Mz1407] nervous system, neuroblast	FBal0278258_1.png	FBrf0239793	Figure S6D	granted access
 GAL4[kirre-rP298-G4] muscle cell, muscle founder cell	FBal0147459_1.jpg	FBrf0222439	Figure 2A	granted access
 GAL4[nanos.PG] female germline cell	FBal0085988_1.png	FBrf0227449	Figure 2A	open access
-GAL4[NP2222] cortex glia	FBal0260979_1.tiff	FBrf0242895	Figure 3C	open access
+GAL4[NP2222] cortex glia	FBal0260979_1.png	FBrf0242895	Figure 3C	open access
 GAL4[NPF.1] peptidergic neuron; LNd neuron	FBal0152204_1.png	FBrf0235424	Figure S1B	open access
 GAL4[nrv2.PS] neuron	FBal0101539_1.png	FBrf0224459	Figure S5D	open access
 GAL4[nSyb.PS] neuron	FBal0230185_1.png	FBrf0234999	Figure S2	granted access
@@ -266,9 +266,9 @@ GAL4[nub-AC-62] wing pouch	FBal0117644_1.png	FBrf0217590	Figure 2C	open access
 GAL4[Or22a.7.717] antennal lobe glomerulus DM2; adult olfactory receptor neuron Or22	FBal0118366_1.png	FBrf0235102	Figure S3	open access
 GAL4[Or22a.7.717] antennal lobe glomerulus DM2; adult olfactory receptor neuron Or22	FBal0118366_2.png	FBrf0220272	Figure 3A1	open access
 GAL4[Orco.2.642.Hsim\VP22] antennal lobe projection neuron; olfactory receptor neuron	FBal0144592_1.png	FBrf0192657	Figure 3A	open access
-GAL4[P2.4.Pdf] LNv neuron; Pdf neuron	FBal0102840_1.tiff	FBrf0204940	Figure S3	open access
+GAL4[P2.4.Pdf] LNv neuron; Pdf neuron	FBal0102840_1.png	FBrf0204940	Figure S3	open access
 GAL4[Pan-R7] photoreceptor cell R7	FBal0124010_1.jpg	FBrf0226257	Figure 2	open access
-GAL4[per.PK] pacemaker neuron; l-LNv neuron; s-LNv neuron	FBal0060668_1.tiff	FBrf0213838	Figure 7A	open access
+GAL4[per.PK] pacemaker neuron; l-LNv neuron; s-LNv neuron	FBal0060668_1.png	FBrf0213838	Figure 7A	open access
 GAL4[ptc-559.1] pair rule expression pattern; anterior-posterior compartment boundary of the wing disc	FBal0040487_1.jpeg	FBrf0135803	Figure 2K, K', K''	granted access
 GAL4[Rh5.PT] 	FBal0117649_3.png	FBrf0134582	Figure 4H	granted access
 GAL4[Rh5.PT] 	FBal0117649_2.jpg	FBrf0144829	Figure 7C-D	granted access

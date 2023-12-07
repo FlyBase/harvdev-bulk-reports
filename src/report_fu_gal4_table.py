@@ -82,8 +82,8 @@ def get_image_metadata():
                 this_image['pubFigure'] = line.split('\t')[3]
                 this_image['permission'] = line.split('\t')[4].rstrip()
                 # REJECT cases where...
-                # 1. Reject if imageFilename has unexpected file extension.
-                if not re.search(r'^fbal[0-9]{7}_[0-9]{1,2}(\.jpg|\.jpeg|\.gif|\.png|\.tif|\.tiff)$', this_filename.lower()):
+                # 1. Reject if imageFilename has unexpected file extension. Note that *.tif/*.tiff files are not allowed.
+                if not re.search(r'^fbal[0-9]{7}_[0-9]{1,2}(\.jpg|\.jpeg|\.gif|\.png)$', this_filename.lower()):
                     logging.warning(f'IMAGES: Line {line_counter} "imageFileName" has unexpected file extension: {this_filename}.')
                     key_checks_failed_counter += 1
                 # 2. Reject if publicationId is specified (not empty string) but is not an FBrf ID.
