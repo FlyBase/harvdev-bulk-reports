@@ -167,7 +167,7 @@ my $ga_query = $dbh->prepare
    ("SELECT DISTINCT gene.feature_id, gene.uniquename as fbid, symb.name as symbol,
        fcvt.feature_cvterm_id, cv.name as aspect,
        godb.accession as GO_id, ppub.uniquename as ppub, o.abbreviation as species,
-       evc.value as evidence_code, prv.value as provenance, date.value as date, fcvt.is_not as is_not
+       evc.value as evidence_code, prv.value as provenance, date.value as date, fcvt.is_not as is_not, evc.rank as evidence_code_rank
        FROM
        cvterm goterm
        JOIN   cv
@@ -235,7 +235,7 @@ while ( my ($fcvtid, $qual) = $qual_query->fetchrow_array()) {
 my %go_xtns;
 my $go_xtn_query = $dbh->prepare
   (sprintf
-    ("SELECT fcvtp.feature_cvterm_id, fcvtp.value
+    ("SELECT fcvtp.feature_cvterm_id, fcvtp.rank, fcvtp.value
       FROM feature_cvtermprop fcvtp
       JOIN cvterm cvt ON cvt.cvterm_id = fcvtp.type_id
       WHERE cvt.name = 'go_annotation_extension'"
@@ -245,8 +245,8 @@ $now = localtime();
 print "$now: Getting the GO extension information.\n";
 my $go_xtn_counter = 0;
 $go_xtn_query->execute or die "Can't query for GO extensions\n";
-while ( my ( $fcvtid, $go_xtn ) = $go_xtn_query->fetchrow_array() ) {
-    $go_xtns{$fcvtid} = $go_xtn;
+while ( my ( $fcvtid, $rank, $go_xtn_text ) = $go_xtn_query->fetchrow_array() ) {
+    $go_xtns{$fcvtid} = {rank => $rank, text => $go_xtn_text};
     $go_xtn_counter += 1;
 }
 $now = localtime();
@@ -362,7 +362,7 @@ my $rows;
 # more efficient but harder to keep track of
 $now = localtime();
 print "$now: Processing results of GA query\n";
-while ( my ($fid, $fbid, $symb, $fcvtid, $asp, $goid, $pub, $orgn, $evid, $src, $date, $is_not)
+while ( my ($fid, $fbid, $symb, $fcvtid, $asp, $goid, $pub, $orgn, $evid, $src, $date, $is_not, $ev_rank)
 	= $ga_query->fetchrow_array()) {
   $rows++;
 #  print "ROW $rows\n";
@@ -554,9 +554,13 @@ while ( my ($fid, $fbid, $symb, $fcvtid, $asp, $goid, $pub, $orgn, $evid, $src, 
   # col 16
   # handle GO annotation extensions.
   if (exists($go_xtns{$fcvtid})) {
-      $line .= "$go_xtns{$fcvtid}\n";
-  } else {
+    if ($ev_rank == $go_xtns{$fcvtid}{'rank'}) {
+      $line .= "$go_xtns{$fcvtid}{'text'}\n";
+    } else {
       $line .= "\n";
+    }
+  } else {
+    $line .= "\n";
   }
 
   # add the evidence and with cols to as many lines as needed
