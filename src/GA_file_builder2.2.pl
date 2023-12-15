@@ -438,7 +438,7 @@ while ( my ($fid, $fbid, $symb, $fcvtid, $asp, $goid, $pub, $orgn, $evid, $src, 
     }
   }
 
-  # going to need to parse the $evid field looking for with's and ands
+  # going to need to parse the $evid field (i.e., feature_cvtermprop.value of type evidence) looking for with's and ands
   # note that there can be multiple evidence statements in the same property value
   # and one or more of them may have info for col 8
   # lets set up a sub to do the parsing and then figure out the best way to deal with
@@ -674,11 +674,11 @@ sub check4doi {
 # that corresponds to database objects (sometimes more than one so need to figure
   # out which to use - using Susan T.'s method here)
   sub parse_evidence_bits {
-  my $evbit = shift;
+  my $evbit = shift;    # The $evbit corresponds to the evidence_code feature_cvtermprop.value passed to the sub.
   my $dbh = shift;
   my @evlines;
   
-  # first substitute spelled out evidence_code for abbreviation
+  # first substitute for spelled out evidence_code with the corresponding abbreviation
   foreach my $code (sort keys %EVC) {
     $evbit =~ s/$code/$EVC{$code}/g;
   }
@@ -693,7 +693,11 @@ sub check4doi {
       push @evlines, "PROBLEM: $e";
       next;
     }
-    
+
+    # BILLY BOB - CONTINUE HERE
+    # WHAT DOES get_dbxrefs() return for something like 'FLYBASE:rod; FB:FBgn0003268,FLYBASE:Zw10; FB:FBgn0004643'?
+    # Because what we get in the GAF is "FB:FBgn0003268,FLYBASE:Zw10" - WRONG.
+    # But we want "FB:FBgn0003268,FB:FBgn0004643".
     (my $col8, my $mismatch) = get_dbxrefs($dbxrefs, $dbh, $evc) if $dbxrefs;
     if ($col8) {
       $line = "$evc\t$col8";
