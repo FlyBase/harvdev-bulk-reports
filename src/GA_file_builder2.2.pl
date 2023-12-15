@@ -15,6 +15,7 @@ if (@ARGV < 5) {
 }
 
 my $start = localtime();
+my $now = localtime();
 
 my $server = shift @ARGV;
 my $dbname = shift @ARGV;
@@ -25,9 +26,12 @@ my $outfile = shift @ARGV;
 
 # connect to db
 ################################ db connection ############################
+$now = localtime();
+print STDOUT "$now: DEBUG: About to connect to the database\n";
 my $chado="dbi:Pg:dbname=$dbname; host=$server;port=5432";
 my $dbh = DBI->connect($chado,$user,$pass) or die "cannot connect to $chado";
-print STDOUT "Connected to $chado\n";
+$now = localtime();
+print STDOUT "$now: INFO: Connected to $chado\n";
 ##########################################################################
 
 # hash to hold the FBrf to GO ref lookup
@@ -80,8 +84,8 @@ my $syn_query = $dbh->prepare
 my %synonyms; # hash keyed by fbid with array of synonyms as value
 
 # execute the query
-my $now = localtime();
-print "$now: Querying for synonyms\n";
+$now = localtime();
+print "$now: INFO: Querying for synonyms\n";
 $syn_query->execute or die "Can't fetch synonyms\n";
 
 # retrieve the results and build the hash
@@ -106,7 +110,7 @@ my $fn_query = $dbh->prepare
 
 # execute the query
 $now = localtime();
-print "$now: Querying for fullnames\n";
+print "$now: INFO: Querying for fullnames\n";
 $fn_query->execute or die "Can't fetch fullnames\n";
 
 while ((my $fbid, my $fn) = $fn_query->fetchrow_array()) {
@@ -225,7 +229,7 @@ my $qual_query = $dbh->prepare
   );
 # build the quals hash
 $now = localtime();
-print "$now: Getting the qualifier information.\n";
+print "$now: INFO: Getting the qualifier information.\n";
 $qual_query->execute or die "Can't query for qualifiers\n";
 while ( my ($fcvtid, $qual) = $qual_query->fetchrow_array()) {
   $quals{$fcvtid} = $qual;
@@ -242,7 +246,7 @@ my $go_xtn_query = $dbh->prepare
     )
   );
 $now = localtime();
-print "$now: Getting the GO extension information.\n";
+print "$now: INFO: Getting the GO extension information.\n";
 my $go_xtn_counter = 0;
 $go_xtn_query->execute or die "Can't query for GO extensions\n";
 while ( my ( $fcvtid, $rank, $go_xtn_text ) = $go_xtn_query->fetchrow_array() ) {
@@ -250,7 +254,7 @@ while ( my ( $fcvtid, $rank, $go_xtn_text ) = $go_xtn_query->fetchrow_array() ) 
   $go_xtn_counter += 1;
 }
 $now = localtime();
-print "$now: Found $go_xtn_counter GO annotation extensions.\n";
+print "$now: INFO: Found $go_xtn_counter GO annotation extensions.\n";
 
 # here is a query to build a lookup hash to exclude genes annotated with 'transposable_element_gene' term
 my %te_genes;
@@ -344,7 +348,7 @@ my $partyq = $dbh->prepare
 
 # execute the big query
 $now = localtime();
-print "$now: Querying for ga info\n";
+print "$now: INFO: Querying for ga info\n";
 $ga_query->execute or die "Can't get ga info\n";
 
 # fetch the results
@@ -361,7 +365,7 @@ my $rows;
 # we could also just fetch an array and refer to array index numbers which might be slightly
 # more efficient but harder to keep track of
 $now = localtime();
-print "$now: Processing results of GA query\n";
+print "$now: INFO: Processing results of GA query\n";
 while ( my ($fid, $fbid, $symb, $fcvtid, $asp, $goid, $pub, $orgn, $evid, $src, $date, $is_not, $ev_rank)
 	= $ga_query->fetchrow_array()) {
   $rows++;
@@ -556,7 +560,7 @@ while ( my ($fid, $fbid, $symb, $fcvtid, $asp, $goid, $pub, $orgn, $evid, $src, 
   if (exists($go_xtns{$fcvtid . '_' . $ev_rank})) {
     $line .= "$go_xtns{$fcvtid . '_' . $ev_rank}\n";
   } else {
-    $line .= "\n";
+    $line .= "BILLY_BOB_EMPTY_GO_ANNOTATION_XTN\n";
   }
 
   # add the evidence and with cols to as many lines as needed
@@ -620,7 +624,7 @@ while ( my ($fid, $fbid, $symb, $fcvtid, $asp, $goid, $pub, $orgn, $evid, $src, 
 
 # and here we output the sorted lines sorted first by symbol and then by FBrf number
 $now = localtime();
-print "$now: Producing output file\n";
+print "$now: INFO: Producing output file\n";
 my $lcnt;
 foreach my $s (sort keys %GA_results) {
   foreach my $r (sort keys %{$GA_results{$s}}) {
@@ -631,6 +635,7 @@ foreach my $s (sort keys %GA_results) {
     }
   }
 }
+print "PRINTED OUT $lcnt LINES FOR GA FILE\n";
 
 my $rlcnt;
 foreach my $s (sort keys %pseudos_withdrawn) {
@@ -642,10 +647,9 @@ foreach my $s (sort keys %pseudos_withdrawn) {
     }
   }
 }
-print "PRINTED OUT $lcnt LINES FOR GA FILE\n";
 print "PRINTED OUT $rlcnt LINES FOR LINES TO REVIEW REPORT\n";
-my $end = localtime();
 
+my $end = localtime();
 print "STARTED: $start\tENDED: $end\n";
 
 #$dbh->finish();
@@ -778,7 +782,7 @@ sub fetch_and_parse_gorefs {
   #$fbrf2goref{'FBrf0253063'} = 'GO_REF:0000024';
   $fbrf2goref{'FBrf0255270'} = 'GO_REF:0000024';#1/13/2023 DB-823
   $fbrf2goref{'FBrf0254415'} = 'GO_REF:0000047';
-  print('Constructed FBrf -> GO_REF Mapping:');
+  print('$now: INFO: Constructed FBrf -> GO_REF Mapping:');
   print Dumper(\%fbrf2goref);
   return \%fbrf2goref;
 }
