@@ -231,7 +231,7 @@ while ( my ($fcvtid, $qual) = $qual_query->fetchrow_array()) {
   $quals{$fcvtid} = $qual;
 }
 
-# DB-893: Hash to store GO extensions.
+# DB-893: Hash to store GO extensions: keys are feature_cvterm_id plus rank with intervening underscore char.
 my %go_xtns;
 my $go_xtn_query = $dbh->prepare
   (sprintf
@@ -246,8 +246,8 @@ print "$now: Getting the GO extension information.\n";
 my $go_xtn_counter = 0;
 $go_xtn_query->execute or die "Can't query for GO extensions\n";
 while ( my ( $fcvtid, $rank, $go_xtn_text ) = $go_xtn_query->fetchrow_array() ) {
-    $go_xtns{$fcvtid} = {rank => $rank, text => $go_xtn_text};
-    $go_xtn_counter += 1;
+  $go_xtns{$fcvtid . '_' . $rank} = $go_xtn_text;
+  $go_xtn_counter += 1;
 }
 $now = localtime();
 print "$now: Found $go_xtn_counter GO annotation extensions.\n";
@@ -553,12 +553,8 @@ while ( my ($fid, $fbid, $symb, $fcvtid, $asp, $goid, $pub, $orgn, $evid, $src, 
 
   # col 16
   # handle GO annotation extensions.
-  if (exists($go_xtns{$fcvtid})) {
-    if ($ev_rank == $go_xtns{$fcvtid}{'rank'}) {
-      $line .= "$go_xtns{$fcvtid}{'text'}\n";
-    } else {
-      $line .= "\n";
-    }
+  if (exists($go_xtns{$fcvtid . '_' . $ev_rank})) {
+    $line .= "$go_xtns{$fcvtid . '_' . $ev_rank}\n";
   } else {
     $line .= "\n";
   }
