@@ -26,7 +26,7 @@ from harvdev_utils.psycopg_functions.sql_queries import (
 
 # Global variables for the output file. Header order will match list order below.
 report_label = 'gene_rpkm_matrix'
-report_title = 'FlyBase gene RPKM matrix report'
+report_title = 'FlyBase gene RNA-seq expression matrix report'
 header_list = [
     'gene_primary_id',
     'gene_symbol',
