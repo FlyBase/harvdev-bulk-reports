@@ -560,7 +560,7 @@ while ( my ($fid, $fbid, $symb, $fcvtid, $asp, $goid, $pub, $orgn, $evid, $src, 
   if (exists($go_xtns{$fcvtid . '_' . $ev_rank})) {
     $line .= "$go_xtns{$fcvtid . '_' . $ev_rank}\n";
   } else {
-    $line .= "BILLY_BOB_EMPTY_GO_ANNOTATION_XTN\n";
+    $line .= "\n";
   }
 
   # add the evidence and with cols to as many lines as needed
