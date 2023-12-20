@@ -785,8 +785,8 @@ sub get_dbxrefs {
   $outline =~ s/\|$//;
 
   # For certain evidence codes, use commas instead of pipes.
-  if ($evc =~ /IPI|IGI|IBA|IC|HGI/) {
-      $outline =~ s/\|/,/g;
+  if ($evc =~ /HGI|IBA|IC|IGC|IGI|IMP|IPI|ISA|ISS/) {
+    $outline =~ s/\|/,/g;
   }
 
   return( $outline, $nomatch);
