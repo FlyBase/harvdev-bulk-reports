@@ -821,7 +821,7 @@ sub fetch_and_parse_gorefs {
   $fbrf2goref{'FBrf0255270'} = 'GO_REF:0000024';#1/13/2023 DB-823
   $fbrf2goref{'FBrf0254415'} = 'GO_REF:0000047';
   $now = localtime();
-  print('$now: INFO: Constructed FBrf -> GO_REF Mapping:');
+  print "$now: INFO: Constructed FBrf -> GO_REF Mapping:\n";
   print Dumper(\%fbrf2goref);
   return \%fbrf2goref;
 }
