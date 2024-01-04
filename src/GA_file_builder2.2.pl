@@ -755,7 +755,6 @@ sub get_dbxrefs {
       $outline .= "$xref|";
     } else {
       my $xref = $parts[0];
-      $xref =~ s/MGI:MGI:/MGI:/g;    # Special handling of MGI xrefs.
       $outline .= "$xref|";
     }
 
