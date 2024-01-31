@@ -15,6 +15,7 @@ if (@ARGV < 5) {
 }
 
 my $start = localtime();
+my $now = localtime();
 
 my $server = shift @ARGV;
 my $dbname = shift @ARGV;
@@ -25,9 +26,12 @@ my $outfile = shift @ARGV;
 
 # connect to db
 ################################ db connection ############################
+$now = localtime();
+print STDOUT "$now: DEBUG: About to connect to the database\n";
 my $chado="dbi:Pg:dbname=$dbname; host=$server;port=5432";
 my $dbh = DBI->connect($chado,$user,$pass) or die "cannot connect to $chado";
-print STDOUT "Connected to $chado\n";
+$now = localtime();
+print STDOUT "$now: INFO: Connected to $chado\n";
 ##########################################################################
 
 # hash to hold the FBrf to GO ref lookup
@@ -80,7 +84,8 @@ my $syn_query = $dbh->prepare
 my %synonyms; # hash keyed by fbid with array of synonyms as value
 
 # execute the query
-print "Querying for synonyms\n";
+$now = localtime();
+print STDOUT "$now: INFO: Querying for synonyms\n";
 $syn_query->execute or die "Can't fetch synonyms\n";
 
 # retrieve the results and build the hash
@@ -104,7 +109,8 @@ my $fn_query = $dbh->prepare
   );
 
 # execute the query
-print "Querying for fullnames\n";
+$now = localtime();
+print STDOUT "$now: INFO: Querying for fullnames\n";
 $fn_query->execute or die "Can't fetch fullnames\n";
 
 while ((my $fbid, my $fn) = $fn_query->fetchrow_array()) {
@@ -165,7 +171,7 @@ my $ga_query = $dbh->prepare
    ("SELECT DISTINCT gene.feature_id, gene.uniquename as fbid, symb.name as symbol,
        fcvt.feature_cvterm_id, cv.name as aspect,
        godb.accession as GO_id, ppub.uniquename as ppub, o.abbreviation as species,
-       evc.value as evidence_code, prv.value as provenance, date.value as date, fcvt.is_not as is_not
+       evc.value as evidence_code, prv.value as provenance, date.value as date, fcvt.is_not as is_not, evc.rank as evidence_code_rank
        FROM
        cvterm goterm
        JOIN   cv
@@ -210,7 +216,6 @@ my $ga_query = $dbh->prepare
 
 # hash to store the feature_cvterms with qualifiers
 my %quals;
-
 # set up the query
 my $qual_query = $dbh->prepare
   (sprintf
@@ -222,14 +227,34 @@ my $qual_query = $dbh->prepare
                          'located_in', 'part_of', 'is_active_in', 'colocalizes_with')"
    )
   );
-
 # build the quals hash
-print "Getting the qualifier information\n";
+$now = localtime();
+print STDOUT "$now: INFO: Getting the qualifier information.\n";
 $qual_query->execute or die "Can't query for qualifiers\n";
-
 while ( my ($fcvtid, $qual) = $qual_query->fetchrow_array()) {
   $quals{$fcvtid} = $qual;
 }
+
+# DB-893: Hash to store GO extensions: keys are feature_cvterm_id plus rank with intervening underscore char.
+my %go_xtns;
+my $go_xtn_query = $dbh->prepare
+  (sprintf
+    ("SELECT fcvtp.feature_cvterm_id, fcvtp.rank, fcvtp.value
+      FROM feature_cvtermprop fcvtp
+      JOIN cvterm cvt ON cvt.cvterm_id = fcvtp.type_id
+      WHERE cvt.name = 'go_annotation_extension'"
+    )
+  );
+$now = localtime();
+print STDOUT "$now: INFO: Getting the GO extension information.\n";
+my $go_xtn_counter = 0;
+$go_xtn_query->execute or die "Can't query for GO extensions\n";
+while ( my ( $fcvtid, $rank, $go_xtn_text ) = $go_xtn_query->fetchrow_array() ) {
+  $go_xtns{$fcvtid . '_' . $rank} = $go_xtn_text;
+  $go_xtn_counter += 1;
+}
+$now = localtime();
+print STDOUT "$now: INFO: Found $go_xtn_counter GO annotation extensions.\n";
 
 # here is a query to build a lookup hash to exclude genes annotated with 'transposable_element_gene' term
 my %te_genes;
@@ -322,7 +347,8 @@ my $partyq = $dbh->prepare
         and t.type_id = c.cvterm_id and fr.object_id = ?", $regex));
 
 # execute the big query
-print "Querying for ga info\n";
+$now = localtime();
+print STDOUT "$now: INFO: Querying for ga info\n";
 $ga_query->execute or die "Can't get ga info\n";
 
 # fetch the results
@@ -338,8 +364,9 @@ my $rows;
 # note I am explicitly declaring all variables in results
 # we could also just fetch an array and refer to array index numbers which might be slightly
 # more efficient but harder to keep track of
-print "Processing results of GA query\n";
-while ( my ($fid, $fbid, $symb, $fcvtid, $asp, $goid, $pub, $orgn, $evid, $src, $date, $is_not)
+$now = localtime();
+print STDOUT "$now: INFO: Processing results of GA query\n";
+while ( my ($fid, $fbid, $symb, $fcvtid, $asp, $goid, $pub, $orgn, $evid, $src, $date, $is_not, $ev_rank)
 	= $ga_query->fetchrow_array()) {
   $rows++;
 #  print "ROW $rows\n";
@@ -411,7 +438,7 @@ while ( my ($fid, $fbid, $symb, $fcvtid, $asp, $goid, $pub, $orgn, $evid, $src, 
     }
   }
 
-  # going to need to parse the $evid field looking for with's and ands
+  # going to need to parse the $evid field (i.e., feature_cvtermprop.value of type evidence) looking for with's and ands
   # note that there can be multiple evidence statements in the same property value
   # and one or more of them may have info for col 8
   # lets set up a sub to do the parsing and then figure out the best way to deal with
@@ -526,13 +553,15 @@ while ( my ($fid, $fbid, $symb, $fcvtid, $asp, $goid, $pub, $orgn, $evid, $src, 
   $line .= "$date\t";
 
   # col 15
-  $line .= "$src";
+  $line .= "$src\t";
 
-  # new cols 16 and 17 for GAF2 (currently empty)
-  $line .= "\t\t";
-
-  # end of line
-  $line .= "\n";
+  # col 16
+  # handle GO annotation extensions.
+  if (exists($go_xtns{$fcvtid . '_' . $ev_rank})) {
+    $line .= "$go_xtns{$fcvtid . '_' . $ev_rank}\n";
+  } else {
+    $line .= "\n";
+  }
 
   # add the evidence and with cols to as many lines as needed
   print STDERR "MISSING EVIDENCE for:\nt$line" and next unless @cols_7_8;
@@ -594,7 +623,8 @@ while ( my ($fid, $fbid, $symb, $fcvtid, $asp, $goid, $pub, $orgn, $evid, $src, 
 }
 
 # and here we output the sorted lines sorted first by symbol and then by FBrf number
-print "Producing output file\n";
+$now = localtime();
+print STDOUT "$now: INFO: Producing output file\n";
 my $lcnt;
 foreach my $s (sort keys %GA_results) {
   foreach my $r (sort keys %{$GA_results{$s}}) {
@@ -605,6 +635,7 @@ foreach my $s (sort keys %GA_results) {
     }
   }
 }
+print "PRINTED OUT $lcnt LINES FOR GA FILE\n";
 
 my $rlcnt;
 foreach my $s (sort keys %pseudos_withdrawn) {
@@ -616,10 +647,9 @@ foreach my $s (sort keys %pseudos_withdrawn) {
     }
   }
 }
-print "PRINTED OUT $lcnt LINES FOR GA FILE\n";
 print "PRINTED OUT $rlcnt LINES FOR LINES TO REVIEW REPORT\n";
-my $end = localtime();
 
+my $end = localtime();
 print "STARTED: $start\tENDED: $end\n";
 
 #$dbh->finish();
@@ -637,34 +667,51 @@ sub check4doi {
     return $doi;
 }
 
-# will take string from evidence_code feature_cvtermprop.value and return
-# an array of columns 7 and 8 as necessary for the value
-# note that there can be multiple evidence codes separated by AND
-# and that one or more of these evidence codes can have a with or from value
-# that corresponds to database objects (sometimes more than one so need to figure
-  # out which to use - using Susan T.'s method here)
+# For GO annotations, the "evidence_code" feature_cvtermprop.value starts with
+# the actual evidence code (fully written out); this must be converted to the
+# appropriate abbreviation for the GAF "evidence" column.
+# The evidence code in the feature_cvtermprop.value may be followed by the word
+# "with" and a list of cross-references to other objects (e.g., FB genes,
+# UniProt IDs, etc); these xrefs will be reported in the GAF "with" column.
+# The xref list can be a bit dirty - various separators, many instances of the
+# the word "with", extra prefixes (e.g., FLYBASE) or suffices (e.g., the name
+# of the FB gene) that should not be reported). All this extra stuff must be
+# stripped out to report a comma-separated list of db:accession strings.
   sub parse_evidence_bits {
-  my $evbit = shift;
+  my $evbit = shift;    # The $evbit corresponds to the evidence_code feature_cvtermprop.value passed to the sub.
   my $dbh = shift;
   my @evlines;
   
-  # first substitute spelled out evidence_code for abbreviation
+  # First, substitute any spelled out evidence_code(s) with the corresponding abbreviation(s).
+  # Any instances of the word "with" in the written out ev code are removed.
   foreach my $code (sort keys %EVC) {
     $evbit =~ s/$code/$EVC{$code}/g;
   }
   
+  # Second, split up the value in case there are many evidence codes in there.
+  # It was once the case that the feature_cvtermprop.value could contain
+  # many evidence code bits separated by the word "AND".
+  # This no longer seems to be true, but we're keeping this approach just to
+  # be safe.
   my @evidence = trim(split / AND /, $evbit);
+
+  # Third, in each evidence code string, split the evidence code abbreviation
+  # from the list of cross-references (the word "with" separates them).
   foreach my $e (@evidence) {
     my $line;
     (my $evc, my $dbxrefs) = trim(split / with | from /, $e);
-    # this is just a check to see that there is a recognized evidence code abbreviation
+    # Check that there is a recognized evidence code abbreviation.
     unless (grep $evc eq $_, values %EVC) {
       print STDERR "WARNING - unrecognized evidence code: $evc\n";
       push @evlines, "PROBLEM: $e";
       next;
     }
-    
+
+    # Fourth, get the list of xrefs using the get_dbxrefs() subroutine.
     (my $col8, my $mismatch) = get_dbxrefs($dbxrefs, $dbh, $evc) if $dbxrefs;
+
+    # Fifth, combine the evidence code abbreviation and the xrefs as a
+    # col7\tcol8 string and push to the array.
     if ($col8) {
       $line = "$evc\t$col8";
       $line = "${line}MISMATCH:$mismatch" if ($mismatch);
@@ -676,51 +723,71 @@ sub check4doi {
   return @evlines;
 }
 
-
-
+# DB-919: Ensure that all IDs are returned (not just the first), and, that any
+# extraneous bits are stripped from the db:dbxref.accession string.
+# For example, for "FLYBASE:rod; FB:FBgn0003268,FLYBASE:Zw10; FB:FBgn0004643",
+# we should return "FB:FBgn0003268,FB:FBgn0004643",
+# rather than "FB:FBgn0003268,FLYBASE:Zw10" (currently the case).
 sub get_dbxrefs {
   my $inline = shift;
   my $dbh = shift;
   my $evc = shift;
   my $outline = '';
   my $nomatch;
-  my @dbxrefs = split /, /, $inline;
 
+  # Split out xrefs into an array, trimming flanking white space.
+  # NOTE - comma may or may not have a trailing space.
+  my @dbxrefs = trim(split /,/, $inline);
+
+  # Prepare a query that confirms that FB IDs are still current.
   my $stmt = "SELECT feature_id FROM feature WHERE is_obsolete = false and name = ? and uniquename = ?";
   my $query = $dbh->prepare($stmt);
 
+  # Clean up each xref in the list.
+  # Special handling for FB xrefs - restricted to genes, having this pattern:
+  # FLYBASE:feature.name; FB:feature.uniquename
+  # e.g., "FLYBASE:rod; FB:FBgn0003268"
+  # In evidence codes, the semi-colon is only used in this way; it's always followed by a space.
   foreach my $d (@dbxrefs) {
     my @parts = split /; /, $d;
     if ($parts[1]) {
-      $outline .= "$parts[1]|";
+      my $xref = trim($parts[1]);
+      $outline .= "$xref|";
     } else {
-      $outline .= "$parts[0]|";
+      my $xref = $parts[0];
+      $outline .= "$xref|";
     }
-#    print "DBXREFS ARE:\n";
-#    print "\t$_\n" for @parts;
-    if ($parts[0] =~ /FLYBASE:(.+)/) { # check to see if pairs match
+
+    # For FB xrefs, check that the name and uniquename match.
+    if ($parts[0] =~ /FLYBASE:(.+)/) {
       my $symb = $1;
       $symb = decon($symb);
-      print STDERR "WARING - missing Symbol in evidence code line $inline\n" unless ($symb);
+      print STDERR "WARNING - missing Symbol in evidence code line $inline\n" unless ($symb);
       if ($parts[1] =~ /FB:(FBgn[0-9]{7})/) {
-	my $fbgn = $1;
-	# print "CHECKING FOR MATCH BETWEEN $symb and $fbgn\n";
-	$query->bind_param(1, $symb);
-	$query->bind_param(2, $fbgn);
-	$query->execute or warn "Can't execute $stmt FOR $symb:$fbgn\n";
-	unless ($query->rows() > 0) {
-	  $nomatch = $fbgn.':'.$symb;
-#	  print "WE HAVE A MISMATCH for $symb:$fbgn\n";
-	}
+	      my $fbgn = $1;
+        # print "CHECKING FOR MATCH BETWEEN $symb and $fbgn\n";
+        $query->bind_param(1, $symb);
+        $query->bind_param(2, $fbgn);
+        $query->execute or warn "Can't execute $stmt FOR $symb:$fbgn\n";
+        unless ($query->rows() > 0) {
+          $nomatch = $fbgn.':'.$symb;
+          $now = localtime();
+          print STDOUT "$now: WARNING: WE HAVE A MISMATCH for $symb:$fbgn\n";
+        }
       } else {
-	print STDERR "WARNING - No FBgn provided for $symb in evidence code line\n";
+        print STDERR "WARNING - No FBgn provided for $symb in evidence code line\n";
       }
     }
   }
+
+  # Trim off the xref divider at end of line.
   $outline =~ s/\|$//;
-  if ($evc =~ /IPI|IGI|IBA|IC|HGI/) {
-      $outline =~ s/\|/,/g;
+
+  # For certain evidence codes, use commas instead of pipes.
+  if ($evc =~ /HGI|IBA|IC|IGC|IGI|IMP|IPI|ISA|ISS/) {
+    $outline =~ s/\|/,/g;
   }
+
   return( $outline, $nomatch);
 }
 
@@ -752,7 +819,8 @@ sub fetch_and_parse_gorefs {
   #$fbrf2goref{'FBrf0253063'} = 'GO_REF:0000024';
   $fbrf2goref{'FBrf0255270'} = 'GO_REF:0000024';#1/13/2023 DB-823
   $fbrf2goref{'FBrf0254415'} = 'GO_REF:0000047';
-  print('Constructed FBrf -> GO_REF Mapping:');
+  $now = localtime();
+  print "$now: INFO: Constructed FBrf -> GO_REF Mapping:\n";
   print Dumper(\%fbrf2goref);
   return \%fbrf2goref;
 }
