@@ -7,6 +7,7 @@
 HOST="193.62.193.162"
 USER="elinks"
 cd /data/build-public-release/fb_$1_reporting/bulk_reports
+pwd
 
 # FTP login and upload.
 ftp -inv $HOST <<EOF

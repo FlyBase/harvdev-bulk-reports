@@ -7,12 +7,12 @@
 HOST="130.14.250.6"
 USER="flybase"
 cd /data/build-public-release/fb_$1_reporting/bulk_reports
+pwd
 
 # FTP login and upload.
 ftp -inv $HOST <<EOF
 user $USER $2
 cd holdings
-ls
 put nt-flybase.xml
 put pm-flybase.xml
 put pr-flybase.xml
