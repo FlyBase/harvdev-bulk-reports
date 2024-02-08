@@ -1,10 +1,12 @@
-# harvdev-reports
+# harvdev-bulk-reports
 
 <!-- toc -->
 
 - [Overview](#Overview)
 - [BulkReportsSOP](#BulkReportsSOP)
   * [PipelineSummary](#PipelineSummary)
+  * [NextSteps](#NextSteps)
+- [TroubleShooting](#TroubleShooting)
 
 ## Overview
 This repo contains scripts that are used to generate most FlyBase bulk reports, as well as reports for FlyBase curators and external collaborators. This is a new public repository that replaces the private, retired `harvdev-reports` (renamed to `harvdev-reports-old`) repository. This repo contains a mix of newer python scripts and older perl (taken from the `fb_cvs/FB/scripts/reports` repo). Bulk reports for FlyBase users are shipped off to IUDev and incorporated into the public FB site on the [Downloads page](http://flybase.org/cgi-bin/get_static_page.pl?file=bulkdata7.html&title=Current%20Release) and [FTP site](ftp://ftp.flybase.net/releases/current). Other reports are posted to internal and external FTP sites for use.  
@@ -18,26 +20,18 @@ The pipeline automates these steps:
 1. Gets HarvDev docker container and builds the appropriate docker image using this repo.  
 2. Saves output bulk files to the `/data/build-reporting/fb_${RELEASE}_reporting/bulk_reports` directory.  
 3. Packages up files into various tarballs.  
-4. Notifies HarvDev by email that the files have been generated, then pauses until a developer confirms that files are ok and clicks continue.  
-5. Uploads the files to the appropriate FTP sites.  
-6. Sends e-mails to various people to indicate that new files are available.  
+4. Notifies HarvDev by email that the files have been generated.
 Manual steps still required: 
 1. Checking file sizes manually by comparing them to previous release file sizes.
 - See the [Reporting Builds](https://drive.google.com/drive/folders/1lHjCrX-ee7pSaThbo4UuMJ3LWGjngKja) Google Drive directory for examples.  
-2. Manual upload of files to NCBI and EuropePMC.
-- I have tried to automate these steps, but they always fail silently (GoCD stage passes, but a `Login failed` error is returned and files do not get uploaded).
 
 ### DetailedSOP
-1. Update `Environment variables` for the `Bulk_Reports` GoCD pipeline.  
-  - SERVER - flysql machine where the reporting db is located: e.g., `flysql25`. This only changes when the servers get upgraded.  
-  - DATABASE - the name of the reporting db to use: e.g., `fb_2019_03_reporting`  
+1. Review the `Environment variables` for the `Reporting_Build` GoCD pipeline group. They should've been updated in earlier release build steps, but double check them.  
 2. Run the pipeline.  
-3. When the files have been generated, upon receiving the email, check files sizes.   
-4. If files look good, have the GoCD pipeline continue to the FTP upload step.  
-5. Manually upload files as `go` user from `flysql25` server. Ask Gil for the ${EBI_DIRECTORY} name.
-```
-echo "put /data/build-public-release/${DATABASE}/bulk_reports/epmc-flybase.xml.gz ${EBI_DIRECTORY}/epmc-flybase.xml.gz" | ftp labslink.ebi.ac.uk
-echo "put /data/build-public-release/${DATABASE}/bulk_reports/nt-flybase.xml holdings/nt-flybase.xml" | ftp ftp-private.ncbi.nih.gov
-echo "put /data/build-public-release/${DATABASE}/bulk_reports/pm-flybase.xml holdings/pm-flybase.xml" | ftp ftp-private.ncbi.nih.gov
-echo "put /data/build-public-release/${DATABASE}/bulk_reports/pr-flybase.xml holdings/pr-flybase.xml" | ftp ftp-private.ncbi.nih.gov
-```
+3. When the files have been generated, upon receiving the email, check files sizes.  
+
+### NextSteps
+1. If files look good, manually start the `Upload_Reporting_Build` GoCD pipeline, which will upload all files related to the release build for various users.  
+
+## TroubleShooting
+The [Reporting Build SOP](https://github.com/FlyBase/harvdev-docs/blob/master/reporting_build/reporting_build_sop.md#TroubleShooting) discusses various troubleshooting scenarios for dealing with failed scripts and GoCD pipelines.
