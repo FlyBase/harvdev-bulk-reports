@@ -8,7 +8,7 @@
 
 ## Overview
 This repo contains scripts that are used to generate most FlyBase bulk reports, as well as reports for FlyBase curators and external collaborators. This is a new public repository that replaces the private, retired `harvdev-reports` (renamed to `harvdev-reports-old`) repository. This repo contains a mix of newer python scripts and older perl (taken from the `fb_cvs/FB/scripts/reports` repo). Bulk reports for FlyBase users are shipped off to IUDev and incorporated into the public FB site on the [Downloads page](http://flybase.org/cgi-bin/get_static_page.pl?file=bulkdata7.html&title=Current%20Release) and [FTP site](ftp://ftp.flybase.net/releases/current). Other reports are posted to internal and external FTP sites for use.  
-This code is intended to run in docker using the `Bulk_Reports` GoCD pipeline (`Reporting_Build` pipeline group).  
+This code is intended to run in docker using the `Bulk_Reports` GoCD pipeline (`Reporting_Build` pipeline group).   
 
 ## BulkReportsSOP
 
