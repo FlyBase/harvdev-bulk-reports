@@ -814,11 +814,12 @@ sub fetch_and_parse_gorefs {
 	    $fbrf2goref{$fbrf} = $goid;
 	  }
   }
-  #DB-767 add extra FBrf->GO_REF mapping
-  $fbrf2goref{'FBrf0253064'} = 'GO_REF:0000115';
-  #$fbrf2goref{'FBrf0253063'} = 'GO_REF:0000024';
-  $fbrf2goref{'FBrf0255270'} = 'GO_REF:0000024';#1/13/2023 DB-823
-  $fbrf2goref{'FBrf0254415'} = 'GO_REF:0000047';
+  $fbrf2goref{'FBrf0253064'} = 'GO_REF:0000115';      # DB-767
+  # $fbrf2goref{'FBrf0253063'} = 'GO_REF:0000024';    # DB-823
+  $fbrf2goref{'FBrf0255270'} = 'GO_REF:0000024';      # DB-823
+  $fbrf2goref{'FBrf0254415'} = 'GO_REF:0000047';      # DB-811
+  $fbrf2goref{'FBrf0258542'} = 'GO_REF:0000033';      # DB-928
+
   $now = localtime();
   print "$now: INFO: Constructed FBrf -> GO_REF Mapping:\n";
   print Dumper(\%fbrf2goref);
