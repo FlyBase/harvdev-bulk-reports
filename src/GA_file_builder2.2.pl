@@ -381,6 +381,7 @@ print STDOUT "$now: INFO: Processing results of GA query\n";
 while ( my ($fid, $fbid, $symb, $fcvtid, $asp, $goid, $pub, $orgn, $evid, $src, $date, $is_not, $ev_rank)
 	= $ga_query->fetchrow_array()) {
   $rows++;
+  $now = localtime();
   print STDOUT "$now: DEBUG: 1. Start processing row #$rows: feature_cvterm_id=$fcvtid\n";
   my $pseudoflag;
   my $extratabsflag;
@@ -404,6 +405,7 @@ while ( my ($fid, $fbid, $symb, $fcvtid, $asp, $goid, $pub, $orgn, $evid, $src, 
 
   if (exists $seen_pubs{$pub}) {
     $pmid = $seen_pubs{$pub} if defined $seen_pubs{$pub};
+    $now = localtime();
     print STDOUT "$now: DEBUG: 2a. pub already seen.\n";
   # BILLY: Is this a SLOW step?
   } else {
@@ -411,6 +413,7 @@ while ( my ($fid, $fbid, $symb, $fcvtid, $asp, $goid, $pub, $orgn, $evid, $src, 
     $pmid_query->bind_param(2, $pub);
     $pmid_query->bind_param(3, $pub);
     $pmid_query->execute or die "Can't fetch pub med id for $pub\n";
+    $now = localtime();
     print STDOUT "$now: DEBUG: 2b1. Queried for pub info.\n";
     # because any pub or supplementary info of a pub should only return one pubmed id we will do
     # a single fetch - but it is still possible that we won't find a PMID so check
@@ -450,6 +453,7 @@ while ( my ($fid, $fbid, $symb, $fcvtid, $asp, $goid, $pub, $orgn, $evid, $src, 
       # we can print out an optional warning if no PMID - comment out if no warning wanted
   #      print STDERR "NO PMID for $pub\n";
     }
+    $now = localtime();
     print STDOUT "$now: DEBUG: 2b2. Assessed query results for pub info.\n";
 
   }
@@ -460,11 +464,13 @@ while ( my ($fid, $fbid, $symb, $fcvtid, $asp, $goid, $pub, $orgn, $evid, $src, 
   # lets set up a sub to do the parsing and then figure out the best way to deal with
   # multiple lines
   my @cols_7_8 = parse_evidence_bits($evid, $dbh);
+  $now = localtime();
   print STDOUT "$now: DEBUG: 3. Parsed evidence bits.\n";
 
   # start building the line
   # cols 2 and 3
   $line .= "$fbid\t$symb\t";
+  $now = localtime();
   print STDOUT "$now: DEBUG: 4. Built line col1-3.\n";
 
   # handle negation (part of col 4).
@@ -472,6 +478,7 @@ while ( my ($fid, $fbid, $symb, $fcvtid, $asp, $goid, $pub, $orgn, $evid, $src, 
   if ($is_not) {
       $line .= "NOT|";
   }
+  $now = localtime();
   print STDOUT "$now: DEBUG: 5a. Filled in col4: NOT.\n";
   # handle mandatory gp2term qualifiers (part of col 4).
   if (exists($quals{$fcvtid})) {
@@ -480,15 +487,18 @@ while ( my ($fid, $fbid, $symb, $fcvtid, $asp, $goid, $pub, $orgn, $evid, $src, 
       print STDERR "CRITICAL ERROR: Missing gp2term qualifier for this annotation: fcvt_id = $fcvtid, gene = $symb ($fbid), cvterm = GO:$goid, pub = $pub, is_not = $is_not.\n";
       die "FAILING due to data issue: some annotations are missing gp2term qualifers.";
   }
+  $now = localtime();
   print STDOUT "$now: DEBUG: 5b. Filled in col4: gp2term.\n";
 
   # cols 5 and 6
   $line .= "GO:$goid\tFB:$pub";
+  $now = localtime();
   print STDOUT "$now: DEBUG: 6. Filled in cols 5-6: GO & FB pub IDs.\n";
 
   # check for PMID
   $line .= "|$pmid" if $pmid;
   $line .= "\t";
+  $now = localtime();
   print STDOUT "$now: DEBUG: 7. Filled in col 7: PubMed ID.\n";
 
   # evidence code col 7
@@ -496,10 +506,12 @@ while ( my ($fid, $fbid, $symb, $fcvtid, $asp, $goid, $pub, $orgn, $evid, $src, 
   # NOTE: as these can have values that might need to be split over multiple lines 
   # at this point we just put in a place holder to substitute in the values
   $line .= "PUT_COLS_8_9_HERE\t";
+  $now = localtime();
   print STDOUT "$now: DEBUG: 8. Filled in cols 7-8 with evidence placeholed.\n";
 
   # aspect col 9
   $line .= "$ASP{$asp}\t";
+  $now = localtime();
   print STDOUT "$now: DEBUG: 9. Filled in col 9: aspect.\n";
 
   # optional fullname col 10
@@ -513,6 +525,7 @@ while ( my ($fid, $fbid, $symb, $fcvtid, $asp, $goid, $pub, $orgn, $evid, $src, 
     $fullnames{$fbid} = $fn;
   }
   $line .= "\t";
+  $now = localtime();
   print STDOUT "$now: DEBUG: 10. Filled in col 10: fullname.\n";
 
   # synonyms col 11
@@ -536,6 +549,7 @@ while ( my ($fid, $fbid, $symb, $fcvtid, $asp, $goid, $pub, $orgn, $evid, $src, 
   } else {
     $line .= "\t";
   }
+  $now = localtime();
   print STDOUT "$now: DEBUG: 11. Filled in col 11: synonyms.\n";
 
   # col 12 - determine type of transcript - assume only one but with miRNA exception
@@ -584,6 +598,7 @@ while ( my ($fid, $fbid, $symb, $fcvtid, $asp, $goid, $pub, $orgn, $evid, $src, 
   }
 
   $line .= "$type\t";
+  $now = localtime();
   print STDOUT "$now: DEBUG: 12. Filled in col 12: gene product type.\n";
   ##################################################################################################
   ##################################################################################################
@@ -598,14 +613,17 @@ while ( my ($fid, $fbid, $symb, $fcvtid, $asp, $goid, $pub, $orgn, $evid, $src, 
 
   # col 13
   $line .= "taxon:$TAX{$orgn}\t";
+  $now = localtime();
   print STDOUT "$now: DEBUG: 13. Filled in col 13: taxon.\n";
 
   # col 14
   $line .= "$date\t";
+  $now = localtime();
   print STDOUT "$now: DEBUG: 14. Filled in col 14: date.\n";
 
   # col 15
   $line .= "$src\t";
+  $now = localtime();
   print STDOUT "$now: DEBUG: 15. Filled in col15: source.\n";
 
   # col 16
@@ -615,6 +633,7 @@ while ( my ($fid, $fbid, $symb, $fcvtid, $asp, $goid, $pub, $orgn, $evid, $src, 
   } else {
     $line .= "\n";
   }
+  $now = localtime();
   print STDOUT "$now: DEBUG: 16. Filled in col16: GO annotation extension.\n";
 
   # add the evidence and with cols to as many lines as needed
@@ -641,12 +660,14 @@ while ( my ($fid, $fbid, $symb, $fcvtid, $asp, $goid, $pub, $orgn, $evid, $src, 
     $line_w_ev .= "$line_copy";
   }
   $line = $line_w_ev;
+  $now = localtime();
   print STDOUT "$now: DEBUG: 17. Went back and filled in cols 7-8: evidence.\n";
 
   # and here's where to decide what to do with the line
   #  print $line;
   # and we'd like to sort if first by gene symbol and then by pub so build a HOH
   push @{$GA_results{$symb}{$pub}}, $line;
+  $now = localtime();
   print STDOUT "$now: DEBUG: 18. Add line to hash.\n";
 
   # generate lines for problem reports
@@ -676,6 +697,7 @@ while ( my ($fid, $fbid, $symb, $fcvtid, $asp, $goid, $pub, $orgn, $evid, $src, 
     $rep_line =~ s/\n/TAB IN: $extratabsflag\n/;
     push @{$pseudos_withdrawn{$symb}{$pub}}, $rep_line;
   }    
+  $now = localtime();
   print STDOUT "$now: DEBUG: 19. Done with additional lines checks.\n";
 }
 ##################################################################################################################
