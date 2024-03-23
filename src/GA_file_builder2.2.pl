@@ -364,12 +364,24 @@ my $rows;
 # note I am explicitly declaring all variables in results
 # we could also just fetch an array and refer to array index numbers which might be slightly
 # more efficient but harder to keep track of
+
+##################################################################################################################
+##################################################################################################################
+##################################################################################################################
+##################################################################################################################
+##################################################################################################################
+##################################################################################################################
+##################################################################################################################
+##################################################################################################################
+##################################################################################################################
+##################################################################################################################
+# BOB: This "while" loop currently takes ~ 3h to process.
 $now = localtime();
 print STDOUT "$now: INFO: Processing results of GA query\n";
 while ( my ($fid, $fbid, $symb, $fcvtid, $asp, $goid, $pub, $orgn, $evid, $src, $date, $is_not, $ev_rank)
 	= $ga_query->fetchrow_array()) {
   $rows++;
-#  print "ROW $rows\n";
+  print STDOUT "$now: DEBUG: 1. Start processing row #$rows: feature_cvterm_id=$fcvtid\n";
   my $pseudoflag;
   my $extratabsflag;
 
@@ -392,12 +404,13 @@ while ( my ($fid, $fbid, $symb, $fcvtid, $asp, $goid, $pub, $orgn, $evid, $src, 
 
   if (exists $seen_pubs{$pub}) {
     $pmid = $seen_pubs{$pub} if defined $seen_pubs{$pub};
+    print STDOUT "$now: DEBUG: 2a. pub already seen.\n";
   } else {
     $pmid_query->bind_param(1, $pub);
     $pmid_query->bind_param(2, $pub);
     $pmid_query->bind_param(3, $pub);
     $pmid_query->execute or die "Can't fetch pub med id for $pub\n";
-
+    print STDOUT "$now: DEBUG: 2b1. Queried for pub info.\n";
     # because any pub or supplementary info of a pub should only return one pubmed id we will do
     # a single fetch - but it is still possible that we won't find a PMID so check
     ($pmid) = $pmid_query->fetchrow_array();
@@ -434,8 +447,10 @@ while ( my ($fid, $fbid, $symb, $fcvtid, $asp, $goid, $pub, $orgn, $evid, $src, 
 	    $seen_pubs{$pub} = $pmid;
 	}
       # we can print out an optional warning if no PMID - comment out if no warning wanted
-#      print STDERR "NO PMID for $pub\n";
+  #      print STDERR "NO PMID for $pub\n";
     }
+    print STDOUT "$now: DEBUG: 2b2. Assessed query results for pub info.\n";
+
   }
 
   # going to need to parse the $evid field (i.e., feature_cvtermprop.value of type evidence) looking for with's and ands
@@ -515,7 +530,7 @@ while ( my ($fid, $fbid, $symb, $fcvtid, $asp, $goid, $pub, $orgn, $evid, $src, 
 
   # col 12 - determine type of transcript - assume only one but with miRNA exception
   # current GAF1 default = 'gene'
-#  $line .= "gene\t";
+  #  $line .= "gene\t";
 
   # query for GAF2 format getting product type from promoted gene type
   # for product type - do lookup
@@ -532,7 +547,7 @@ while ( my ($fid, $fbid, $symb, $fcvtid, $asp, $goid, $pub, $orgn, $evid, $src, 
       print STDERR "WARNING - more than one type of transcript associated with $fbid\n";
     }
     (my $gtype) = $partyq->fetchrow_array();
-#    print "$gtype\n";
+  #    print "$gtype\n";
     if ($gtype) {
       if ($gtype eq 'pseudogene') {
 	$pseudoflag = 1;
@@ -589,7 +604,7 @@ while ( my ($fid, $fbid, $symb, $fcvtid, $asp, $goid, $pub, $orgn, $evid, $src, 
   $line = $line_w_ev;
 
   # and here's where to decide what to do with the line
-#  print $line;
+  #  print $line;
   # and we'd like to sort if first by gene symbol and then by pub so build a HOH
   push @{$GA_results{$symb}{$pub}}, $line;
 
@@ -621,6 +636,16 @@ while ( my ($fid, $fbid, $symb, $fcvtid, $asp, $goid, $pub, $orgn, $evid, $src, 
     push @{$pseudos_withdrawn{$symb}{$pub}}, $rep_line;
   }    
 }
+##################################################################################################################
+##################################################################################################################
+##################################################################################################################
+##################################################################################################################
+##################################################################################################################
+##################################################################################################################
+##################################################################################################################
+##################################################################################################################
+##################################################################################################################
+##################################################################################################################
 
 # and here we output the sorted lines sorted first by symbol and then by FBrf number
 $now = localtime();
@@ -650,7 +675,7 @@ foreach my $s (sort keys %pseudos_withdrawn) {
 print "PRINTED OUT $rlcnt LINES FOR LINES TO REVIEW REPORT\n";
 
 my $end = localtime();
-print "STARTED: $start\tENDED: $end\n";
+print "STARTED: $start\nENDED:   $end\n";
 
 #$dbh->finish();
 #$dbh->disconnect();
