@@ -9,7 +9,7 @@ use LWP::UserAgent;
 use LWP::Protocol::https;
 use Data::Dumper;
 use lib '../perl_modules';
-# use Utils;
+use Utils;
 
 if ( @ARGV < 5 ) {
     print "\n USAGE: perl GA_file_builder server db user password outfile (optional: log_file)\n";
