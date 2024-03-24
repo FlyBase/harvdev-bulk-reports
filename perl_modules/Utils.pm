@@ -505,6 +505,9 @@ Gil dos Santos - dossantos@morgan.harvard.edu
 #############################################################################################
 ######################### general utility functions #########################################
 #############################################################################################
+
+use Time::Piece;
+
 # return the organism_id for the given feature
 sub get_organism_id_for_feature {
   my $dbh = shift;
