@@ -22,8 +22,8 @@ my $pass    = shift @ARGV;
 my $outfile = shift @ARGV;
 if (@ARGV) {
     my $logfile = shift @ARGV;
-    open( STDOUT, ">>$logfile" ) or die print_log("Can't redirect STDOUT to $logfile\n");
-    open( STDERR, ">>$logfile" ) or die print_log("Can't redirect STDERR to $logfile\n");
+    open( STDOUT, ">>$logfile" ) or die print_log("Can't redirect STDOUT to $logfile");
+    open( STDERR, ">>$logfile" ) or die print_log("Can't redirect STDERR to $logfile");
 }
 my $start = localtime();
 print_log("INFO: Start GA_file_builder.");
@@ -31,7 +31,7 @@ print_log("INFO: Start GA_file_builder.");
 ############################## DB CONNECTION #############################
 my $chado = "dbi:Pg:dbname=$dbname; host=$server;port=5432";
 my $dbh   = DBI->connect( $chado, $user, $pass ) or die print_log("ERROR: Can't connect to $chado");
-print_log("INFO: Connected to $chado\n");
+print_log("INFO: Connected to $chado");
 ##########################################################################
 
 # Generate hash to hold the FBrf to GO ref lookup.
@@ -40,11 +40,11 @@ my %gorefs;
 
 # Set up output files.
 open( OUT, ">>$outfile" )
-  or die print_log("Can't open $outfile to write output\n");
+  or die print_log("Can't open $outfile to write output.");
 open( OUT2, ">$outfile.lines2review" )
-  or die print_log("Can't open file to write report of lines to review\n");
+  or die print_log("Can't open file to write report of lines to review.");
 open( OUT3, ">$outfile.pubs_wo_xrefs" )
-  or die print_log("Can't open file to report of pubs without dbxrefs\n");
+  or die print_log("Can't open file to report of pubs without dbxrefs.");
 
 # Header info.
 my $RELEASE = "$dbname";
@@ -65,7 +65,7 @@ print OUT $header;
 
 # Set up an FBgn-keyed hash to non-current synonyms.
 # NOTE - If GO terms get moved to proteins/transcripts this will require rejiggering.
-print_log("INFO: Querying for synonyms\n");
+print_log("INFO: Querying for synonyms");
 my %synonyms;
 my $syn_query = $dbh->prepare(
     sprintf("
@@ -79,7 +79,7 @@ my $syn_query = $dbh->prepare(
           AND fs.is_current IS FALSE
     ")
 );
-$syn_query->execute or die print_log("ERROR: Can't fetch synonyms.\n");
+$syn_query->execute or die print_log("ERROR: Can't fetch synonyms.");
 while ( ( my $fbid, my $syn ) = $syn_query->fetchrow_array() ) {
     push @{ $synonyms{$fbid} }, $syn;
 }
@@ -102,8 +102,8 @@ my $fn_query = $dbh->prepare(
 );
 
 # execute the query
-print_log("INFO: Querying for fullnames\n");
-$fn_query->execute or die print_log("Can't fetch fullnames\n");
+print_log("INFO: Querying for fullnames");
+$fn_query->execute or die print_log("Can't fetch fullnames");
 
 while ( ( my $fbid, my $fn ) = $fn_query->fetchrow_array() ) {
     $fullnames{$fbid} = $fn;
@@ -116,7 +116,7 @@ my %pubsbytype;
 my $stmt =
 "SELECT cvterm_id, cvterm.name FROM cvterm, cv WHERE cvterm.cv_id = cv.cv_id and cv.name = 'pub type'";
 my $query = $dbh->prepare($stmt);
-$query->execute or die print_log("Can't do pub type query!\n");
+$query->execute or die print_log("Can't do pub type query!");
 while ( ( my $cid, my $name ) = $query->fetchrow_array() ) {
     $pubsbytype{$cid} = $name;
 }
@@ -224,8 +224,8 @@ my $qual_query = $dbh->prepare(
 );
 
 # build the quals hash
-print_log("INFO: Getting the qualifier information.\n");
-$qual_query->execute or die print_log("Can't query for qualifiers\n");
+print_log("INFO: Getting the qualifier information.");
+$qual_query->execute or die print_log("Can't query for qualifiers");
 while ( my ( $fcvtid, $qual ) = $qual_query->fetchrow_array() ) {
     $quals{$fcvtid} = $qual;
 }
@@ -240,15 +240,15 @@ my $go_xtn_query = $dbh->prepare(
       WHERE cvt.name = 'go_annotation_extension'"
     )
 );
-print_log("INFO: Getting the GO extension information.\n");
+print_log("INFO: Getting the GO extension information.");
 my $go_xtn_counter = 0;
-$go_xtn_query->execute or die print_log("Can't query for GO extensions\n");
+$go_xtn_query->execute or die print_log("Can't query for GO extensions");
 while ( my ( $fcvtid, $rank, $go_xtn_text ) = $go_xtn_query->fetchrow_array() )
 {
     $go_xtns{ $fcvtid . '_' . $rank } = $go_xtn_text;
     $go_xtn_counter += 1;
 }
-print_log("INFO: Found $go_xtn_counter GO annotation extensions.\n");
+print_log("INFO: Found $go_xtn_counter GO annotation extensions.");
 
 # here is a query to build a lookup hash to exclude genes annotated with 'transposable_element_gene' term
 my %te_genes;
@@ -263,7 +263,7 @@ my $te_query = $dbh->prepare(
     )
 );
 
-$te_query->execute or die print_log("Can't query for te genes\n");
+$te_query->execute or die print_log("Can't query for te genes");
 
 while ( ( my $teg_uname ) = $te_query->fetchrow_array() ) {
     $te_genes{$teg_uname} = 1;
@@ -349,8 +349,8 @@ my $partyq = $dbh->prepare(
 );
 
 # execute the big query
-print_log("INFO: Querying for ga info\n");
-$ga_query->execute or die print_log("Can't get ga info\n");
+print_log("INFO: Querying for ga info");
+$ga_query->execute or die print_log("Can't get ga info");
 
 # fetch the results
 
@@ -378,7 +378,7 @@ my $rows;
 ##################################################################################################################
 ##################################################################################################################
 # BOB: This "while" loop currently takes ~ 3h to process.
-print_log("INFO: Processing results of GA query\n");
+print_log("INFO: Processing results of GA query");
 while (
     my (
         $fid,  $fbid, $symb, $fcvtid, $asp, $goid, $pub,
@@ -388,7 +388,7 @@ while (
   )
 {
     $rows++;
-    print_log("DEBUG: 1. Start processing row #$rows: feature_cvterm_id=$fcvtid\n");
+    print_log("DEBUG: 1. Start processing row #$rows: feature_cvterm_id=$fcvtid");
     my $pseudoflag;
     my $extratabsflag;
 
@@ -411,16 +411,15 @@ while (
 
     if ( exists $seen_pubs{$pub} ) {
         $pmid = $seen_pubs{$pub} if defined $seen_pubs{$pub};
-        print_log("DEBUG: 2a. pub already seen.\n");
+        print_log("DEBUG: 2a. pub already seen.");
     # BILLY: Is this a SLOW step?
     }
     else {
         $pmid_query->bind_param( 1, $pub );
         $pmid_query->bind_param( 2, $pub );
         $pmid_query->bind_param( 3, $pub );
-        $pmid_query->execute
-          or die print_log("Can't fetch pub med id for $pub\n");
-        print_log("DEBUG: 2b1. Queried for pub info.\n");
+        $pmid_query->execute or die print_log("Can't fetch pub med id for $pub");
+        print_log("DEBUG: 2b1. Queried for pub info.");
 
         # because any pub or supplementary info of a pub should only return one pubmed id we will do
         # a single fetch - but it is still possible that we won't find a PMID so check
@@ -472,9 +471,9 @@ while (
                 }
                 $seen_pubs{$pub} = $pmid;
             }
-        # print_log("ERROR: No PMID for $pub\n");
+        # print_log("ERROR: No PMID for $pub");
         }
-        print_log("DEBUG: 2b2. Assessed query results for pub info.\n");
+        print_log("DEBUG: 2b2. Assessed query results for pub info.");
 
     }
 
@@ -484,48 +483,48 @@ while (
     # lets set up a sub to do the parsing and then figure out the best way to deal with
     # multiple lines
     my @cols_7_8 = parse_evidence_bits( $evid, $dbh );
-    print_log("DEBUG: 3. Parsed evidence bits.\n");
+    print_log("DEBUG: 3. Parsed evidence bits.");
 
     # start building the line
     # cols 2 and 3
     $line .= "$fbid\t$symb\t";
-    print_log("DEBUG: 4. Built line col1-3.\n");
+    print_log("DEBUG: 4. Built line col1-3.");
 
     # handle negation (part of col 4).
     # $line .= "IS_NOT VALUE: $is_not |||";
     if ($is_not) {
         $line .= "NOT|";
     }
-    print_log("DEBUG: 5a. Filled in col4: NOT.\n");
+    print_log("DEBUG: 5a. Filled in col4: NOT.");
 
     # handle mandatory gp2term qualifiers (part of col 4).
     if ( exists( $quals{$fcvtid} ) ) {
         $line .= "$quals{$fcvtid}\t";
     }
     else {
-        print_log("ERROR: Missing gp2term qualifier for this annotation: fcvt_id = $fcvtid, gene = $symb ($fbid), cvterm = GO:$goid, pub = $pub, is_not = $is_not.\n");
+        print_log("ERROR: Missing gp2term qualifier for this annotation: fcvt_id = $fcvtid, gene = $symb ($fbid), cvterm = GO:$goid, pub = $pub, is_not = $is_not.");
         die print_log("ERROR: FAILING due to data issue: some annotations are missing gp2term qualifers.");
     }
-    print_log("DEBUG: 5b. Filled in col4: gp2term.\n");
+    print_log("DEBUG: 5b. Filled in col4: gp2term.");
 
     # cols 5 and 6
     $line .= "GO:$goid\tFB:$pub";
-    print_log("DEBUG: 6. Filled in cols 5-6: GO & FB pub IDs.\n");
+    print_log("DEBUG: 6. Filled in cols 5-6: GO & FB pub IDs.");
 
     # check for PMID
     $line .= "|$pmid" if $pmid;
     $line .= "\t";
-    print_log("DEBUG: 7. Filled in col 7: PubMed ID.\n");
+    print_log("DEBUG: 7. Filled in col 7: PubMed ID.");
 
     # evidence code col 7 and optional with col 8
     # NOTE: as these can have values that might need to be split over multiple lines
     # at this point we just put in a place holder to substitute in the values
     $line .= "PUT_COLS_8_9_HERE\t";
-    print_log("DEBUG: 8. Filled in cols 7-8 with evidence placeholed.\n");
+    print_log("DEBUG: 8. Filled in cols 7-8 with evidence placeholed.");
 
     # aspect col 9
     $line .= "$ASP{$asp}\t";
-    print_log("DEBUG: 9. Filled in col 9: aspect.\n");
+    print_log("DEBUG: 9. Filled in col 9: aspect.");
 
     # optional fullname col 10
     if ( $fullnames{$fbid} ) {
@@ -538,7 +537,7 @@ while (
         $fullnames{$fbid} = $fn;
     }
     $line .= "\t";
-    print_log("DEBUG: 10. Filled in col 10: fullname.\n");
+    print_log("DEBUG: 10. Filled in col 10: fullname.");
 
     # synonyms col 11
     if ( $synonyms{$fbid} ) {
@@ -566,7 +565,7 @@ while (
     else {
         $line .= "\t";
     }
-    print_log("DEBUG: 11. Filled in col 11: synonyms.\n");
+    print_log("DEBUG: 11. Filled in col 11: synonyms.");
 
     # col 12 - determine type of transcript - assume only one but with miRNA exception
     # current GAF1 default = 'gene'
@@ -596,9 +595,9 @@ while (
     }
     else {
         $partyq->bind_param( 1, $fid );
-        $partyq->execute or die print_log("Can't do gene type query\n");
+        $partyq->execute or die print_log("Can't do gene type query");
         if ( $partyq->rows > 1 ) {
-            print_log("WARNING: More than one type of transcript associated with $fbid\n");
+            print_log("WARNING: More than one type of transcript associated with $fbid");
         }
         ( my $gtype ) = $partyq->fetchrow_array();
         if ($gtype) {
@@ -613,7 +612,7 @@ while (
         }
     }
     $line .= "$type\t";
-    print_log("DEBUG: 12. Filled in col 12: gene product type.\n");
+    print_log("DEBUG: 12. Filled in col 12: gene product type.");
     ##################################################################################################
     ##################################################################################################
     ##################################################################################################
@@ -627,15 +626,15 @@ while (
 
     # col 13
     $line .= "taxon:$TAX{$orgn}\t";
-    print_log("DEBUG: 13. Filled in col 13: taxon.\n");
+    print_log("DEBUG: 13. Filled in col 13: taxon.");
 
     # col 14
     $line .= "$date\t";
-    print_log("DEBUG: 14. Filled in col 14: date.\n");
+    print_log("DEBUG: 14. Filled in col 14: date.");
 
     # col 15
     $line .= "$src\t";
-    print_log("DEBUG: 15. Filled in col15: source.\n");
+    print_log("DEBUG: 15. Filled in col15: source.");
 
     # col 16
     # handle GO annotation extensions.
@@ -645,7 +644,7 @@ while (
     else {
         $line .= "\n";
     }
-    print_log("DEBUG: 16. Filled in col16: GO annotation extension.\n");
+    print_log("DEBUG: 16. Filled in col16: GO annotation extension.");
 
     # add the evidence and with cols to as many lines as needed
     print_log("ERROR: Missing evidence for:\nt$line") and next unless @cols_7_8;
@@ -654,7 +653,7 @@ while (
     foreach my $c (@cols_7_8) {
         my $evc_gn_mismatch;
         if ( $c =~ /PROBLEM/ ) {
-            print_log("ERROR: $c IS A PROBLEM FOR $line\n");
+            print_log("ERROR: $c IS A PROBLEM FOR $line");
             next;
         }
         if ( $c =~ /MISMATCH/ ) {
@@ -672,13 +671,13 @@ while (
         $line_w_ev .= "$line_copy";
     }
     $line = $line_w_ev;
-    print_log("DEBUG: 17. Went back and filled in cols 7-8: evidence.\n");
+    print_log("DEBUG: 17. Went back and filled in cols 7-8: evidence.");
 
     # and here's where to decide what to do with the line
     #  print $line;
     # and we'd like to sort if first by gene symbol and then by pub so build a HOH
     push @{ $GA_results{$symb}{$pub} }, $line;
-    print_log("DEBUG: 18. Add line to hash.\n");
+    print_log("DEBUG: 18. Add line to hash.");
 
     # generate lines for problem reports
     if ($pseudoflag) {
@@ -690,7 +689,7 @@ while (
     # BILLY: Is this a SLOW step?
     if ($tyq) {
         $tyq->bind_param( 1, $fid );
-        $tyq->execute or die print_log("Can't do gene type query\n");
+        $tyq->execute or die print_log("Can't do gene type query");
         ( my $status ) = $tyq->fetchrow_array();
         if ( $status eq 'Withdrawn' ) {
             my $rep_line = $line;
@@ -708,7 +707,7 @@ while (
         $rep_line =~ s/\n/TAB IN: $extratabsflag\n/;
         push @{ $pseudos_withdrawn{$symb}{$pub} }, $rep_line;
     }
-    print_log("DEBUG: 19. Done with additional lines checks.\n");
+    print_log("DEBUG: 19. Done with additional lines checks.");
 }
 ##################################################################################################################
 ##################################################################################################################
@@ -722,7 +721,7 @@ while (
 ##################################################################################################################
 
 # and here we output the sorted lines sorted first by symbol and then by FBrf number
-print_log("INFO: Producing output file\n");
+print_log("INFO: Producing output file");
 my $lcnt = 0;
 foreach my $s ( sort keys %GA_results ) {
     foreach my $r ( sort keys %{ $GA_results{$s} } ) {
@@ -734,7 +733,7 @@ foreach my $s ( sort keys %GA_results ) {
         }
     }
 }
-print_log("INFO: Printed out $lcnt lines for GA file.\n");
+print_log("INFO: Printed out $lcnt lines for GA file.");
 
 my $rlcnt = 0;
 foreach my $s ( sort keys %pseudos_withdrawn ) {
@@ -747,10 +746,10 @@ foreach my $s ( sort keys %pseudos_withdrawn ) {
         }
     }
 }
-print_log("INFO: Printed out $rlcnt lines for the lines to review report.\n");
+print_log("INFO: Printed out $rlcnt lines for the lines to review report.");
 
 my $end = localtime();
-print_log("INFO: STARTED: $start\nENDED:   $end\n");
+print_log("INFO: STARTED: $start\nENDED:   $end");
 
 #$dbh->finish();
 #$dbh->disconnect();
@@ -763,7 +762,7 @@ sub check4doi {
 "SELECT accession FROM pub p, pub_dbxref pd, dbxref d, db WHERE p.pub_id = pd.pub_id and pd.dbxref_id = d.dbxref_id and pd.is_current = true and d.db_id = db.db_id and db.name = 'DOI' and p.uniquename = ?";
     my $query = $dbh->prepare($stmt);
     $query->bind_param( 1, $fbrf );
-    $query->execute or print_log("WARNING: Can't do doi query\n");
+    $query->execute or print_log("WARNING: Can't do doi query");
     ( my $doi ) = $query->fetchrow_array();    #expecting only one current one
     return $doi;
 }
@@ -805,7 +804,7 @@ sub parse_evidence_bits {
 
         # Check that there is a recognized evidence code abbreviation.
         unless ( grep $evc eq $_, values %EVC ) {
-            print_log("WARNING: Unrecognized evidence code: $evc\n");
+            print_log("WARNING: Unrecognized evidence code: $evc");
             push @evlines, "PROBLEM: $e";
             next;
         }
@@ -875,19 +874,19 @@ sub get_dbxrefs {
             if ( $parts[1] =~ /FB:(FBgn[0-9]{7})/ ) {
                 my $fbgn = $1;
 
-                # print "CHECKING FOR MATCH BETWEEN $symb and $fbgn\n");
+                # print "CHECKING FOR MATCH BETWEEN $symb and $fbgn");
                 $query->bind_param( 1, $symb );
                 $query->bind_param( 2, $fbgn );
                 $query->execute
                   or
-                  print_log("WARNING: Can't execute $stmt FOR $symb:$fbgn\n");
+                  print_log("WARNING: Can't execute $stmt FOR $symb:$fbgn");
                 unless ( $query->rows() > 0 ) {
                     $nomatch = $fbgn . ':' . $symb;
-                    print_log("WARNING: WE HAVE A MISMATCH for $symb:$fbgn\n");
+                    print_log("WARNING: WE HAVE A MISMATCH for $symb:$fbgn");
                 }
             }
             else {
-                print_log("WARNING: No FBgn provided for $symb in evidence code line\n");
+                print_log("WARNING: No FBgn provided for $symb in evidence code line");
             }
         }
     }
@@ -935,7 +934,7 @@ sub fetch_and_parse_gorefs {
     $fbrf2goref{'FBrf0254415'} = 'GO_REF:0000047';    # DB-811
     $fbrf2goref{'FBrf0258542'} = 'GO_REF:0000033';    # DB-928
 
-    print_log("INFO: Constructed FBrf -> GO_REF Mapping:\n");
+    print_log("INFO: Constructed FBrf -> GO_REF Mapping:");
     print Dumper( \%fbrf2goref );
     return \%fbrf2goref;
 }
