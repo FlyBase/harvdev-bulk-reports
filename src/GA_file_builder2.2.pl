@@ -9,7 +9,7 @@ use LWP::UserAgent;
 use LWP::Protocol::https;
 use Data::Dumper;
 use lib '../perl_modules';
-use Utils;
+# use Utils;
 
 if ( @ARGV < 5 ) {
     print "\n USAGE: perl GA_file_builder server db user password outfile (optional: log_file)\n";
@@ -940,20 +940,9 @@ sub fetch_and_parse_gorefs {
     return \%fbrf2goref;
 }
 
-# trims any leading or trailing white space
-# can provide a string or an array of strings
-sub trim {
-    my @s = @_;
-    for (@s) { s/^\s+//; s/\s+$//; }
-    return wantarray ? @s : $s[0];
-}
-
-sub decon {
-
 # Converts SGML-formatted symbols to 'symbol_plain' format (modified from conv_greeks)
-
+sub decon {
     my $string = shift;
-
     $string =~ s/&agr\;/alpha/g;
     $string =~ s/&Agr\;/Alpha/g;
     $string =~ s/&bgr\;/beta/g;
@@ -1006,6 +995,5 @@ sub decon {
     $string =~ s/\<down\>/\[\[/g;
     $string =~ s/\<up\>/\[/g;
     $string =~ s/\<\/up\>/\]/g;
-
     return $string;
 }
