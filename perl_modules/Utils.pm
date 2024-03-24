@@ -1890,8 +1890,12 @@ sub get_formatted_time {
   # my $current_time = localtime();
   # my $formatted_time = $current_time->strftime("%Y-%m-%d %H:%M:%S");
   # High res time.
-  my $current_time = Time::Piece->new(gettimeofday());
-  my $formatted_time = $current_time->strftime("%Y-%m-%d %H:%M:%S") . sprintf(".%03d", ($current_time->microsecond / 1000));
+  # DID NOT WORK
+  # my $current_time = Time::Piece->new(gettimeofday());
+  # my $formatted_time = $current_time->strftime("%Y-%m-%d %H:%M:%S") . sprintf(".%03d", ($current_time->microsecond / 1000));
+  my ($seconds, $microseconds) = gettimeofday();
+  my $current_time = Time::Piece->new($seconds, $microseconds);
+  my $formatted_time = $current_time->strftime("%Y-%m-%d %H:%M:%S") . sprintf(".%03d", ($microseconds / 1000));
   return $formatted_time;
 }
 
