@@ -1,21 +1,19 @@
 #!/usr/local/bin/perl -w
 
 # script to build the GA file by querying GO data in chado producing gene_association.fb
-# Usage: perl GA_file_builder host:dbname outputfile optional_error_log
+# Usage: perl GA_file_builder host:dbname outputfile optional_log
 
 use strict;
 use DBI;
 use LWP::UserAgent;
 use LWP::Protocol::https;
 use Data::Dumper;
+use lib '../perl_modules';
 
 if ( @ARGV < 5 ) {
     print "\n USAGE: perl GA_file_builder server db user password outfile (optional: log_file)\n";
     exit();
 }
-
-my $start = localtime();
-
 my $server  = shift @ARGV;
 my $dbname  = shift @ARGV;
 my $user    = shift @ARGV;
@@ -23,39 +21,34 @@ my $pass    = shift @ARGV;
 my $outfile = shift @ARGV;
 if (@ARGV) {
     my $logfile = shift @ARGV;
-    open( STDOUT, ">>$logfile" )
-      or die print_log("Can't redirect STDOUT to $logfile\n");
-    open( STDERR, ">>$logfile" )
-      or die print_log("Can't redirect STDERR to $logfile\n");
+    open( STDOUT, ">>$logfile" ) or die print_log("Can't redirect STDOUT to $logfile\n");
+    open( STDERR, ">>$logfile" ) or die print_log("Can't redirect STDERR to $logfile\n");
 }
+my $start = localtime();
 print_log("INFO: Start GA_file_builder.");
 
-# connect to db
-################################ db connection ############################
+############################## DB CONNECTION #############################
 my $chado = "dbi:Pg:dbname=$dbname; host=$server;port=5432";
-my $dbh   = DBI->connect( $chado, $user, $pass )
-  or die print_log("ERROR: Can't connect to $chado");
+my $dbh   = DBI->connect( $chado, $user, $pass ) or die print_log("ERROR: Can't connect to $chado");
 print_log("INFO: Connected to $chado\n");
 ##########################################################################
 
-# hash to hold the FBrf to GO ref lookup
+# Generate hash to hold the FBrf to GO ref lookup.
 my %gorefs;
 %gorefs = %{ fetch_and_parse_gorefs() };
 
+# Set up output files.
 open( OUT, ">>$outfile" )
   or die print_log("Can't open $outfile to write output\n");
-
 open( OUT2, ">$outfile.lines2review" )
   or die print_log("Can't open file to write report of lines to review\n");
-
 open( OUT3, ">$outfile.pubs_wo_xrefs" )
   or die print_log("Can't open file to report of pubs without dbxrefs\n");
 
-# deal with file header info
+# Header info.
 my $RELEASE = "$dbname";
 $RELEASE = $1 if $dbname =~ /(fb_20[0-9]{2}_[0-9]{2}).*/;
 $RELEASE =~ s/fb_/FB/g;
-
 my $DATE = sprintf(
     "%04d-%02d-%02d",
     sub { ( $_[5] + 1900, $_[4] + 1, $_[3] ) }
@@ -67,33 +60,25 @@ $header .= "!generated-by: FlyBase\n";
 $header .= "!date-generated: $DATE\n";
 $header .= "!saved-by: FlyBase GOcur gocur\@morgan.harvard.edu\n";
 $header .= "!FlyBase release: $RELEASE\n";
-
 print OUT $header;
 
-# $dbh is a database handle that is used to talk to the db
-# the prepare method does all the formatting and such to get the query ready to execute
-
-# I think the best way to deal with the synonyms at the moment is to set up a hash keyed by FBgn number with
-# value a reference to an array of all the non_current synonyms for every gene
-# * note that if the go terms get moved to proteins and/or transcripts then the synonym bit will
-# need to be rejiggered
-my $syn_query = $dbh->prepare(
-    sprintf(
-        "SELECT distinct f.uniquename, s.name
-     FROM   synonym s, feature_synonym fs, feature f
-     WHERE  f.is_obsolete = false and f.is_analysis = false and f.uniquename like 'FBgn_______'
-     and    f.feature_id = fs.feature_id and fs.synonym_id = s.synonym_id
-     and    fs.is_current = false"
-    )
-);
-
-my %synonyms;    # hash keyed by fbid with array of synonyms as value
-
-# execute the query
+# Set up an FBgn-keyed hash to non-current synonyms.
+# NOTE - If GO terms get moved to proteins/transcripts this will require rejiggering.
 print_log("INFO: Querying for synonyms\n");
+my %synonyms;
+my $syn_query = $dbh->prepare(
+    sprintf("
+        SELECT DISTINCT f.uniquename, s.name
+        FROM synonym s
+        JOIN feature_synonym fs ON fs.synonym_id = s.synonym_id
+        JOIN feature f ON f.feature_id = fs.feature_id
+        WHERE f.is_obsolete IS FALSE
+          AND f.is_analysis IS FALSE
+          AND f.uniquename ~ '^FBgn[0-9]{7}\$'
+          AND fs.is_current IS FALSE
+    ")
+);
 $syn_query->execute or die print_log("ERROR: Can't fetch synonyms.\n");
-
-# retrieve the results and build the hash
 while ( ( my $fbid, my $syn ) = $syn_query->fetchrow_array() ) {
     push @{ $synonyms{$fbid} }, $syn;
 }
