@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl -w
 
-# script to build the GA file by querying GO data in chado producing gene_association.fb
+# Script to build the GA file by querying GO data in chado producing gene_association.fb
 # Usage: perl GA_file_builder host:dbname outputfile optional_log
 
 use strict;
@@ -9,6 +9,7 @@ use LWP::UserAgent;
 use LWP::Protocol::https;
 use Data::Dumper;
 use lib '../perl_modules';
+use Utils;
 
 if ( @ARGV < 5 ) {
     print "\n USAGE: perl GA_file_builder server db user password outfile (optional: log_file)\n";
@@ -83,19 +84,21 @@ while ( ( my $fbid, my $syn ) = $syn_query->fetchrow_array() ) {
     push @{ $synonyms{$fbid} }, $syn;
 }
 
-# create a hash for fullname lookups so we don't need to do this in GA_query
-# keyed by uniquename with current fullname as value
+# Create a FBgn-keyed hash of current fullnames.
 my %fullnames;
-
 my $fn_query = $dbh->prepare(
-    sprintf(
-        "SELECT distinct f.uniquename, s.name
-     FROM   synonym s, feature_synonym fs, feature f, cvterm c
-     WHERE  f.is_obsolete = false and f.is_analysis = false
-     and    f.feature_id = fs.feature_id and fs.synonym_id = s.synonym_id 
-     and    fs.is_current = true
-     and    s.type_id = c.cvterm_id and c.name = 'fullname'"
-    )
+    sprintf("
+    SELECT DISTINCT f.uniquename, s.name
+    FROM synonym s
+    JOIN feature_synonym fs ON fs.synonym_id = s.synonym_id
+    JOIN feature f ON f.feature_id = fs.feature_id
+    JOIN cvterm cvt ON cvt.cvterm_id = s.type_id
+    WHERE f.is_obsolete IS FALSE
+      AND f.is_analysis IS FALSE
+      AND f.uniquename ~ '^FBgn[0-9]{7}\$'
+      AND fs.is_current IS TRUE
+      AND cvt.name = 'fullname'
+    ")
 );
 
 # execute the query
