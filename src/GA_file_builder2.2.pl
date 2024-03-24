@@ -9,52 +9,59 @@ use LWP::UserAgent;
 use LWP::Protocol::https;
 use Data::Dumper;
 
-if (@ARGV < 5) {
-  print "\n USAGE: perl GA_file_builder server db user password outfile\n";
-  exit();
+if ( @ARGV < 5 ) {
+    print
+"\n USAGE: perl GA_file_builder server db user password outfile (optional: log_file)\n";
+    exit();
 }
 
 my $start = localtime();
-my $now = localtime();
 
-my $server = shift @ARGV;
-my $dbname = shift @ARGV;
-my $user = shift @ARGV;
-my $pass = shift @ARGV;
+my $server  = shift @ARGV;
+my $dbname  = shift @ARGV;
+my $user    = shift @ARGV;
+my $pass    = shift @ARGV;
 my $outfile = shift @ARGV;
-
+if (@ARGV) {
+    my $logfile = shift @ARGV;
+    open( STDOUT, ">>$logfile" )
+      or die print_log("Can't redirect STDOUT to $logfile\n");
+    open( STDERR, ">>$logfile" )
+      or die print_log("Can't redirect STDERR to $logfile\n");
+}
+print_log("INFO: Start GA_file_builder.");
 
 # connect to db
 ################################ db connection ############################
-$now = localtime();
-print STDOUT "$now: DEBUG: About to connect to the database\n";
-my $chado="dbi:Pg:dbname=$dbname; host=$server;port=5432";
-my $dbh = DBI->connect($chado,$user,$pass) or die "cannot connect to $chado";
-$now = localtime();
-print STDOUT "$now: INFO: Connected to $chado\n";
+my $chado = "dbi:Pg:dbname=$dbname; host=$server;port=5432";
+my $dbh   = DBI->connect( $chado, $user, $pass )
+  or die print_log("ERROR: Can't connect to $chado");
+print_log("INFO: Connected to $chado\n");
 ##########################################################################
 
 # hash to hold the FBrf to GO ref lookup
 my %gorefs;
-%gorefs = %{fetch_and_parse_gorefs()};
+%gorefs = %{ fetch_and_parse_gorefs() };
 
-open(OUT, ">>$outfile") or die "Can't open $outfile to write output\n";
+open( OUT, ">>$outfile" )
+  or die print_log("Can't open $outfile to write output\n");
 
-open(OUT2, ">$outfile.lines2review") or die "Can't open file to write report of lines to review\n";
+open( OUT2, ">$outfile.lines2review" )
+  or die print_log("Can't open file to write report of lines to review\n");
 
-open(OUT3, ">$outfile.pubs_wo_xrefs") or die "Can't open file to report of pubs without dbxrefs\n";
-
-if (@ARGV) {
-  my $logfile = shift @ARGV;
-  open(STDERR, ">>$logfile") or die "Can't redirect STDERR to $logfile\n";
-}
+open( OUT3, ">$outfile.pubs_wo_xrefs" )
+  or die print_log("Can't open file to report of pubs without dbxrefs\n");
 
 # deal with file header info
 my $RELEASE = "$dbname";
 $RELEASE = $1 if $dbname =~ /(fb_20[0-9]{2}_[0-9]{2}).*/;
 $RELEASE =~ s/fb_/FB/g;
 
-my $DATE = sprintf("%04d-%02d-%02d", sub {($_[5] + 1900, $_[4]+1, $_[3])}->(localtime));
+my $DATE = sprintf(
+    "%04d-%02d-%02d",
+    sub { ( $_[5] + 1900, $_[4] + 1, $_[3] ) }
+      ->(localtime)
+);
 my $header = '';
 $header .= "!gaf-version: 2.2\n";
 $header .= "!generated-by: FlyBase\n";
@@ -64,111 +71,111 @@ $header .= "!FlyBase release: $RELEASE\n";
 
 print OUT $header;
 
-# $dbh is a database handle that is used to talk to the db 
+# $dbh is a database handle that is used to talk to the db
 # the prepare method does all the formatting and such to get the query ready to execute
 
 # I think the best way to deal with the synonyms at the moment is to set up a hash keyed by FBgn number with
-# value a reference to an array of all the non_current synonyms for every gene 
+# value a reference to an array of all the non_current synonyms for every gene
 # * note that if the go terms get moved to proteins and/or transcripts then the synonym bit will
 # need to be rejiggered
-my $syn_query = $dbh->prepare
-  (sprintf
-   ("SELECT distinct f.uniquename, s.name
+my $syn_query = $dbh->prepare(
+    sprintf(
+        "SELECT distinct f.uniquename, s.name
      FROM   synonym s, feature_synonym fs, feature f
      WHERE  f.is_obsolete = false and f.is_analysis = false and f.uniquename like 'FBgn_______'
      and    f.feature_id = fs.feature_id and fs.synonym_id = s.synonym_id
      and    fs.is_current = false"
-   )
-  );
+    )
+);
 
-my %synonyms; # hash keyed by fbid with array of synonyms as value
+my %synonyms;    # hash keyed by fbid with array of synonyms as value
 
 # execute the query
-$now = localtime();
-print STDOUT "$now: INFO: Querying for synonyms\n";
-$syn_query->execute or die "Can't fetch synonyms\n";
+print_log("INFO: Querying for synonyms\n");
+$syn_query->execute or die print_log("ERROR: Can't fetch synonyms.\n");
 
 # retrieve the results and build the hash
-while ((my $fbid, my $syn) = $syn_query->fetchrow_array()) {
-  push @{$synonyms{$fbid}}, $syn;
+while ( ( my $fbid, my $syn ) = $syn_query->fetchrow_array() ) {
+    push @{ $synonyms{$fbid} }, $syn;
 }
 
 # create a hash for fullname lookups so we don't need to do this in GA_query
 # keyed by uniquename with current fullname as value
 my %fullnames;
 
-my $fn_query = $dbh->prepare
-  (sprintf
-   ("SELECT distinct f.uniquename, s.name
+my $fn_query = $dbh->prepare(
+    sprintf(
+        "SELECT distinct f.uniquename, s.name
      FROM   synonym s, feature_synonym fs, feature f, cvterm c
      WHERE  f.is_obsolete = false and f.is_analysis = false
      and    f.feature_id = fs.feature_id and fs.synonym_id = s.synonym_id 
      and    fs.is_current = true
      and    s.type_id = c.cvterm_id and c.name = 'fullname'"
-   )
-  );
+    )
+);
 
 # execute the query
-$now = localtime();
-print STDOUT "$now: INFO: Querying for fullnames\n";
-$fn_query->execute or die "Can't fetch fullnames\n";
+print_log("INFO: Querying for fullnames\n");
+$fn_query->execute or die print_log("Can't fetch fullnames\n");
 
-while ((my $fbid, my $fn) = $fn_query->fetchrow_array()) {
-  $fullnames{$fbid} = $fn;
+while ( ( my $fbid, my $fn ) = $fn_query->fetchrow_array() ) {
+    $fullnames{$fbid} = $fn;
 }
 
 # set up various mapping hashes
 
 # pub types by type_id
 my %pubsbytype;
-my $stmt = "SELECT cvterm_id, cvterm.name FROM cvterm, cv WHERE cvterm.cv_id = cv.cv_id and cv.name = 'pub type'";
+my $stmt =
+"SELECT cvterm_id, cvterm.name FROM cvterm, cv WHERE cvterm.cv_id = cv.cv_id and cv.name = 'pub type'";
 my $query = $dbh->prepare($stmt);
-$query->execute or die "Can't do pub type query!\n";
-while ((my $cid, my $name) = $query->fetchrow_array()) {
+$query->execute or die print_log("Can't do pub type query!\n");
+while ( ( my $cid, my $name ) = $query->fetchrow_array() ) {
     $pubsbytype{$cid} = $name;
 }
 
 # this is global so can use it in the parse evidence code sub
-our %EVC = ('inferred from mutant phenotype' => 'IMP',
-	    'inferred from genetic interaction' => 'IGI',
-	    'inferred from physical interaction' => 'IPI',
-	    'inferred from sequence or structural similarity' => 'ISS',
-	    'inferred from sequence model' => 'ISM',
-	    'inferred from sequence alignment' => 'ISA',
-	    'inferred from sequence orthology' => 'ISO',
-	    'inferred from experiment' => 'EXP',
-	    'inferred from direct assay' => 'IDA',
-	    'inferred from electronic annotation' => 'IEA',
-	    'inferred from expression pattern' => 'IEP',
-	    'inferred from reviewed computational analysis' => 'RCA',
-	    'traceable author statement' => 'TAS',
-	    'non-traceable author statement' => 'NAS',
-	    'inferred by curator'  => 'IC',
-	    'inferred from genomic context' => 'IGC',
-	    'no biological data available'  => 'ND',
-	    'inferred from biological aspect of ancestor' => 'IBA',
-	    'inferred from biological aspect of descendant' => 'IBD',
-	    'inferred from key residues' => 'IKR',
-	    'inferred from rapid divergence' => 'IRD',
-	    'inferred from high throughput experiment' => 'HTP',
-	    'inferred from high throughput direct assay' => 'HDA',
-	    'inferred from high throughput expression pattern' => 'HEP',
-	    'inferred from high throughput genetic interaction' => 'HGI',
-	    'inferred from high throughput mutant phenotype' => 'HMP',
-	  );
+our %EVC = (
+    'inferred from mutant phenotype'                    => 'IMP',
+    'inferred from genetic interaction'                 => 'IGI',
+    'inferred from physical interaction'                => 'IPI',
+    'inferred from sequence or structural similarity'   => 'ISS',
+    'inferred from sequence model'                      => 'ISM',
+    'inferred from sequence alignment'                  => 'ISA',
+    'inferred from sequence orthology'                  => 'ISO',
+    'inferred from experiment'                          => 'EXP',
+    'inferred from direct assay'                        => 'IDA',
+    'inferred from electronic annotation'               => 'IEA',
+    'inferred from expression pattern'                  => 'IEP',
+    'inferred from reviewed computational analysis'     => 'RCA',
+    'traceable author statement'                        => 'TAS',
+    'non-traceable author statement'                    => 'NAS',
+    'inferred by curator'                               => 'IC',
+    'inferred from genomic context'                     => 'IGC',
+    'no biological data available'                      => 'ND',
+    'inferred from biological aspect of ancestor'       => 'IBA',
+    'inferred from biological aspect of descendant'     => 'IBD',
+    'inferred from key residues'                        => 'IKR',
+    'inferred from rapid divergence'                    => 'IRD',
+    'inferred from high throughput experiment'          => 'HTP',
+    'inferred from high throughput direct assay'        => 'HDA',
+    'inferred from high throughput expression pattern'  => 'HEP',
+    'inferred from high throughput genetic interaction' => 'HGI',
+    'inferred from high throughput mutant phenotype'    => 'HMP',
+);
 
-my %ASP = ('biological_process' => 'P',
-	   'cellular_component' => 'C',
-	   'molecular_function' => 'F',
-	  );
+my %ASP = (
+    'biological_process' => 'P',
+    'cellular_component' => 'C',
+    'molecular_function' => 'F',
+);
 
-my %TAX = (Dmel => '7227');
-
+my %TAX = ( Dmel => '7227' );
 
 # prepare the biggie
-my $ga_query = $dbh->prepare
-  (sprintf
-   ("SELECT DISTINCT gene.feature_id, gene.uniquename as fbid, symb.name as symbol,
+my $ga_query = $dbh->prepare(
+    sprintf(
+"SELECT DISTINCT gene.feature_id, gene.uniquename as fbid, symb.name as symbol,
        fcvt.feature_cvterm_id, cv.name as aspect,
        godb.accession as GO_id, ppub.uniquename as ppub, o.abbreviation as species,
        evc.value as evidence_code, prv.value as provenance, date.value as date, fcvt.is_not as is_not, evc.rank as evidence_code_rank
@@ -208,69 +215,71 @@ my $ga_query = $dbh->prepare
        ON   (fcvt.feature_cvterm_id = date.feature_cvterm_id)
        JOIN   cvterm dtname
        ON   (date.type_id = dtname.cvterm_id and dtname.name = 'date')"
-   )
-  );
+    )
+);
 
 # this is a separate query we have set up to retrieve qualifier information to stick
 # in post big query to avoid row duplication problem (due to LEFT JOIN misbehavior) in previous version
 
 # hash to store the feature_cvterms with qualifiers
 my %quals;
+
 # set up the query
-my $qual_query = $dbh->prepare
-  (sprintf
-   ("SELECT fcvtp.feature_cvterm_id, qual.name
+my $qual_query = $dbh->prepare(
+    sprintf(
+        "SELECT fcvtp.feature_cvterm_id, qual.name
      FROM   feature_cvtermprop fcvtp, cvterm qual
      WHERE  fcvtp.type_id = qual.cvterm_id and
             qual.name IN ('enables', 'contributes_to', 'involved_in', 'acts_upstream_of',
                           'acts_upstream_of_positive_effect', 'acts_upstream_of_negative_effect',
                          'located_in', 'part_of', 'is_active_in', 'colocalizes_with')"
-   )
-  );
+    )
+);
+
 # build the quals hash
-$now = localtime();
-print STDOUT "$now: INFO: Getting the qualifier information.\n";
-$qual_query->execute or die "Can't query for qualifiers\n";
-while ( my ($fcvtid, $qual) = $qual_query->fetchrow_array()) {
-  $quals{$fcvtid} = $qual;
+print_log("INFO: Getting the qualifier information.\n");
+$qual_query->execute or die print_log("Can't query for qualifiers\n");
+while ( my ( $fcvtid, $qual ) = $qual_query->fetchrow_array() ) {
+    $quals{$fcvtid} = $qual;
 }
 
 # DB-893: Hash to store GO extensions: keys are feature_cvterm_id plus rank with intervening underscore char.
 my %go_xtns;
-my $go_xtn_query = $dbh->prepare
-  (sprintf
-    ("SELECT fcvtp.feature_cvterm_id, fcvtp.rank, fcvtp.value
+my $go_xtn_query = $dbh->prepare(
+    sprintf(
+        "SELECT fcvtp.feature_cvterm_id, fcvtp.rank, fcvtp.value
       FROM feature_cvtermprop fcvtp
       JOIN cvterm cvt ON cvt.cvterm_id = fcvtp.type_id
       WHERE cvt.name = 'go_annotation_extension'"
     )
-  );
-$now = localtime();
-print STDOUT "$now: INFO: Getting the GO extension information.\n";
+);
+print_log("INFO: Getting the GO extension information.\n");
 my $go_xtn_counter = 0;
-$go_xtn_query->execute or die "Can't query for GO extensions\n";
-while ( my ( $fcvtid, $rank, $go_xtn_text ) = $go_xtn_query->fetchrow_array() ) {
-  $go_xtns{$fcvtid . '_' . $rank} = $go_xtn_text;
-  $go_xtn_counter += 1;
+$go_xtn_query->execute or die print_log("Can't query for GO extensions\n");
+while ( my ( $fcvtid, $rank, $go_xtn_text ) = $go_xtn_query->fetchrow_array() )
+{
+    $go_xtns{ $fcvtid . '_' . $rank } = $go_xtn_text;
+    $go_xtn_counter += 1;
 }
-$now = localtime();
-print STDOUT "$now: INFO: Found $go_xtn_counter GO annotation extensions.\n";
+print_log("INFO: Found $go_xtn_counter GO annotation extensions.\n");
 
 # here is a query to build a lookup hash to exclude genes annotated with 'transposable_element_gene' term
 my %te_genes;
 
 # here's the query
-my $te_query = $dbh->prepare
-  (sprintf
-   ("SELECT f.uniquename
+my $te_query = $dbh->prepare(
+    sprintf(
+        "SELECT f.uniquename
      FROM   feature f, feature_cvterm fc, cvterm c, cv
      WHERE  f.feature_id = fc.feature_id and fc.cvterm_id = c.cvterm_id
-     and    c.cv_id = cv.cv_id and cv.name = 'SO' and c.name = 'transposable_element_gene'"));
+     and    c.cv_id = cv.cv_id and cv.name = 'SO' and c.name = 'transposable_element_gene'"
+    )
+);
 
-$te_query->execute or die "Can't query for te genes\n";
+$te_query->execute or die print_log("Can't query for te genes\n");
 
-while ((my $teg_uname) = $te_query->fetchrow_array()) {
-  $te_genes{$teg_uname} = 1;
+while ( ( my $teg_uname ) = $te_query->fetchrow_array() ) {
+    $te_genes{$teg_uname} = 1;
 }
 
 # we can prepare this  next query once and then bind the parameters of the FBrf
@@ -279,9 +288,9 @@ while ((my $teg_uname) = $te_query->fetchrow_array()) {
 # and I think in general we can do many fetches within the loop rather than setting up a lookup first
 # as we did for synonyms because in this case only a minority subset of all references will be checked
 # but it may turn out more efficient to do similar to synonyms (remains to be seen)
-my $pmid_query = $dbh->prepare
-  (sprintf
-   ("SELECT CASE WHEN pt.name = 'supplementary material' 
+my $pmid_query = $dbh->prepare(
+    sprintf(
+        "SELECT CASE WHEN pt.name = 'supplementary material' 
             THEN (SELECT d.accession
                   FROM   pub_relationship pr, pub sm, pub p, pub_dbxref pd, dbxref d, db, cvterm c
                   WHERE  sm.uniquename = ? 
@@ -296,8 +305,8 @@ my $pmid_query = $dbh->prepare
                     and  d.db_id = db.db_id and db.name = 'pubmed')
             END as PMID
       FROM pub, cvterm pt where pub.uniquename = ? and pub.type_id = pt.cvterm_id"
-   )
-  );
+    )
+);
 
 # query for gene type using 'promoted_gene_type' featureprop
 # and map to value in col 12
@@ -310,46 +319,51 @@ my $pmid_query = $dbh->prepare
 #		  'non_protein_coding_gene' => 'ncRNA',
 #		 );
 
-my %gene_types = ('mRNA' => 'protein',
-		  'miRNA' => 'miRNA',
-		  'pre_miRNA' => 'miRNA',
-		  'tRNA' => 'tRNA',
-		  'rRNA' => 'rRNA',
-		  'snoRNA' => 'snoRNA',
-		  'snRNA' => 'snRNA',
-		  'ncRNA' => 'ncRNA',
-		 );
+my %gene_types = (
+    'mRNA'      => 'protein',
+    'miRNA'     => 'miRNA',
+    'pre_miRNA' => 'miRNA',
+    'tRNA'      => 'tRNA',
+    'rRNA'      => 'rRNA',
+    'snoRNA'    => 'snoRNA',
+    'snRNA'     => 'snRNA',
+    'ncRNA'     => 'ncRNA',
+);
 
-(my $promoted_prop_tyid) = $dbh->selectrow_array
-  (sprintf
-   ("SELECT cvterm_id FROM cvterm c WHERE c.name = 'derived_gene_model_status'"));
+( my $promoted_prop_tyid ) = $dbh->selectrow_array(
+    sprintf(
+"SELECT cvterm_id FROM cvterm c WHERE c.name = 'derived_gene_model_status'"
+    )
+);
 
 my $tyq;
-if (defined $promoted_prop_tyid) {
-  $tyq = $dbh->prepare
-  (sprintf
-   ("SELECT value FROM featureprop WHERE type_id = $promoted_prop_tyid
-        and feature_id = ?"));
+if ( defined $promoted_prop_tyid ) {
+    $tyq = $dbh->prepare(
+        sprintf(
+            "SELECT value FROM featureprop WHERE type_id = $promoted_prop_tyid
+        and feature_id = ?"
+        )
+    );
 }
 
-my $partof = $dbh->selectrow_array
-  (sprintf
-   ("SELECT cvterm_id FROM cvterm c WHERE c.name = 'partof'"));
+my $partof = $dbh->selectrow_array(
+    sprintf("SELECT cvterm_id FROM cvterm c WHERE c.name = 'partof'") );
 
 my $regex = '%-XR';
 
-my $partyq = $dbh->prepare
-  (sprintf
-   ("SELECT distinct c.name
+my $partyq = $dbh->prepare(
+    sprintf(
+        "SELECT distinct c.name
        FROM feature t, feature_relationship fr, cvterm c
       WHERE fr.type_id = $partof and fr.subject_id = t.feature_id
         and t.uniquename like 'FBtr_______' and t.name not like '%s' and t.is_obsolete = false
-        and t.type_id = c.cvterm_id and fr.object_id = ?", $regex));
+        and t.type_id = c.cvterm_id and fr.object_id = ?", $regex
+    )
+);
 
 # execute the big query
-$now = localtime();
-print STDOUT "$now: INFO: Querying for ga info\n";
-$ga_query->execute or die "Can't get ga info\n";
+print_log("INFO: Querying for ga info\n");
+$ga_query->execute or die print_log("Can't get ga info\n");
 
 # fetch the results
 
@@ -357,8 +371,9 @@ $ga_query->execute or die "Can't get ga info\n";
 my %GA_results;
 my %pseudos_withdrawn;
 
-my %seen_pubs; # tracking hash so we don't need to query for so many pubs with complex query
-my %seen_gns; # tracking hash with type as value
+my %seen_pubs
+  ; # tracking hash so we don't need to query for so many pubs with complex query
+my %seen_gns;    # tracking hash with type as value
 my $rows;
 
 # note I am explicitly declaring all variables in results
@@ -376,329 +391,378 @@ my $rows;
 ##################################################################################################################
 ##################################################################################################################
 # BOB: This "while" loop currently takes ~ 3h to process.
-$now = localtime();
-print STDOUT "$now: INFO: Processing results of GA query\n";
-while ( my ($fid, $fbid, $symb, $fcvtid, $asp, $goid, $pub, $orgn, $evid, $src, $date, $is_not, $ev_rank)
-	= $ga_query->fetchrow_array()) {
-  $rows++;
-  $now = localtime();
-  print STDOUT "$now: DEBUG: 1. Start processing row #$rows: feature_cvterm_id=$fcvtid\n";
-  my $pseudoflag;
-  my $extratabsflag;
+print_log("INFO: Processing results of GA query\n");
+while (
+    my (
+        $fid,  $fbid, $symb, $fcvtid, $asp,    $goid, $pub,
+        $orgn, $evid, $src,  $date,   $is_not, $ev_rank
+    )
+    = $ga_query->fetchrow_array()
+  )
+{
+    $rows++;
 
-  # skip te genes
-  next if $te_genes{$fbid};
+    print_log(
+        "DEBUG: 1. Start processing row #$rows: feature_cvterm_id=$fcvtid\n");
+    my $pseudoflag;
+    my $extratabsflag;
 
-  # here is where some decisions need to be made on formatting
-  # do you want the lines of the file sorted in any particular order for example by gene symbol
-  # or go id
-  # if so we will need to build up some type of data structure to be able to sort the values
-  # it can be as simple as an array of lines but then the sorting function would be somewhat more
-  # complicated or it could be some combination of hashes allowing sequential sorting of the keys
+    # skip te genes
+    next if $te_genes{$fbid};
 
-  # basically you will want to set up the line for the GA file as you like it and then either print 
-  # it to your output or put it in the data structure for later sorting and printing
-  my $line = "FB\t"; # here is the variable to store the GA file line with column one info
+# here is where some decisions need to be made on formatting
+# do you want the lines of the file sorted in any particular order for example by gene symbol
+# or go id
+# if so we will need to build up some type of data structure to be able to sort the values
+# it can be as simple as an array of lines but then the sorting function would be somewhat more
+# complicated or it could be some combination of hashes allowing sequential sorting of the keys
 
-  # this bit here will do the query for the pub med id for the pub returned
-  my $pmid;
+# basically you will want to set up the line for the GA file as you like it and then either print
+# it to your output or put it in the data structure for later sorting and printing
+    my $line = "FB\t"
+      ;    # here is the variable to store the GA file line with column one info
 
-  if (exists $seen_pubs{$pub}) {
-    $pmid = $seen_pubs{$pub} if defined $seen_pubs{$pub};
-    $now = localtime();
-    print STDOUT "$now: DEBUG: 2a. pub already seen.\n";
-  # BILLY: Is this a SLOW step?
-  } else {
-    $pmid_query->bind_param(1, $pub);
-    $pmid_query->bind_param(2, $pub);
-    $pmid_query->bind_param(3, $pub);
-    $pmid_query->execute or die "Can't fetch pub med id for $pub\n";
-    $now = localtime();
-    print STDOUT "$now: DEBUG: 2b1. Queried for pub info.\n";
-    # because any pub or supplementary info of a pub should only return one pubmed id we will do
-    # a single fetch - but it is still possible that we won't find a PMID so check
-    ($pmid) = $pmid_query->fetchrow_array();
+    # this bit here will do the query for the pub med id for the pub returned
+    my $pmid;
 
-    # add to seen hash if found
-    if ($pmid) {
-      $pmid = "PMID:$pmid";
-      $seen_pubs{$pub} = $pmid;
-    } else { 
-	# do other checks and associations based on JIRA DB-233 specification
-	$pmid = check4doi($dbh, $pub);
-	if ($pmid) {
-	    $pmid = "DOI:$pmid";
-	    $seen_pubs{$pub} = $pmid;
-	} else {
-	    (my $ptyid) = $dbh->selectrow_array("SELECT type_id FROM pub WHERE uniquename = '$pub'");
-	    if ($pubsbytype{$ptyid} eq 'review' or $pubsbytype{$ptyid} eq 'paper' or $pub eq 'FBrf0045941') {
-		$pmid = 'GO_REF:0000095';
-		print OUT3 "$pub|$pmid\n";
-	    } elsif ($gorefs{$pub}) {
-		$pmid = $gorefs{$pub};
-	    } elsif ($pubsbytype{$ptyid} eq 'personal communication to FlyBase') {
-		$pmid = 'GO_REF:0000097';
-	    } elsif ($pubsbytype{$ptyid} eq 'abstract') {
-		$pmid = 'GO_REF:0000098';
-	    } elsif ($pubsbytype{$ptyid} eq 'DNA/RNA sequence record') {
-		$pmid = 'GO_REF:0000099';
-	    } elsif ($pubsbytype{$ptyid} eq 'protein sequence record') {
-		$pmid = 'GO_REF:0000106';
-	    } else {
-		$pmid = undef;
-		print OUT3 "$pub\n";
-	    }
-	    $seen_pubs{$pub} = $pmid;
-	}
-      # we can print out an optional warning if no PMID - comment out if no warning wanted
-  #      print STDERR "NO PMID for $pub\n";
+    if ( exists $seen_pubs{$pub} ) {
+        $pmid = $seen_pubs{$pub} if defined $seen_pubs{$pub};
+        $now  = localtime();
+        print_log("DEBUG: 2a. pub already seen.\n");
+
+        # BILLY: Is this a SLOW step?
     }
-    $now = localtime();
-    print STDOUT "$now: DEBUG: 2b2. Assessed query results for pub info.\n";
+    else {
+        $pmid_query->bind_param( 1, $pub );
+        $pmid_query->bind_param( 2, $pub );
+        $pmid_query->bind_param( 3, $pub );
+        $pmid_query->execute
+          or die print_log("Can't fetch pub med id for $pub\n");
 
-  }
+        print_log("DEBUG: 2b1. Queried for pub info.\n");
 
-  # going to need to parse the $evid field (i.e., feature_cvtermprop.value of type evidence) looking for with's and ands
-  # note that there can be multiple evidence statements in the same property value
-  # and one or more of them may have info for col 8
-  # lets set up a sub to do the parsing and then figure out the best way to deal with
-  # multiple lines
-  my @cols_7_8 = parse_evidence_bits($evid, $dbh);
-  $now = localtime();
-  print STDOUT "$now: DEBUG: 3. Parsed evidence bits.\n";
+# because any pub or supplementary info of a pub should only return one pubmed id we will do
+# a single fetch - but it is still possible that we won't find a PMID so check
+        ($pmid) = $pmid_query->fetchrow_array();
 
-  # start building the line
-  # cols 2 and 3
-  $line .= "$fbid\t$symb\t";
-  $now = localtime();
-  print STDOUT "$now: DEBUG: 4. Built line col1-3.\n";
+        # add to seen hash if found
+        if ($pmid) {
+            $pmid = "PMID:$pmid";
+            $seen_pubs{$pub} = $pmid;
+        }
+        else {
+           # do other checks and associations based on JIRA DB-233 specification
+           # BILLY: Is this a slow step.
+            $pmid = check4doi( $dbh, $pub );
+            if ($pmid) {
+                $pmid = "DOI:$pmid";
+                $seen_pubs{$pub} = $pmid;
+            }
+            else {
+                ( my $ptyid ) = $dbh->selectrow_array(
+                    "SELECT type_id FROM pub WHERE uniquename = '$pub'");
+                if (   $pubsbytype{$ptyid} eq 'review'
+                    or $pubsbytype{$ptyid} eq 'paper'
+                    or $pub eq 'FBrf0045941' )
+                {
+                    $pmid = 'GO_REF:0000095';
+                    print OUT3 "$pub|$pmid\n";
+                }
+                elsif ( $gorefs{$pub} ) {
+                    $pmid = $gorefs{$pub};
+                }
+                elsif (
+                    $pubsbytype{$ptyid} eq 'personal communication to FlyBase' )
+                {
+                    $pmid = 'GO_REF:0000097';
+                }
+                elsif ( $pubsbytype{$ptyid} eq 'abstract' ) {
+                    $pmid = 'GO_REF:0000098';
+                }
+                elsif ( $pubsbytype{$ptyid} eq 'DNA/RNA sequence record' ) {
+                    $pmid = 'GO_REF:0000099';
+                }
+                elsif ( $pubsbytype{$ptyid} eq 'protein sequence record' ) {
+                    $pmid = 'GO_REF:0000106';
+                }
+                else {
+                    $pmid = undef;
+                    print OUT3 "$pub\n";
+                }
+                $seen_pubs{$pub} = $pmid;
+            }
 
-  # handle negation (part of col 4).
-  # $line .= "IS_NOT VALUE: $is_not |||";
-  if ($is_not) {
-      $line .= "NOT|";
-  }
-  $now = localtime();
-  print STDOUT "$now: DEBUG: 5a. Filled in col4: NOT.\n";
-  # handle mandatory gp2term qualifiers (part of col 4).
-  if (exists($quals{$fcvtid})) {
-      $line .= "$quals{$fcvtid}\t";
-  } else {
-      print STDERR "CRITICAL ERROR: Missing gp2term qualifier for this annotation: fcvt_id = $fcvtid, gene = $symb ($fbid), cvterm = GO:$goid, pub = $pub, is_not = $is_not.\n";
-      die "FAILING due to data issue: some annotations are missing gp2term qualifers.";
-  }
-  $now = localtime();
-  print STDOUT "$now: DEBUG: 5b. Filled in col4: gp2term.\n";
+# we can print out an optional warning if no PMID - comment out if no warning wanted
+#      print_log("ERROR: No PMID for $pub\n");
+        }
 
-  # cols 5 and 6
-  $line .= "GO:$goid\tFB:$pub";
-  $now = localtime();
-  print STDOUT "$now: DEBUG: 6. Filled in cols 5-6: GO & FB pub IDs.\n";
+        print_log("DEBUG: 2b2. Assessed query results for pub info.\n");
 
-  # check for PMID
-  $line .= "|$pmid" if $pmid;
-  $line .= "\t";
-  $now = localtime();
-  print STDOUT "$now: DEBUG: 7. Filled in col 7: PubMed ID.\n";
-
-  # evidence code col 7
-  # and optional with col 8
-  # NOTE: as these can have values that might need to be split over multiple lines 
-  # at this point we just put in a place holder to substitute in the values
-  $line .= "PUT_COLS_8_9_HERE\t";
-  $now = localtime();
-  print STDOUT "$now: DEBUG: 8. Filled in cols 7-8 with evidence placeholed.\n";
-
-  # aspect col 9
-  $line .= "$ASP{$asp}\t";
-  $now = localtime();
-  print STDOUT "$now: DEBUG: 9. Filled in col 9: aspect.\n";
-
-  # optional fullname col 10
-  if ($fullnames{$fbid}) {
-    my $fn = $fullnames{$fbid};
-    if ($fn =~ /\t/) {
-      $extratabsflag = $fn;
-      $fn =~ s/\t/ /g;
     }
-    $line .= $fn;
-    $fullnames{$fbid} = $fn;
-  }
-  $line .= "\t";
-  $now = localtime();
-  print STDOUT "$now: DEBUG: 10. Filled in col 10: fullname.\n";
 
-  # synonyms col 11
-  if ($synonyms{$fbid}) {
-    my @syns = sort @{$synonyms{$fbid}};
-    foreach my $s (@syns) {
-      next if ($s eq 'unnamed');
-      if ($s =~ /\t/) {
-	$extratabsflag = $s;
-	$s =~ s/\t/ /g;
-      }
-      next if (($s eq $symb) or ($fullnames{$fbid} and ($s eq $fullnames{$fbid})));
-      $line .= "$s|";
+# going to need to parse the $evid field (i.e., feature_cvtermprop.value of type evidence) looking for with's and ands
+# note that there can be multiple evidence statements in the same property value
+# and one or more of them may have info for col 8
+# lets set up a sub to do the parsing and then figure out the best way to deal with
+# multiple lines
+    my @cols_7_8 = parse_evidence_bits( $evid, $dbh );
+
+    print_log("DEBUG: 3. Parsed evidence bits.\n");
+
+    # start building the line
+    # cols 2 and 3
+    $line .= "$fbid\t$symb\t";
+
+    print_log("DEBUG: 4. Built line col1-3.\n");
+
+    # handle negation (part of col 4).
+    # $line .= "IS_NOT VALUE: $is_not |||";
+    if ($is_not) {
+        $line .= "NOT|";
     }
-    # this little bit just checks to make sure there are any synonyms left
-    if ($line =~ /\|$/) {
-      $line =~ s/\|$/\t/;
-    } else {
-      $line .= "\t";
+
+    print_log("DEBUG: 5a. Filled in col4: NOT.\n");
+
+    # handle mandatory gp2term qualifiers (part of col 4).
+    if ( exists( $quals{$fcvtid} ) ) {
+        $line .= "$quals{$fcvtid}\t";
     }
-  } else {
+    else {
+        print_log(
+"ERROR: Missing gp2term qualifier for this annotation: fcvt_id = $fcvtid, gene = $symb ($fbid), cvterm = GO:$goid, pub = $pub, is_not = $is_not.\n"
+        );
+        die print_log(
+"ERROR: FAILING due to data issue: some annotations are missing gp2term qualifers."
+        );
+    }
+
+    print_log("DEBUG: 5b. Filled in col4: gp2term.\n");
+
+    # cols 5 and 6
+    $line .= "GO:$goid\tFB:$pub";
+
+    print_log("DEBUG: 6. Filled in cols 5-6: GO & FB pub IDs.\n");
+
+    # check for PMID
+    $line .= "|$pmid" if $pmid;
     $line .= "\t";
-  }
-  $now = localtime();
-  print STDOUT "$now: DEBUG: 11. Filled in col 11: synonyms.\n";
 
-  # col 12 - determine type of transcript - assume only one but with miRNA exception
-  # current GAF1 default = 'gene'
-  #  $line .= "gene\t";
+    print_log("DEBUG: 7. Filled in col 7: PubMed ID.\n");
 
-  ##################################################################################################
-  ##################################################################################################
-  ##################################################################################################
-  ##################################################################################################
-  ##################################################################################################
-  ##################################################################################################
-  ##################################################################################################
-  ##################################################################################################
-  ##################################################################################################
-  ##################################################################################################
-  # BOB
-  # Probably need to update this code block for DB-943.
-  # It seems to already look up promoted gene type, so perhaps only minor modification is required.
-  # BILLY: Is this a SLOW step?
-  # query for GAF2 format getting product type from promoted gene type
-  # for product type - do lookup
-  my $type = 'gene_product';
-  if ($seen_gns{$fid}) {
-    $type = $seen_gns{$fid};
-    $type = 'gene_product' if $type eq 'pseudogene';
+# evidence code col 7
+# and optional with col 8
+# NOTE: as these can have values that might need to be split over multiple lines
+# at this point we just put in a place holder to substitute in the values
+    $line .= "PUT_COLS_8_9_HERE\t";
 
-  } else {
-    $partyq->bind_param(1, $fid);
-    $partyq->execute or die "Can't do gene type query\n";
+    print STDOUT
+      "$now: DEBUG: 8. Filled in cols 7-8 with evidence placeholed.\n";
 
-    if ($partyq->rows > 1) {
-      print STDERR "WARNING - more than one type of transcript associated with $fbid\n";
+    # aspect col 9
+    $line .= "$ASP{$asp}\t";
+
+    print_log("DEBUG: 9. Filled in col 9: aspect.\n");
+
+    # optional fullname col 10
+    if ( $fullnames{$fbid} ) {
+        my $fn = $fullnames{$fbid};
+        if ( $fn =~ /\t/ ) {
+            $extratabsflag = $fn;
+            $fn =~ s/\t/ /g;
+        }
+        $line .= $fn;
+        $fullnames{$fbid} = $fn;
     }
-    (my $gtype) = $partyq->fetchrow_array();
-  #    print "$gtype\n";
-    if ($gtype) {
-      if ($gtype eq 'pseudogene') {
-	$pseudoflag = 1;
-	$seen_gns{fid} = $gtype;
-      } else {
-	$type = $gene_types{$gtype} if $gene_types{$gtype};
-	$seen_gns{$fid} = $type;
-      }
+    $line .= "\t";
+
+    print_log("DEBUG: 10. Filled in col 10: fullname.\n");
+
+    # synonyms col 11
+    if ( $synonyms{$fbid} ) {
+        my @syns = sort @{ $synonyms{$fbid} };
+        foreach my $s (@syns) {
+            next if ( $s eq 'unnamed' );
+            if ( $s =~ /\t/ ) {
+                $extratabsflag = $s;
+                $s =~ s/\t/ /g;
+            }
+            next
+              if ( ( $s eq $symb )
+                or ( $fullnames{$fbid} and ( $s eq $fullnames{$fbid} ) ) );
+            $line .= "$s|";
+        }
+
+        # this little bit just checks to make sure there are any synonyms left
+        if ( $line =~ /\|$/ ) {
+            $line =~ s/\|$/\t/;
+        }
+        else {
+            $line .= "\t";
+        }
     }
-  }
-
-  $line .= "$type\t";
-  $now = localtime();
-  print STDOUT "$now: DEBUG: 12. Filled in col 12: gene product type.\n";
-  ##################################################################################################
-  ##################################################################################################
-  ##################################################################################################
-  ##################################################################################################
-  ##################################################################################################
-  ##################################################################################################
-  ##################################################################################################
-  ##################################################################################################
-  ##################################################################################################
-  ##################################################################################################
-
-  # col 13
-  $line .= "taxon:$TAX{$orgn}\t";
-  $now = localtime();
-  print STDOUT "$now: DEBUG: 13. Filled in col 13: taxon.\n";
-
-  # col 14
-  $line .= "$date\t";
-  $now = localtime();
-  print STDOUT "$now: DEBUG: 14. Filled in col 14: date.\n";
-
-  # col 15
-  $line .= "$src\t";
-  $now = localtime();
-  print STDOUT "$now: DEBUG: 15. Filled in col15: source.\n";
-
-  # col 16
-  # handle GO annotation extensions.
-  if (exists($go_xtns{$fcvtid . '_' . $ev_rank})) {
-    $line .= "$go_xtns{$fcvtid . '_' . $ev_rank}\n";
-  } else {
-    $line .= "\n";
-  }
-  $now = localtime();
-  print STDOUT "$now: DEBUG: 16. Filled in col16: GO annotation extension.\n";
-
-  # add the evidence and with cols to as many lines as needed
-  print STDERR "MISSING EVIDENCE for:\nt$line" and next unless @cols_7_8;
-  my $line_w_ev = '';
-  my $mismatch_line = '';
-  foreach my $c (@cols_7_8) {
-    my $evc_gn_mismatch;
-    if ($c =~ /PROBLEM/) {
-      print STDERR "$c IS A PROBLEM FOR $line\n";
-      next;
+    else {
+        $line .= "\t";
     }
-    if ($c =~ /MISMATCH/) {
-      $c =~ s/MISMATCH:(.*)$//;
-      $evc_gn_mismatch = $1;
+
+    print_log("DEBUG: 11. Filled in col 11: synonyms.\n");
+
+# col 12 - determine type of transcript - assume only one but with miRNA exception
+# current GAF1 default = 'gene'
+#  $line .= "gene\t";
+
+    ##################################################################################################
+    ##################################################################################################
+    ##################################################################################################
+    ##################################################################################################
+    ##################################################################################################
+    ##################################################################################################
+    ##################################################################################################
+    ##################################################################################################
+    ##################################################################################################
+    ##################################################################################################
+# BOB
+# Probably need to update this code block for DB-943.
+# It seems to already look up promoted gene type, so perhaps only minor modification is required.
+# BILLY: Is this a SLOW step?
+# query for GAF2 format getting product type from promoted gene type
+# for product type - do lookup
+    my $type = 'gene_product';
+    if ( $seen_gns{$fid} ) {
+        $type = $seen_gns{$fid};
+        $type = 'gene_product' if $type eq 'pseudogene';
+
+        # BILLY: Is this a SLOW step?
     }
-    my $line_copy = $line;
-    $line_copy =~ s/PUT_COLS_8_9_HERE/$c/;
-    if ($evc_gn_mismatch) {
-      my $mline = $line_copy;
-      chomp $mline;
-      $mismatch_line .= $mline . "evc_has_fbgn_symbol_mismatch ($evc_gn_mismatch)\n";
-    }      
-    $line_w_ev .= "$line_copy";
-  }
-  $line = $line_w_ev;
-  $now = localtime();
-  print STDOUT "$now: DEBUG: 17. Went back and filled in cols 7-8: evidence.\n";
+    else {
+        $partyq->bind_param( 1, $fid );
+        $partyq->execute or die print_log("Can't do gene type query\n");
+
+        if ( $partyq->rows > 1 ) {
+            print_log(
+"WARNING: More than one type of transcript associated with $fbid\n"
+            );
+        }
+        ( my $gtype ) = $partyq->fetchrow_array();
+        if ($gtype) {
+            if ( $gtype eq 'pseudogene' ) {
+                $pseudoflag = 1;
+                $seen_gns{fid} = $gtype;
+            }
+            else {
+                $type = $gene_types{$gtype} if $gene_types{$gtype};
+                $seen_gns{$fid} = $type;
+            }
+        }
+    }
+
+    $line .= "$type\t";
+
+    print_log("DEBUG: 12. Filled in col 12: gene product type.\n");
+    ##################################################################################################
+    ##################################################################################################
+    ##################################################################################################
+    ##################################################################################################
+    ##################################################################################################
+    ##################################################################################################
+    ##################################################################################################
+    ##################################################################################################
+    ##################################################################################################
+    ##################################################################################################
+
+    # col 13
+    $line .= "taxon:$TAX{$orgn}\t";
+
+    print_log("DEBUG: 13. Filled in col 13: taxon.\n");
+
+    # col 14
+    $line .= "$date\t";
+
+    print_log("DEBUG: 14. Filled in col 14: date.\n");
+
+    # col 15
+    $line .= "$src\t";
+
+    print_log("DEBUG: 15. Filled in col15: source.\n");
+
+    # col 16
+    # handle GO annotation extensions.
+    if ( exists( $go_xtns{ $fcvtid . '_' . $ev_rank } ) ) {
+        $line .= "$go_xtns{$fcvtid . '_' . $ev_rank}\n";
+    }
+    else {
+        $line .= "\n";
+    }
+
+    print_log("DEBUG: 16. Filled in col16: GO annotation extension.\n");
+
+    # add the evidence and with cols to as many lines as needed
+    print_log(
+        "ERROR: Missing evidence for:\nt$line" and next
+          unless @cols_7_8
+    );
+    my $line_w_ev     = '';
+    my $mismatch_line = '';
+    foreach my $c (@cols_7_8) {
+        my $evc_gn_mismatch;
+        if ( $c =~ /PROBLEM/ ) {
+            print_log("ERROR: $c IS A PROBLEM FOR $line\n");
+            next;
+        }
+        if ( $c =~ /MISMATCH/ ) {
+            $c =~ s/MISMATCH:(.*)$//;
+            $evc_gn_mismatch = $1;
+        }
+        my $line_copy = $line;
+        $line_copy =~ s/PUT_COLS_8_9_HERE/$c/;
+        if ($evc_gn_mismatch) {
+            my $mline = $line_copy;
+            chomp $mline;
+            $mismatch_line .=
+              $mline . "evc_has_fbgn_symbol_mismatch ($evc_gn_mismatch)\n";
+        }
+        $line_w_ev .= "$line_copy";
+    }
+    $line = $line_w_ev;
+    $now  = localtime();
+    print STDOUT
+      "$now: DEBUG: 17. Went back and filled in cols 7-8: evidence.\n";
 
   # and here's where to decide what to do with the line
   #  print $line;
   # and we'd like to sort if first by gene symbol and then by pub so build a HOH
-  push @{$GA_results{$symb}{$pub}}, $line;
-  $now = localtime();
-  print STDOUT "$now: DEBUG: 18. Add line to hash.\n";
+    push @{ $GA_results{$symb}{$pub} }, $line;
 
-  # generate lines for problem reports
-  if ($pseudoflag) {
-    my $rep_line = $line;
-    $rep_line =~ s/\n/pseudogene\n/;
-    push @{$pseudos_withdrawn{$symb}{$pub}}, $rep_line;
-  } 
+    print_log("DEBUG: 18. Add line to hash.\n");
 
-  if ($tyq) {
-    $tyq->bind_param(1, $fid);
-    $tyq->execute or die "Can't do gene type query\n";
-    (my $status) = $tyq->fetchrow_array();
-    if ($status eq 'Withdrawn') {
-      my $rep_line = $line;
-      $rep_line =~ s/\n/withdrawn\n/;
-      push @{$pseudos_withdrawn{$symb}{$pub}}, $rep_line;
+    # generate lines for problem reports
+    if ($pseudoflag) {
+        my $rep_line = $line;
+        $rep_line =~ s/\n/pseudogene\n/;
+        push @{ $pseudos_withdrawn{$symb}{$pub} }, $rep_line;
     }
-  }
- 
-  if ($mismatch_line) {
-    push @{$pseudos_withdrawn{$symb}{$pub}}, $mismatch_line;
-  }
 
-  if ($extratabsflag) {
-    my $rep_line = $line;
-    $rep_line =~ s/\n/TAB IN: $extratabsflag\n/;
-    push @{$pseudos_withdrawn{$symb}{$pub}}, $rep_line;
-  }    
-  $now = localtime();
-  print STDOUT "$now: DEBUG: 19. Done with additional lines checks.\n";
+    # BILLY: Is this a SLOW step?
+    if ($tyq) {
+        $tyq->bind_param( 1, $fid );
+        $tyq->execute or die print_log("Can't do gene type query\n");
+        ( my $status ) = $tyq->fetchrow_array();
+        if ( $status eq 'Withdrawn' ) {
+            my $rep_line = $line;
+            $rep_line =~ s/\n/withdrawn\n/;
+            push @{ $pseudos_withdrawn{$symb}{$pub} }, $rep_line;
+        }
+    }
+
+    if ($mismatch_line) {
+        push @{ $pseudos_withdrawn{$symb}{$pub} }, $mismatch_line;
+    }
+
+    if ($extratabsflag) {
+        my $rep_line = $line;
+        $rep_line =~ s/\n/TAB IN: $extratabsflag\n/;
+        push @{ $pseudos_withdrawn{$symb}{$pub} }, $rep_line;
+    }
+    print_log("DEBUG: 19. Done with additional lines checks.\n");
 }
 ##################################################################################################################
 ##################################################################################################################
@@ -712,47 +776,49 @@ while ( my ($fid, $fbid, $symb, $fcvtid, $asp, $goid, $pub, $orgn, $evid, $src, 
 ##################################################################################################################
 
 # and here we output the sorted lines sorted first by symbol and then by FBrf number
-$now = localtime();
-print STDOUT "$now: INFO: Producing output file\n";
-my $lcnt;
-foreach my $s (sort keys %GA_results) {
-  foreach my $r (sort keys %{$GA_results{$s}}) {
-    foreach my $l (@{$GA_results{$s}->{$r}}) {
-      print OUT $l;
-      $lcnt++;
-#      print $l;
-    }
-  }
-}
-print "PRINTED OUT $lcnt LINES FOR GA FILE\n";
+print_log("INFO: Producing output file\n");
+my $lcnt = 0;
+foreach my $s ( sort keys %GA_results ) {
+    foreach my $r ( sort keys %{ $GA_results{$s} } ) {
+        foreach my $l ( @{ $GA_results{$s}->{$r} } ) {
+            print OUT $l;
+            $lcnt++;
 
-my $rlcnt;
-foreach my $s (sort keys %pseudos_withdrawn) {
-  foreach my $r (sort keys %{$pseudos_withdrawn{$s}}) {
-    foreach my $l (@{$pseudos_withdrawn{$s}->{$r}}) {
-      print OUT2 $l;
-      $rlcnt++;
-#      print $l;
+            #      print $l;
+        }
     }
-  }
 }
-print "PRINTED OUT $rlcnt LINES FOR LINES TO REVIEW REPORT\n";
+print_log("INFO: Printed out $lcnt lines for GA file.\n");
+
+my $rlcnt = 0;
+foreach my $s ( sort keys %pseudos_withdrawn ) {
+    foreach my $r ( sort keys %{ $pseudos_withdrawn{$s} } ) {
+        foreach my $l ( @{ $pseudos_withdrawn{$s}->{$r} } ) {
+            print OUT2 $l;
+            $rlcnt++;
+
+            #      print $l;
+        }
+    }
+}
+print_log("INFO: Printed out $rlcnt lines for the lines to review report.\n");
 
 my $end = localtime();
-print "STARTED: $start\nENDED:   $end\n";
+print_log("INFO: STARTED: $start\nENDED:   $end\n");
 
 #$dbh->finish();
 #$dbh->disconnect();
 
 # checks to see if pub has a DOI number
 sub check4doi {
-    my $dbh = shift;
+    my $dbh  = shift;
     my $fbrf = shift;
-    my $stmt = "SELECT accession FROM pub p, pub_dbxref pd, dbxref d, db WHERE p.pub_id = pd.pub_id and pd.dbxref_id = d.dbxref_id and pd.is_current = true and d.db_id = db.db_id and db.name = 'DOI' and p.uniquename = ?";
+    my $stmt =
+"SELECT accession FROM pub p, pub_dbxref pd, dbxref d, db WHERE p.pub_id = pd.pub_id and pd.dbxref_id = d.dbxref_id and pd.is_current = true and d.db_id = db.db_id and db.name = 'DOI' and p.uniquename = ?";
     my $query = $dbh->prepare($stmt);
-    $query->bind_param(1, $fbrf);
-    $query->execute or warn "Can't do doi query\n";
-    (my $doi) = $query->fetchrow_array(); #expecting only one current one
+    $query->bind_param( 1, $fbrf );
+    $query->execute or print_log("WARNING: Can't do doi query\n");
+    ( my $doi ) = $query->fetchrow_array();    #expecting only one current one
     return $doi;
 }
 
@@ -766,50 +832,55 @@ sub check4doi {
 # the word "with", extra prefixes (e.g., FLYBASE) or suffices (e.g., the name
 # of the FB gene) that should not be reported). All this extra stuff must be
 # stripped out to report a comma-separated list of db:accession strings.
-  sub parse_evidence_bits {
-  my $evbit = shift;    # The $evbit corresponds to the evidence_code feature_cvtermprop.value passed to the sub.
-  my $dbh = shift;
-  my @evlines;
-  
-  # First, substitute any spelled out evidence_code(s) with the corresponding abbreviation(s).
-  # Any instances of the word "with" in the written out ev code are removed.
-  foreach my $code (sort keys %EVC) {
-    $evbit =~ s/$code/$EVC{$code}/g;
-  }
-  
-  # Second, split up the value in case there are many evidence codes in there.
-  # It was once the case that the feature_cvtermprop.value could contain
-  # many evidence code bits separated by the word "AND".
-  # This no longer seems to be true, but we're keeping this approach just to
-  # be safe.
-  my @evidence = trim(split / AND /, $evbit);
+sub parse_evidence_bits {
+    my $evbit = shift
+      ; # The $evbit corresponds to the evidence_code feature_cvtermprop.value passed to the sub.
+    my $dbh = shift;
+    my @evlines;
 
-  # Third, in each evidence code string, split the evidence code abbreviation
-  # from the list of cross-references (the word "with" separates them).
-  foreach my $e (@evidence) {
-    my $line;
-    (my $evc, my $dbxrefs) = trim(split / with | from /, $e);
-    # Check that there is a recognized evidence code abbreviation.
-    unless (grep $evc eq $_, values %EVC) {
-      print STDERR "WARNING - unrecognized evidence code: $evc\n";
-      push @evlines, "PROBLEM: $e";
-      next;
+# First, substitute any spelled out evidence_code(s) with the corresponding abbreviation(s).
+# Any instances of the word "with" in the written out ev code are removed.
+    foreach my $code ( sort keys %EVC ) {
+        $evbit =~ s/$code/$EVC{$code}/g;
     }
 
-    # Fourth, get the list of xrefs using the get_dbxrefs() subroutine.
-    (my $col8, my $mismatch) = get_dbxrefs($dbxrefs, $dbh, $evc) if $dbxrefs;
+    # Second, split up the value in case there are many evidence codes in there.
+    # It was once the case that the feature_cvtermprop.value could contain
+    # many evidence code bits separated by the word "AND".
+    # This no longer seems to be true, but we're keeping this approach just to
+    # be safe.
+    my @evidence = trim( split / AND /, $evbit );
 
-    # Fifth, combine the evidence code abbreviation and the xrefs as a
-    # col7\tcol8 string and push to the array.
-    if ($col8) {
-      $line = "$evc\t$col8";
-      $line = "${line}MISMATCH:$mismatch" if ($mismatch);
-    } else {
-      $line= "$evc\t";
+    # Third, in each evidence code string, split the evidence code abbreviation
+    # from the list of cross-references (the word "with" separates them).
+    foreach my $e (@evidence) {
+        my $line;
+        ( my $evc, my $dbxrefs ) = trim( split / with | from /, $e );
+
+        # Check that there is a recognized evidence code abbreviation.
+        unless ( grep $evc eq $_, values %EVC ) {
+            print_log("WARNING: Unrecognized evidence code: $evc\n");
+            push @evlines, "PROBLEM: $e";
+            next;
+        }
+
+        # BILLY: Is this a slow step?
+        # Fourth, get the list of xrefs using the get_dbxrefs() subroutine.
+        ( my $col8, my $mismatch ) = get_dbxrefs( $dbxrefs, $dbh, $evc )
+          if $dbxrefs;
+
+        # Fifth, combine the evidence code abbreviation and the xrefs as a
+        # col7\tcol8 string and push to the array.
+        if ($col8) {
+            $line = "$evc\t$col8";
+            $line = "${line}MISMATCH:$mismatch" if ($mismatch);
+        }
+        else {
+            $line = "$evc\t";
+        }
+        push @evlines, $line;
     }
-    push @evlines, $line;
-  }
-  return @evlines;
+    return @evlines;
 }
 
 # DB-919: Ensure that all IDs are returned (not just the first), and, that any
@@ -818,116 +889,127 @@ sub check4doi {
 # we should return "FB:FBgn0003268,FB:FBgn0004643",
 # rather than "FB:FBgn0003268,FLYBASE:Zw10" (currently the case).
 sub get_dbxrefs {
-  my $inline = shift;
-  my $dbh = shift;
-  my $evc = shift;
-  my $outline = '';
-  my $nomatch;
+    my $inline  = shift;
+    my $dbh     = shift;
+    my $evc     = shift;
+    my $outline = '';
+    my $nomatch;
 
-  # Split out xrefs into an array, trimming flanking white space.
-  # NOTE - comma may or may not have a trailing space.
-  my @dbxrefs = trim(split /,/, $inline);
+    # Split out xrefs into an array, trimming flanking white space.
+    # NOTE - comma may or may not have a trailing space.
+    my @dbxrefs = trim( split /,/, $inline );
 
-  # Prepare a query that confirms that FB IDs are still current.
-  my $stmt = "SELECT feature_id FROM feature WHERE is_obsolete = false and name = ? and uniquename = ?";
-  my $query = $dbh->prepare($stmt);
+    # Prepare a query that confirms that FB IDs are still current.
+    my $stmt =
+"SELECT feature_id FROM feature WHERE is_obsolete = false and name = ? and uniquename = ?";
+    my $query = $dbh->prepare($stmt);
 
-  # Clean up each xref in the list.
-  # Special handling for FB xrefs - restricted to genes, having this pattern:
-  # FLYBASE:feature.name; FB:feature.uniquename
-  # e.g., "FLYBASE:rod; FB:FBgn0003268"
-  # In evidence codes, the semi-colon is only used in this way; it's always followed by a space.
-  foreach my $d (@dbxrefs) {
-    my @parts = split /; /, $d;
-    if ($parts[1]) {
-      my $xref = trim($parts[1]);
-      $outline .= "$xref|";
-    } else {
-      my $xref = $parts[0];
-      $outline .= "$xref|";
-    }
-
-    # For FB xrefs, check that the name and uniquename match.
-    if ($parts[0] =~ /FLYBASE:(.+)/) {
-      my $symb = $1;
-      $symb = decon($symb);
-      print STDERR "WARNING - missing Symbol in evidence code line $inline\n" unless ($symb);
-      if ($parts[1] =~ /FB:(FBgn[0-9]{7})/) {
-	      my $fbgn = $1;
-        # print "CHECKING FOR MATCH BETWEEN $symb and $fbgn\n";
-        $query->bind_param(1, $symb);
-        $query->bind_param(2, $fbgn);
-        $query->execute or warn "Can't execute $stmt FOR $symb:$fbgn\n";
-        unless ($query->rows() > 0) {
-          $nomatch = $fbgn.':'.$symb;
-          $now = localtime();
-          print STDOUT "$now: WARNING: WE HAVE A MISMATCH for $symb:$fbgn\n";
+# Clean up each xref in the list.
+# Special handling for FB xrefs - restricted to genes, having this pattern:
+# FLYBASE:feature.name; FB:feature.uniquename
+# e.g., "FLYBASE:rod; FB:FBgn0003268"
+# In evidence codes, the semi-colon is only used in this way; it's always followed by a space.
+    foreach my $d (@dbxrefs) {
+        my @parts = split /; /, $d;
+        if ( $parts[1] ) {
+            my $xref = trim( $parts[1] );
+            $outline .= "$xref|";
         }
-      } else {
-        print STDERR "WARNING - No FBgn provided for $symb in evidence code line\n";
-      }
+        else {
+            my $xref = $parts[0];
+            $outline .= "$xref|";
+        }
+
+        # For FB xrefs, check that the name and uniquename match.
+        if ( $parts[0] =~ /FLYBASE:(.+)/ ) {
+            my $symb = $1;
+            $symb = decon($symb);
+            print_log("WARNING: Missing Symbol in evidence code line $inline\n")
+              unless ($symb);
+            if ( $parts[1] =~ /FB:(FBgn[0-9]{7})/ ) {
+                my $fbgn = $1;
+
+                # print "CHECKING FOR MATCH BETWEEN $symb and $fbgn\n");
+                $query->bind_param( 1, $symb );
+                $query->bind_param( 2, $fbgn );
+                $query->execute
+                  or
+                  print_log("WARNING: Can't execute $stmt FOR $symb:$fbgn\n");
+                unless ( $query->rows() > 0 ) {
+                    $nomatch = $fbgn . ':' . $symb;
+                    $now     = localtime();
+                    print_log("WARNING: WE HAVE A MISMATCH for $symb:$fbgn\n");
+                }
+            }
+            else {
+                print_log(
+"WARNING: No FBgn provided for $symb in evidence code line\n"
+                );
+            }
+        }
     }
-  }
 
-  # Trim off the xref divider at end of line.
-  $outline =~ s/\|$//;
+    # Trim off the xref divider at end of line.
+    $outline =~ s/\|$//;
 
-  # For certain evidence codes, use commas instead of pipes.
-  if ($evc =~ /HGI|IBA|IC|IGC|IGI|IMP|IPI|ISA|ISS/) {
-    $outline =~ s/\|/,/g;
-  }
+    # For certain evidence codes, use commas instead of pipes.
+    if ( $evc =~ /HGI|IBA|IC|IGC|IGI|IMP|IPI|ISA|ISS/ ) {
+        $outline =~ s/\|/,/g;
+    }
 
-  return( $outline, $nomatch);
+    return ( $outline, $nomatch );
 }
 
 # attempts to fetch GO.references file from geneontology.org site and parse to lookup hash
 # keyed by FBrf with GO ref as value
 sub fetch_and_parse_gorefs {
-  my $ua = LWP::UserAgent->new;
-  my $req = HTTP::Request->new( GET => 'https://raw.githubusercontent.com/geneontology/go-site/master/metadata/gorefs/README.md');
-  my $response = $ua->request($req);
-  my $page = $response->content;
-  unless ($page =~ /^# GO REFs/) {
-	  return;
-  }
-  my @lines = split /\n/, $page;
-  my %fbrf2goref;
-  my $goid = '';
-  foreach my $l (@lines) {
-    next if $l =~ /^#/; # skip comments
-	  next if $l =~ /^\s*$/; # and blank lines
-	$goid = $1 if ($l =~ /^\s\*\sid:\s\[(GO_REF:[0-9]+)\]/);
-  	next if ($goid eq "GO_REF:0000033");
-	  if ($l =~ /^\s\*\sext\sxref:\sFB:(FBrf[0-9]{7})/) {
-	    my $fbrf = $1;
-	    $fbrf2goref{$fbrf} = $goid;
-	  }
-  }
-  $fbrf2goref{'FBrf0253064'} = 'GO_REF:0000115';      # DB-767
-  # $fbrf2goref{'FBrf0253063'} = 'GO_REF:0000024';    # DB-823
-  $fbrf2goref{'FBrf0255270'} = 'GO_REF:0000024';      # DB-823
-  $fbrf2goref{'FBrf0254415'} = 'GO_REF:0000047';      # DB-811
-  $fbrf2goref{'FBrf0258542'} = 'GO_REF:0000033';      # DB-928
+    my $ua = LWP::UserAgent->new;
+    my $req =
+      HTTP::Request->new( GET =>
+'https://raw.githubusercontent.com/geneontology/go-site/master/metadata/gorefs/README.md'
+      );
+    my $response = $ua->request($req);
+    my $page     = $response->content;
+    unless ( $page =~ /^# GO REFs/ ) {
+        return;
+    }
+    my @lines = split /\n/, $page;
+    my %fbrf2goref;
+    my $goid = '';
+    foreach my $l (@lines) {
+        next       if $l =~ /^#/;       # skip comments
+        next       if $l =~ /^\s*$/;    # and blank lines
+        $goid = $1 if ( $l =~ /^\s\*\sid:\s\[(GO_REF:[0-9]+)\]/ );
+        next       if ( $goid eq "GO_REF:0000033" );
+        if ( $l =~ /^\s\*\sext\sxref:\sFB:(FBrf[0-9]{7})/ ) {
+            my $fbrf = $1;
+            $fbrf2goref{$fbrf} = $goid;
+        }
+    }
+    $fbrf2goref{'FBrf0253064'} = 'GO_REF:0000115';    # DB-767
+        # $fbrf2goref{'FBrf0253063'} = 'GO_REF:0000024';    # DB-823
+    $fbrf2goref{'FBrf0255270'} = 'GO_REF:0000024';    # DB-823
+    $fbrf2goref{'FBrf0254415'} = 'GO_REF:0000047';    # DB-811
+    $fbrf2goref{'FBrf0258542'} = 'GO_REF:0000033';    # DB-928
 
-  $now = localtime();
-  print "$now: INFO: Constructed FBrf -> GO_REF Mapping:\n";
-  print Dumper(\%fbrf2goref);
-  return \%fbrf2goref;
+    print_log("INFO: Constructed FBrf -> GO_REF Mapping:\n");
+    print Dumper( \%fbrf2goref );
+    return \%fbrf2goref;
 }
-
 
 # trims any leading or trailing white space
 # can provide a string or an array of strings
 sub trim {
     my @s = @_;
-    for (@s) {s/^\s+//; s/\s+$//;}
+    for (@s) { s/^\s+//; s/\s+$//; }
     return wantarray ? @s : $s[0];
 }
 
 sub decon {
+
 # Converts SGML-formatted symbols to 'symbol_plain' format (modified from conv_greeks)
 
-    my $string = shift ;
+    my $string = shift;
 
     $string =~ s/&agr\;/alpha/g;
     $string =~ s/&Agr\;/Alpha/g;
