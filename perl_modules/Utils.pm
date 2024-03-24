@@ -507,6 +507,7 @@ Gil dos Santos - dossantos@morgan.harvard.edu
 #############################################################################################
 
 use Time::Piece;
+use Time::HiRes qw(gettimeofday);
 
 # return the organism_id for the given feature
 sub get_organism_id_for_feature {
@@ -1885,8 +1886,12 @@ sub get_highest_caller_line_number {
 }
 
 sub get_formatted_time {
-  my $current_time = localtime();
-  my $formatted_time = $current_time->strftime("%Y-%m-%d %H:%M:%S");
+  # Low res time.
+  # my $current_time = localtime();
+  # my $formatted_time = $current_time->strftime("%Y-%m-%d %H:%M:%S");
+  # High res time.
+  my $current_time = Time::Piece->new(gettimeofday());
+  my $formatted_time = $current_time->strftime("%Y-%m-%d %H:%M:%S") . sprintf(".%03d", ($current_time->microsecond / 1000));
   return $formatted_time;
 }
 
