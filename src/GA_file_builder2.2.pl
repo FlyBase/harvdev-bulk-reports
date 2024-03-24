@@ -423,7 +423,6 @@ while (
 
     if ( exists $seen_pubs{$pub} ) {
         $pmid = $seen_pubs{$pub} if defined $seen_pubs{$pub};
-        $now  = localtime();
         print_log("DEBUG: 2a. pub already seen.\n");
     # BILLY: Is this a SLOW step?
     }
@@ -685,7 +684,6 @@ while (
         $line_w_ev .= "$line_copy";
     }
     $line = $line_w_ev;
-    $now  = localtime();
     print_log("DEBUG: 17. Went back and filled in cols 7-8: evidence.\n");
 
     # and here's where to decide what to do with the line
@@ -897,7 +895,6 @@ sub get_dbxrefs {
                   print_log("WARNING: Can't execute $stmt FOR $symb:$fbgn\n");
                 unless ( $query->rows() > 0 ) {
                     $nomatch = $fbgn . ':' . $symb;
-                    $now     = localtime();
                     print_log("WARNING: WE HAVE A MISMATCH for $symb:$fbgn\n");
                 }
             }
