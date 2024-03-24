@@ -10,8 +10,7 @@ use LWP::Protocol::https;
 use Data::Dumper;
 
 if ( @ARGV < 5 ) {
-    print
-"\n USAGE: perl GA_file_builder server db user password outfile (optional: log_file)\n";
+    print "\n USAGE: perl GA_file_builder server db user password outfile (optional: log_file)\n";
     exit();
 }
 
@@ -394,33 +393,30 @@ my $rows;
 print_log("INFO: Processing results of GA query\n");
 while (
     my (
-        $fid,  $fbid, $symb, $fcvtid, $asp,    $goid, $pub,
-        $orgn, $evid, $src,  $date,   $is_not, $ev_rank
+        $fid,  $fbid, $symb, $fcvtid, $asp, $goid, $pub,
+        $orgn, $evid, $src, $date, $is_not, $ev_rank
     )
     = $ga_query->fetchrow_array()
   )
 {
     $rows++;
-
-    print_log(
-        "DEBUG: 1. Start processing row #$rows: feature_cvterm_id=$fcvtid\n");
+    print_log("DEBUG: 1. Start processing row #$rows: feature_cvterm_id=$fcvtid\n");
     my $pseudoflag;
     my $extratabsflag;
 
     # skip te genes
     next if $te_genes{$fbid};
 
-# here is where some decisions need to be made on formatting
-# do you want the lines of the file sorted in any particular order for example by gene symbol
-# or go id
-# if so we will need to build up some type of data structure to be able to sort the values
-# it can be as simple as an array of lines but then the sorting function would be somewhat more
-# complicated or it could be some combination of hashes allowing sequential sorting of the keys
+    # here is where some decisions need to be made on formatting
+    # do you want the lines of the file sorted in any particular order for example by gene symbol
+    # or go id
+    # if so we will need to build up some type of data structure to be able to sort the values
+    # it can be as simple as an array of lines but then the sorting function would be somewhat more
+    # complicated or it could be some combination of hashes allowing sequential sorting of the keys
 
-# basically you will want to set up the line for the GA file as you like it and then either print
-# it to your output or put it in the data structure for later sorting and printing
-    my $line = "FB\t"
-      ;    # here is the variable to store the GA file line with column one info
+    # basically you will want to set up the line for the GA file as you like it and then either print
+    # it to your output or put it in the data structure for later sorting and printing
+    my $line = "FB\t";    # here is the variable to store the GA file line with column one info
 
     # this bit here will do the query for the pub med id for the pub returned
     my $pmid;
@@ -429,8 +425,7 @@ while (
         $pmid = $seen_pubs{$pub} if defined $seen_pubs{$pub};
         $now  = localtime();
         print_log("DEBUG: 2a. pub already seen.\n");
-
-        # BILLY: Is this a SLOW step?
+    # BILLY: Is this a SLOW step?
     }
     else {
         $pmid_query->bind_param( 1, $pub );
@@ -438,11 +433,10 @@ while (
         $pmid_query->bind_param( 3, $pub );
         $pmid_query->execute
           or die print_log("Can't fetch pub med id for $pub\n");
-
         print_log("DEBUG: 2b1. Queried for pub info.\n");
 
-# because any pub or supplementary info of a pub should only return one pubmed id we will do
-# a single fetch - but it is still possible that we won't find a PMID so check
+        # because any pub or supplementary info of a pub should only return one pubmed id we will do
+        # a single fetch - but it is still possible that we won't find a PMID so check
         ($pmid) = $pmid_query->fetchrow_array();
 
         # add to seen hash if found
@@ -491,28 +485,23 @@ while (
                 }
                 $seen_pubs{$pub} = $pmid;
             }
-
-# we can print out an optional warning if no PMID - comment out if no warning wanted
-#      print_log("ERROR: No PMID for $pub\n");
+        # print_log("ERROR: No PMID for $pub\n");
         }
-
         print_log("DEBUG: 2b2. Assessed query results for pub info.\n");
 
     }
 
-# going to need to parse the $evid field (i.e., feature_cvtermprop.value of type evidence) looking for with's and ands
-# note that there can be multiple evidence statements in the same property value
-# and one or more of them may have info for col 8
-# lets set up a sub to do the parsing and then figure out the best way to deal with
-# multiple lines
+    # going to need to parse the $evid field (i.e., feature_cvtermprop.value of type evidence) looking for with's and ands
+    # note that there can be multiple evidence statements in the same property value
+    # and one or more of them may have info for col 8
+    # lets set up a sub to do the parsing and then figure out the best way to deal with
+    # multiple lines
     my @cols_7_8 = parse_evidence_bits( $evid, $dbh );
-
     print_log("DEBUG: 3. Parsed evidence bits.\n");
 
     # start building the line
     # cols 2 and 3
     $line .= "$fbid\t$symb\t";
-
     print_log("DEBUG: 4. Built line col1-3.\n");
 
     # handle negation (part of col 4).
@@ -520,7 +509,6 @@ while (
     if ($is_not) {
         $line .= "NOT|";
     }
-
     print_log("DEBUG: 5a. Filled in col4: NOT.\n");
 
     # handle mandatory gp2term qualifiers (part of col 4).
@@ -528,39 +516,28 @@ while (
         $line .= "$quals{$fcvtid}\t";
     }
     else {
-        print_log(
-"ERROR: Missing gp2term qualifier for this annotation: fcvt_id = $fcvtid, gene = $symb ($fbid), cvterm = GO:$goid, pub = $pub, is_not = $is_not.\n"
-        );
-        die print_log(
-"ERROR: FAILING due to data issue: some annotations are missing gp2term qualifers."
-        );
+        print_log("ERROR: Missing gp2term qualifier for this annotation: fcvt_id = $fcvtid, gene = $symb ($fbid), cvterm = GO:$goid, pub = $pub, is_not = $is_not.\n");
+        die print_log("ERROR: FAILING due to data issue: some annotations are missing gp2term qualifers.");
     }
-
     print_log("DEBUG: 5b. Filled in col4: gp2term.\n");
 
     # cols 5 and 6
     $line .= "GO:$goid\tFB:$pub";
-
     print_log("DEBUG: 6. Filled in cols 5-6: GO & FB pub IDs.\n");
 
     # check for PMID
     $line .= "|$pmid" if $pmid;
     $line .= "\t";
-
     print_log("DEBUG: 7. Filled in col 7: PubMed ID.\n");
 
-# evidence code col 7
-# and optional with col 8
-# NOTE: as these can have values that might need to be split over multiple lines
-# at this point we just put in a place holder to substitute in the values
+    # evidence code col 7 and optional with col 8
+    # NOTE: as these can have values that might need to be split over multiple lines
+    # at this point we just put in a place holder to substitute in the values
     $line .= "PUT_COLS_8_9_HERE\t";
-
-    print STDOUT
-      "$now: DEBUG: 8. Filled in cols 7-8 with evidence placeholed.\n";
+    print_log("DEBUG: 8. Filled in cols 7-8 with evidence placeholed.\n");
 
     # aspect col 9
     $line .= "$ASP{$asp}\t";
-
     print_log("DEBUG: 9. Filled in col 9: aspect.\n");
 
     # optional fullname col 10
@@ -574,7 +551,6 @@ while (
         $fullnames{$fbid} = $fn;
     }
     $line .= "\t";
-
     print_log("DEBUG: 10. Filled in col 10: fullname.\n");
 
     # synonyms col 11
@@ -603,12 +579,11 @@ while (
     else {
         $line .= "\t";
     }
-
     print_log("DEBUG: 11. Filled in col 11: synonyms.\n");
 
-# col 12 - determine type of transcript - assume only one but with miRNA exception
-# current GAF1 default = 'gene'
-#  $line .= "gene\t";
+    # col 12 - determine type of transcript - assume only one but with miRNA exception
+    # current GAF1 default = 'gene'
+    #  $line .= "gene\t";
 
     ##################################################################################################
     ##################################################################################################
@@ -620,27 +595,23 @@ while (
     ##################################################################################################
     ##################################################################################################
     ##################################################################################################
-# BOB
-# Probably need to update this code block for DB-943.
-# It seems to already look up promoted gene type, so perhaps only minor modification is required.
-# BILLY: Is this a SLOW step?
-# query for GAF2 format getting product type from promoted gene type
-# for product type - do lookup
+    # BOB
+    # Probably need to update this code block for DB-943.
+    # It seems to already look up promoted gene type, so perhaps only minor modification is required.
+    # BILLY: Is this a SLOW step?
+    # query for GAF2 format getting product type from promoted gene type
+    # for product type - do lookup
     my $type = 'gene_product';
     if ( $seen_gns{$fid} ) {
         $type = $seen_gns{$fid};
         $type = 'gene_product' if $type eq 'pseudogene';
-
-        # BILLY: Is this a SLOW step?
+    # BILLY: Is this a SLOW step?
     }
     else {
         $partyq->bind_param( 1, $fid );
         $partyq->execute or die print_log("Can't do gene type query\n");
-
         if ( $partyq->rows > 1 ) {
-            print_log(
-"WARNING: More than one type of transcript associated with $fbid\n"
-            );
+            print_log("WARNING: More than one type of transcript associated with $fbid\n");
         }
         ( my $gtype ) = $partyq->fetchrow_array();
         if ($gtype) {
@@ -654,9 +625,7 @@ while (
             }
         }
     }
-
     $line .= "$type\t";
-
     print_log("DEBUG: 12. Filled in col 12: gene product type.\n");
     ##################################################################################################
     ##################################################################################################
@@ -671,17 +640,14 @@ while (
 
     # col 13
     $line .= "taxon:$TAX{$orgn}\t";
-
     print_log("DEBUG: 13. Filled in col 13: taxon.\n");
 
     # col 14
     $line .= "$date\t";
-
     print_log("DEBUG: 14. Filled in col 14: date.\n");
 
     # col 15
     $line .= "$src\t";
-
     print_log("DEBUG: 15. Filled in col15: source.\n");
 
     # col 16
@@ -692,14 +658,10 @@ while (
     else {
         $line .= "\n";
     }
-
     print_log("DEBUG: 16. Filled in col16: GO annotation extension.\n");
 
     # add the evidence and with cols to as many lines as needed
-    print_log(
-        "ERROR: Missing evidence for:\nt$line" and next
-          unless @cols_7_8
-    );
+    print_log("ERROR: Missing evidence for:\nt$line") and next unless @cols_7_8;
     my $line_w_ev     = '';
     my $mismatch_line = '';
     foreach my $c (@cols_7_8) {
@@ -724,14 +686,12 @@ while (
     }
     $line = $line_w_ev;
     $now  = localtime();
-    print STDOUT
-      "$now: DEBUG: 17. Went back and filled in cols 7-8: evidence.\n";
+    print_log("DEBUG: 17. Went back and filled in cols 7-8: evidence.\n");
 
-  # and here's where to decide what to do with the line
-  #  print $line;
-  # and we'd like to sort if first by gene symbol and then by pub so build a HOH
+    # and here's where to decide what to do with the line
+    #  print $line;
+    # and we'd like to sort if first by gene symbol and then by pub so build a HOH
     push @{ $GA_results{$symb}{$pub} }, $line;
-
     print_log("DEBUG: 18. Add line to hash.\n");
 
     # generate lines for problem reports
@@ -942,9 +902,7 @@ sub get_dbxrefs {
                 }
             }
             else {
-                print_log(
-"WARNING: No FBgn provided for $symb in evidence code line\n"
-                );
+                print_log("WARNING: No FBgn provided for $symb in evidence code line\n");
             }
         }
     }
