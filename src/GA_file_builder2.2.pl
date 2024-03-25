@@ -329,12 +329,12 @@ print_log("INFO: Found $trpt_type_counter gene product types for current localiz
 # 2. Get more detailed gene product types for some ncRNA genes.
 #    This only works on reporting builds where 'promoted_gene_type' is available.
 my %ncrna_gene_class_mapping = (
-    'SO0001269:SRP_RNA_gene' => 'SRP_RNA',
-    'SO0001640:RNase_MRP_RNA_gene' => 'RNase_MRP_RNA',
-    'SO0001639:RNase_P_RNA_gene' => 'RNase_P_RNA',
-    'SO0002127:lncRNA_gene' => 'lncRNA',
-    'SO0002182:antisense_lncRNA_gene' => 'lncRNA',
-    'SO0002353:sbRNA_gene' => 'sbRNA',
+    '@SO0001269:SRP_RNA_gene@' => 'SRP_RNA',
+    '@SO0001640:RNase_MRP_RNA_gene@' => 'RNase_MRP_RNA',
+    '@SO0001639:RNase_P_RNA_gene@' => 'RNase_P_RNA',
+    '@SO0002127:lncRNA_gene@' => 'lncRNA',
+    '@SO0002182:antisense_lncRNA_gene@' => 'lncRNA',
+    '@SO0002353:sbRNA_gene@' => 'sbRNA',
 );
 my $promoted_ncrna_gene_type_query = $dbh->prepare(
     sprintf("
