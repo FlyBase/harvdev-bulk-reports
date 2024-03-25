@@ -63,7 +63,7 @@ $header .= "!saved-by: FlyBase GOcur gocur\@morgan.harvard.edu\n";
 $header .= "!FlyBase release: $RELEASE\n";
 print OUT $header;
 
-# Set up an FBgn-keyed hash to non-current synonyms.
+# Create an FBgn-keyed hash to non-current synonyms.
 # NOTE - If GO terms get moved to proteins/transcripts this will require rejiggering.
 print_log("INFO: Querying for synonyms");
 my %synonyms;
@@ -85,33 +85,28 @@ while ( ( my $fbid, my $syn ) = $syn_query->fetchrow_array() ) {
 }
 
 # Create a FBgn-keyed hash of current fullnames.
+print_log("INFO: Querying for fullnames");
 my %fullnames;
 my $fn_query = $dbh->prepare(
     sprintf("
-    SELECT DISTINCT f.uniquename, s.name
-    FROM synonym s
-    JOIN feature_synonym fs ON fs.synonym_id = s.synonym_id
-    JOIN feature f ON f.feature_id = fs.feature_id
-    JOIN cvterm cvt ON cvt.cvterm_id = s.type_id
-    WHERE f.is_obsolete IS FALSE
-      AND f.is_analysis IS FALSE
-      AND f.uniquename ~ '^FBgn[0-9]{7}\$'
-      AND fs.is_current IS TRUE
-      AND cvt.name = 'fullname'
+        SELECT DISTINCT f.uniquename, s.name
+        FROM synonym s
+        JOIN feature_synonym fs ON fs.synonym_id = s.synonym_id
+        JOIN feature f ON f.feature_id = fs.feature_id
+        JOIN cvterm cvt ON cvt.cvterm_id = s.type_id
+        WHERE f.is_obsolete IS FALSE
+        AND f.is_analysis IS FALSE
+        AND f.uniquename ~ '^FBgn[0-9]{7}\$'
+        AND fs.is_current IS TRUE
+        AND cvt.name = 'fullname'
     ")
 );
-
-# execute the query
-print_log("INFO: Querying for fullnames");
 $fn_query->execute or die print_log("Can't fetch fullnames");
-
 while ( ( my $fbid, my $fn ) = $fn_query->fetchrow_array() ) {
     $fullnames{$fbid} = $fn;
 }
 
-# set up various mapping hashes
-
-# pub types by type_id
+# Create a pub types hash.
 my %pubsbytype;
 my $stmt =
 "SELECT cvterm_id, cvterm.name FROM cvterm, cv WHERE cvterm.cv_id = cv.cv_id and cv.name = 'pub type'";
@@ -121,7 +116,7 @@ while ( ( my $cid, my $name ) = $query->fetchrow_array() ) {
     $pubsbytype{$cid} = $name;
 }
 
-# this is global so can use it in the parse evidence code sub
+# This is global so it can be used in the parse_evidence_bits subroutine.
 our %EVC = (
     'inferred from mutant phenotype'                    => 'IMP',
     'inferred from genetic interaction'                 => 'IGI',
@@ -159,101 +154,96 @@ my %ASP = (
 
 my %TAX = ( Dmel => '7227' );
 
-# prepare the biggie
+# Prepare the main gene GO annotation query.
 my $ga_query = $dbh->prepare(
-    sprintf(
-"SELECT DISTINCT gene.feature_id, gene.uniquename as fbid, symb.name as symbol,
-       fcvt.feature_cvterm_id, cv.name as aspect,
-       godb.accession as GO_id, ppub.uniquename as ppub, o.abbreviation as species,
-       evc.value as evidence_code, prv.value as provenance, date.value as date, fcvt.is_not as is_not, evc.rank as evidence_code_rank
-       FROM
-       cvterm goterm
-       JOIN   cv
-       ON   (goterm.cv_id = cv.cv_id and goterm.is_obsolete = 0 and 
-             cv.name in ('cellular_component','molecular_function','biological_process'))
-       JOIN   dbxref godb
-       ON   (goterm.dbxref_id = godb.dbxref_id)
-       JOIN   feature_cvterm fcvt
-       ON   (goterm.cvterm_id = fcvt.cvterm_id)
-       JOIN   feature gene
-       ON   (fcvt.feature_id = gene.feature_id and gene.is_obsolete = false and gene.is_analysis = false
-            and gene.uniquename like 'FBgn_______')
-       JOIN   organism o
-       -- to remove organism restriction comment out 'and o.abbreviation = 'Dmel''
-       -- but remember to close paren
-       ON   (gene.organism_id = o.organism_id and o.abbreviation = 'Dmel')
-       JOIN   feature_synonym fs1
-       ON   (gene.feature_id = fs1.feature_id and fs1.is_current = true)
-       JOIN   synonym symb
-       ON   (fs1.synonym_id = symb.synonym_id)
-       JOIN   cvterm stype
-       ON   (symb.type_id = stype.cvterm_id and stype.name = 'symbol')
-       JOIN   pub ppub
-       ON   (fcvt.pub_id = ppub.pub_id)
-       JOIN   feature_cvtermprop prv
-       ON   (fcvt.feature_cvterm_id = prv.feature_cvterm_id)
-       JOIN   cvterm prvname
-       ON   (prv.type_id = prvname.cvterm_id and prvname.name = 'provenance')
-       JOIN   feature_cvtermprop evc
-       ON   (fcvt.feature_cvterm_id = evc.feature_cvterm_id)
-       JOIN   cvterm evcname
-       ON   (evc.type_id = evcname.cvterm_id and evcname.name = 'evidence_code')
-       JOIN   feature_cvtermprop date
-       ON   (fcvt.feature_cvterm_id = date.feature_cvterm_id)
-       JOIN   cvterm dtname
-       ON   (date.type_id = dtname.cvterm_id and dtname.name = 'date')"
-    )
+    sprintf("
+        SELECT DISTINCT gene.feature_id,
+                        gene.uniquename AS fbid,
+                        symb.name AS symbol,
+                        fcvt.feature_cvterm_id,
+                        cv.name AS aspect,
+                        godb.accession AS GO_id,
+                        ppub.uniquename AS ppub,
+                        o.abbreviation AS species,
+                        evc.value AS evidence_code,
+                        prv.value AS provenance,
+                        date.value AS date,
+                        fcvt.is_not AS is_not,
+                        evc.rank AS evidence_code_rank
+        FROM cvterm goterm
+        JOIN cv ON goterm.cv_id = cv.cv_id
+        JOIN dbxref godb ON goterm.dbxref_id = godb.dbxref_id
+        JOIN feature_cvterm fcvt ON goterm.cvterm_id = fcvt.cvterm_id
+        JOIN feature gene ON fcvt.feature_id = gene.feature_id
+        JOIN organism o ON gene.organism_id = o.organism_id
+        JOIN feature_synonym fs1 ON gene.feature_id = fs1.feature_id AND fs1.is_current IS TRUE
+        JOIN synonym symb ON fs1.synonym_id = symb.synonym_id
+        JOIN cvterm stype on symb.type_id = stype.cvterm_id and stype.name = 'symbol'
+        JOIN pub ppub ON fcvt.pub_id = ppub.pub_id
+        JOIN feature_cvtermprop prv ON fcvt.feature_cvterm_id = prv.feature_cvterm_id
+        JOIN cvterm prvname ON prv.type_id = prvname.cvterm_id and prvname.name = 'provenance'
+        JOIN feature_cvtermprop evc ON  fcvt.feature_cvterm_id = evc.feature_cvterm_id
+        JOIN cvterm evcname ON evc.type_id = evcname.cvterm_id and evcname.name = 'evidence_code'
+        JOIN feature_cvtermprop date ON fcvt.feature_cvterm_id = date.feature_cvterm_id
+        JOIN cvterm dtname ON date.type_id = dtname.cvterm_id and dtname.name = 'date'
+        WHERE gene.is_obsolete IS FALSE
+          AND gene.is_analysis IS FALSE
+          AND gene.uniquename ~ '^FBgn[0-9]{7}\$'
+          AND o.abbreviation = 'Dmel'
+          AND goterm.is_obsolete = 0
+          AND cv.name in ('cellular_component','molecular_function','biological_process')
+    ")
 );
 
-# this is a separate query we have set up to retrieve qualifier information to stick
-# in post big query to avoid row duplication problem (due to LEFT JOIN misbehavior) in previous version
-
-# hash to store the feature_cvterms with qualifiers
-my %quals;
-
-# set up the query
-my $qual_query = $dbh->prepare(
-    sprintf(
-        "SELECT fcvtp.feature_cvterm_id, qual.name
-     FROM   feature_cvtermprop fcvtp, cvterm qual
-     WHERE  fcvtp.type_id = qual.cvterm_id and
-            qual.name IN ('enables', 'contributes_to', 'involved_in', 'acts_upstream_of',
-                          'acts_upstream_of_positive_effect', 'acts_upstream_of_negative_effect',
-                         'located_in', 'part_of', 'is_active_in', 'colocalizes_with')"
-    )
-);
-
-# build the quals hash
+# A a separate query to get qualifier information to stick in post-big-query.
 print_log("INFO: Getting the qualifier information.");
+my %quals;
+my $qual_query = $dbh->prepare(
+    sprintf("
+        SELECT fcvtp.feature_cvterm_id, qual.name
+        FROM feature_cvtermprop fcvtp
+        JOIN cvterm qual ON fcvtp.type_id = qual.cvterm_id
+        WHERE qual.name IN (
+            'enables',
+            'contributes_to',
+            'involved_in',
+            'acts_upstream_of',
+            'acts_upstream_of_positive_effect',
+            'acts_upstream_of_negative_effect',
+            'located_in',
+            'part_of',
+            'is_active_in',
+            'colocalizes_with'
+        )
+    ")
+);
 $qual_query->execute or die print_log("Can't query for qualifiers");
 while ( my ( $fcvtid, $qual ) = $qual_query->fetchrow_array() ) {
     $quals{$fcvtid} = $qual;
 }
 
 # DB-893: Hash to store GO extensions: keys are feature_cvterm_id plus rank with intervening underscore char.
+print_log("INFO: Getting the GO extension information.");
 my %go_xtns;
 my $go_xtn_query = $dbh->prepare(
-    sprintf(
-        "SELECT fcvtp.feature_cvterm_id, fcvtp.rank, fcvtp.value
-      FROM feature_cvtermprop fcvtp
-      JOIN cvterm cvt ON cvt.cvterm_id = fcvtp.type_id
-      WHERE cvt.name = 'go_annotation_extension'"
-    )
+    sprintf("
+        SELECT fcvtp.feature_cvterm_id, fcvtp.rank, fcvtp.value
+        FROM feature_cvtermprop fcvtp
+        JOIN cvterm cvt ON cvt.cvterm_id = fcvtp.type_id
+        WHERE cvt.name = 'go_annotation_extension'
+    ")
 );
-print_log("INFO: Getting the GO extension information.");
 my $go_xtn_counter = 0;
 $go_xtn_query->execute or die print_log("Can't query for GO extensions");
 while ( my ( $fcvtid, $rank, $go_xtn_text ) = $go_xtn_query->fetchrow_array() )
 {
     $go_xtns{ $fcvtid . '_' . $rank } = $go_xtn_text;
-    $go_xtn_counter += 1;
+    $go_xtn_counter++;
 }
 print_log("INFO: Found $go_xtn_counter GO annotation extensions.");
 
-# here is a query to build a lookup hash to exclude genes annotated with 'transposable_element_gene' term
+# Build a lookup has to exclude genes annotated with 'transposable_element_gene' term.
 my %te_genes;
-
-# here's the query
 my $te_query = $dbh->prepare(
     sprintf(
         "SELECT f.uniquename
@@ -262,9 +252,7 @@ my $te_query = $dbh->prepare(
      and    c.cv_id = cv.cv_id and cv.name = 'SO' and c.name = 'transposable_element_gene'"
     )
 );
-
 $te_query->execute or die print_log("Can't query for te genes");
-
 while ( ( my $teg_uname ) = $te_query->fetchrow_array() ) {
     $te_genes{$teg_uname} = 1;
 }
@@ -295,34 +283,94 @@ my $pmid_query = $dbh->prepare(
     )
 );
 
-# query for gene type using 'promoted_gene_type' featureprop
-# and map to value in col 12
-#my %gene_types = ('protein_coding_gene' => 'protein',
-#		  'miRNA_gene' => 'miRNA',
-#		  'tRNA_gene' => 'tRNA',
-#		  'rRNA_gene' => 'rRNA',
-#		  'snoRNA_gene' => 'snoRNA',
-#		  'snRNA_gene' => 'snRNA',
-#		  'non_protein_coding_gene' => 'ncRNA',
-#		 );
+# Build, in layers, a gene feature_id-keyed hash of gene product types.
+# DB-943: Improve gene product types listed for ncRNA genes.
+print_log("INFO: Get gene product types.");
+# 1. Create feature_id-keyed hash of types based on annotated transcripts.
+# This assumes only one transcript type per gene, which is the current restriction.
+my %gene_product_types;
+my $transcript_type_query = $dbh->prepare(
+    sprintf("
+        SELECT DISTINCT gene.feature_id, cvt.name
+        FROM feature trpt
+        JOIN cvterm cvt ON cvt.cvterm_id = trpt.type_id
+        JOIN featureloc fl ON fl.feature_id = trpt.feature_id
+        JOIN feature_relationship fr ON fr.subject_id = trpt.feature_id
+        JOIN cvterm cvtfr ON cvtfr.cvterm_id = fr.type_id AND cvtfr.name = 'partof'
+        JOIN feature gene ON gene.feature_id = fr.object_id
+        JOIN organism o ON o.organism_id = gene.organism_id
+        WHERE gene.is_obsolete IS FALSE
+          AND gene.is_analysis IS FALSE
+          AND gene.uniquename ~ '^FBgn[0-9]{7}\$'
+          AND o.abbreviation = 'Dmel'
+          AND trpt.is_obsolete IS FALSE
+          AND trpt.is_analysis IS FALSE
+          AND trpt.uniquename ~ '^FBtr[0-9]{7}\$'
+          AND trpt.name !~ '-XR\$'
+    ")
+)
+my $trpt_type_counter = 0;
+$transcript_type_query->execute or die print_log("Can't query for gene transcript types.");
+while ( my ( $fid, $trpt_type ) = $transcript_type_query->fetchrow_array() )
+{
+    if ( $trpt_type eq 'mRNA' ) {
+        $gene_product_types{$fid} = 'protein';
+    }
+    elsif ( $trpt_type eq 'pre_miRNA' ) {
+        $gene_product_types{$fid} = 'miRNA';
+    }
+    else {
+        $gene_product_types{$fid} = $trpt_type;
+    }
+    $trpt_type_counter++;
+}
+print_log("INFO: Found $trpt_type_counter gene product types for current localized Dmel genes.");
 
-my %gene_types = (
-    'mRNA'      => 'protein',
-    'miRNA'     => 'miRNA',
-    'pre_miRNA' => 'miRNA',
-    'tRNA'      => 'tRNA',
-    'rRNA'      => 'rRNA',
-    'snoRNA'    => 'snoRNA',
-    'snRNA'     => 'snRNA',
-    'ncRNA'     => 'ncRNA',
+# 2. Get more detailed gene product types for some ncRNA genes.
+#    This only works on reporting builds where 'promoted_gene_type' is available.
+my %ncrna_gene_class_mapping = (
+    'SO0001269:SRP_RNA_gene' => 'SRP_RNA',
+    'SO0001640:RNase_MRP_RNA_gene' => 'RNase_MRP_RNA',
+    'SO0001639:RNase_P_RNA_gene' => 'RNase_P_RNA',
+    'SO0002127:lncRNA_gene' => 'lncRNA',
+    'SO0002182:antisense_lncRNA_gene' => 'lncRNA',
+    'SO0002353:sbRNA_gene' => 'sbRNA',
+)
+my $promoted_ncrna_gene_type_query = $dbh->prepare(
+    sprintf("
+        SELECT DISTINCT f.feature_id, fp.value
+        FROM feature f
+        JOIN organism o ON o.organism_id = f.organism_id
+        JOIN featureprop fp ON fp.feature_id = f.feature_id
+        JOIN cvterm t ON t.cvterm_id = fp.type_id
+        WHERE f.is_obsolete IS FALSE
+          AND f.is_analysis IS FALSE
+          AND f.uniquename ~ '^FBgn[0-9]{7}\$'
+          AND o.abbreviation = 'Dmel'
+          AND t.name = 'promoted_gene_type'
+          AND fp.value ~ 'RNA_gene'
+    ")
 );
+my $result_counter = 0;
+my $update_gp_type_counter = 0;
+$promoted_ncrna_gene_type_query->execute or die print_log("Can't query for ncRNA gene promoted gene types.");
+while ( my ( $fid, $pgt_value ) = $promoted_ncrna_gene_type_query->fetchrow_array() )
+{
+    if ( $ncrna_gene_class_mapping{$pgt_value} ) {
+        $gene_product_types{$fid} = $ncrna_gene_class_mapping{$pgt_value}
+        $update_gp_type_counter++;
+    }
+    $result_counter++;
+}
+print_log("INFO: Found $result_counter ncRNA promoted_gene_type values for current Dmel genes.");
+print_log("INFO: Updated gene product type for $update_gp_type_counter ncRNA genes.");
 
+# Query for gene model status.
 ( my $promoted_prop_tyid ) = $dbh->selectrow_array(
     sprintf(
 "SELECT cvterm_id FROM cvterm c WHERE c.name = 'derived_gene_model_status'"
     )
 );
-
 my $tyq;
 if ( defined $promoted_prop_tyid ) {
     $tyq = $dbh->prepare(
@@ -333,28 +381,13 @@ if ( defined $promoted_prop_tyid ) {
     );
 }
 
-my $partof = $dbh->selectrow_array(
-    sprintf("SELECT cvterm_id FROM cvterm c WHERE c.name = 'partof'") );
-
-my $regex = '%-XR';
-
-my $partyq = $dbh->prepare(
-    sprintf(
-        "SELECT distinct c.name
-       FROM feature t, feature_relationship fr, cvterm c
-      WHERE fr.type_id = $partof and fr.subject_id = t.feature_id
-        and t.uniquename like 'FBtr_______' and t.name not like '%s' and t.is_obsolete = false
-        and t.type_id = c.cvterm_id and fr.object_id = ?", $regex
-    )
-);
-
-# execute the big query
+# Execute the big query
 print_log("INFO: Querying for ga info");
 $ga_query->execute or die print_log("Can't get ga info");
 
-# fetch the results
+# Fetch the results
 
-# do we want to declare some hash or array to hold the info for sorting here? see below.
+# Do we want to declare some hash or array to hold the info for sorting here? see below.
 my %GA_results;
 my %pseudos_withdrawn;
 
@@ -370,14 +403,14 @@ my $rows;
 print_log("INFO: Processing results of GA query");
 while (
     my (
-        $fid,  $fbid, $symb, $fcvtid, $asp, $goid, $pub,
+        $fid, $fbid, $symb, $fcvtid, $asp, $goid, $pub,
         $orgn, $evid, $src, $date, $is_not, $ev_rank
     )
     = $ga_query->fetchrow_array()
   )
 {
     $rows++;
-    # print_log("DEBUG: 1. Start processing row #$rows: feature_cvterm_id=$fcvtid");
+    print_log("DEBUG: 1. Start processing row #$rows: feature_cvterm_id=$fcvtid");
     my $pseudoflag;
     my $extratabsflag;
 
@@ -540,7 +573,6 @@ while (
                 or ( $fullnames{$fbid} and ( $s eq $fullnames{$fbid} ) ) );
             $line .= "$s|";
         }
-
         # this little bit just checks to make sure there are any synonyms left
         if ( $line =~ /\|$/ ) {
             $line =~ s/\|$/\t/;
@@ -552,43 +584,31 @@ while (
     else {
         $line .= "\t";
     }
-    # print_log("DEBUG: 11. Filled in col 11: synonyms.");
+    print_log("DEBUG: 11. Filled in col 11: synonyms.");
 
-    # col 12 - determine type of transcript - assume only one but with miRNA exception
-    # current GAF1 default = 'gene'
-    #  $line .= "gene\t";
-
-    # query for GAF2 format getting product type from promoted gene type
-    # for product type - do lookup
-    my $type = 'gene_product';
-    if ( $seen_gns{$fid} ) {
-        $type = $seen_gns{$fid};
-        $type = 'gene_product' if $type eq 'pseudogene';
-    }
-    else {
-        $partyq->bind_param( 1, $fid );
-        $partyq->execute or die print_log("Can't do gene type query");
-        if ( $partyq->rows > 1 ) {
-            print_log("WARNING: More than one type of transcript associated with $fbid");
+    # col 12 - determine the gene product type.
+    # DB-943: Use more detailed gene product descriptors.
+    # Note: In old code, the gene product look up was the rate limiting step.
+    #       When a new gene was encountered in the list of GO annotations, 
+    #       it would take about 700ms to get the gene product value. For
+    #       ~14,763 genes in FB2024_01, this adds up to ~2h52m, essentially
+    #       the entire run time for this script. New method builds the lookup
+    #       at the start of the script to avoid repeated slow db queries.
+    my $gp_type = 'gene_product';
+    if ( $gene_product_types{$fid} ) {
+        if ( $gene_product_types{$fid} ne 'pseudogene' ) {
+            $gp_type = $gene_product_types{$fid};
         }
-        ( my $gtype ) = $partyq->fetchrow_array();
-        if ($gtype) {
-            if ( $gtype eq 'pseudogene' ) {
-                $pseudoflag = 1;
-                $seen_gns{fid} = $gtype;
-            }
-            else {
-                $type = $gene_types{$gtype} if $gene_types{$gtype};
-                $seen_gns{$fid} = $type;
-            }
+        else {
+            $pseudoflag = 1;
         }
     }
-    $line .= "$type\t";
-    # print_log("DEBUG: 12. Filled in col 12: gene product type.");
+    $line .= "$gp_type\t";
+    print_log("DEBUG: 12. Filled in col 12: gene product type.");
 
     # col 13
     $line .= "taxon:$TAX{$orgn}\t";
-    # print_log("DEBUG: 13. Filled in col 13: taxon.");
+    print_log("DEBUG: 13. Filled in col 13: taxon.");
 
     # col 14
     $line .= "$date\t";
@@ -701,7 +721,7 @@ foreach my $s ( sort keys %pseudos_withdrawn ) {
 print_log("INFO: Printed out $rlcnt lines for the lines to review report.");
 
 my $end = localtime();
-print_log("INFO: STARTED: $start\nENDED:   $end");
+print_log("INFO: STARTED: $start\tENDED:   $end");
 
 #$dbh->finish();
 #$dbh->disconnect();
