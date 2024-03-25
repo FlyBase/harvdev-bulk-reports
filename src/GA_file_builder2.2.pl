@@ -357,7 +357,7 @@ $promoted_ncrna_gene_type_query->execute or die print_log("Can't query for ncRNA
 while ( my ( $fid, $pgt_value ) = $promoted_ncrna_gene_type_query->fetchrow_array() )
 {
     if ( $ncrna_gene_class_mapping{$pgt_value} ) {
-        $gene_product_types{$fid} = $ncrna_gene_class_mapping{$pgt_value}
+        $gene_product_types{$fid} = $ncrna_gene_class_mapping{$pgt_value};
         $update_gp_type_counter++;
     }
     $result_counter++;
