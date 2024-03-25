@@ -308,7 +308,7 @@ my $transcript_type_query = $dbh->prepare(
           AND trpt.uniquename ~ '^FBtr[0-9]{7}\$'
           AND trpt.name !~ '-XR\$'
     ")
-)
+);
 my $trpt_type_counter = 0;
 $transcript_type_query->execute or die print_log("Can't query for gene transcript types.");
 while ( my ( $fid, $trpt_type ) = $transcript_type_query->fetchrow_array() )
