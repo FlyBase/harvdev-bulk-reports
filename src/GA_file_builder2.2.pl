@@ -363,21 +363,10 @@ my %seen_pubs
 my %seen_gns;    # tracking hash with type as value
 my $rows;
 
+# Main loop: assess ~150,000 GO annotations (~3h).
 # note I am explicitly declaring all variables in results
 # we could also just fetch an array and refer to array index numbers which might be slightly
 # more efficient but harder to keep track of
-
-##################################################################################################################
-##################################################################################################################
-##################################################################################################################
-##################################################################################################################
-##################################################################################################################
-##################################################################################################################
-##################################################################################################################
-##################################################################################################################
-##################################################################################################################
-##################################################################################################################
-# BOB: This "while" loop currently takes ~ 3h to process.
 print_log("INFO: Processing results of GA query");
 while (
     my (
@@ -388,7 +377,7 @@ while (
   )
 {
     $rows++;
-    print_log("DEBUG: 1. Start processing row #$rows: feature_cvterm_id=$fcvtid");
+    # print_log("DEBUG: 1. Start processing row #$rows: feature_cvterm_id=$fcvtid");
     my $pseudoflag;
     my $extratabsflag;
 
@@ -411,15 +400,14 @@ while (
 
     if ( exists $seen_pubs{$pub} ) {
         $pmid = $seen_pubs{$pub} if defined $seen_pubs{$pub};
-        print_log("DEBUG: 2a. pub already seen.");
-    # BILLY: Is this a SLOW step?
+        # print_log("DEBUG: 2a. pub already seen.");
     }
     else {
         $pmid_query->bind_param( 1, $pub );
         $pmid_query->bind_param( 2, $pub );
         $pmid_query->bind_param( 3, $pub );
         $pmid_query->execute or die print_log("Can't fetch pub med id for $pub");
-        print_log("DEBUG: 2b1. Queried for pub info.");
+        # print_log("DEBUG: 2b1. Queried for pub info.");
 
         # because any pub or supplementary info of a pub should only return one pubmed id we will do
         # a single fetch - but it is still possible that we won't find a PMID so check
@@ -432,7 +420,6 @@ while (
         }
         else {
            # do other checks and associations based on JIRA DB-233 specification
-           # BILLY: Is this a slow step.
             $pmid = check4doi( $dbh, $pub );
             if ($pmid) {
                 $pmid = "DOI:$pmid";
@@ -473,7 +460,7 @@ while (
             }
         # print_log("ERROR: No PMID for $pub");
         }
-        print_log("DEBUG: 2b2. Assessed query results for pub info.");
+        # print_log("DEBUG: 2b2. Assessed query results for pub info.");
 
     }
 
@@ -483,19 +470,19 @@ while (
     # lets set up a sub to do the parsing and then figure out the best way to deal with
     # multiple lines
     my @cols_7_8 = parse_evidence_bits( $evid, $dbh );
-    print_log("DEBUG: 3. Parsed evidence bits.");
+    # print_log("DEBUG: 3. Parsed evidence bits.");
 
     # start building the line
     # cols 2 and 3
     $line .= "$fbid\t$symb\t";
-    print_log("DEBUG: 4. Built line col1-3.");
+    # print_log("DEBUG: 4. Built line col1-3.");
 
     # handle negation (part of col 4).
     # $line .= "IS_NOT VALUE: $is_not |||";
     if ($is_not) {
         $line .= "NOT|";
     }
-    print_log("DEBUG: 5a. Filled in col4: NOT.");
+    # print_log("DEBUG: 5a. Filled in col4: NOT.");
 
     # handle mandatory gp2term qualifiers (part of col 4).
     if ( exists( $quals{$fcvtid} ) ) {
@@ -505,26 +492,26 @@ while (
         print_log("ERROR: Missing gp2term qualifier for this annotation: fcvt_id = $fcvtid, gene = $symb ($fbid), cvterm = GO:$goid, pub = $pub, is_not = $is_not.");
         die print_log("ERROR: FAILING due to data issue: some annotations are missing gp2term qualifers.");
     }
-    print_log("DEBUG: 5b. Filled in col4: gp2term.");
+    # print_log("DEBUG: 5b. Filled in col4: gp2term.");
 
     # cols 5 and 6
     $line .= "GO:$goid\tFB:$pub";
-    print_log("DEBUG: 6. Filled in cols 5-6: GO & FB pub IDs.");
+    # print_log("DEBUG: 6. Filled in cols 5-6: GO & FB pub IDs.");
 
     # check for PMID
     $line .= "|$pmid" if $pmid;
     $line .= "\t";
-    print_log("DEBUG: 7. Filled in col 7: PubMed ID.");
+    # print_log("DEBUG: 7. Filled in col 7: PubMed ID.");
 
     # evidence code col 7 and optional with col 8
     # NOTE: as these can have values that might need to be split over multiple lines
     # at this point we just put in a place holder to substitute in the values
     $line .= "PUT_COLS_8_9_HERE\t";
-    print_log("DEBUG: 8. Filled in cols 7-8 with evidence placeholed.");
+    # print_log("DEBUG: 8. Filled in cols 7-8 with evidence placeholed.");
 
     # aspect col 9
     $line .= "$ASP{$asp}\t";
-    print_log("DEBUG: 9. Filled in col 9: aspect.");
+    # print_log("DEBUG: 9. Filled in col 9: aspect.");
 
     # optional fullname col 10
     if ( $fullnames{$fbid} ) {
@@ -537,7 +524,7 @@ while (
         $fullnames{$fbid} = $fn;
     }
     $line .= "\t";
-    print_log("DEBUG: 10. Filled in col 10: fullname.");
+    # print_log("DEBUG: 10. Filled in col 10: fullname.");
 
     # synonyms col 11
     if ( $synonyms{$fbid} ) {
@@ -565,33 +552,18 @@ while (
     else {
         $line .= "\t";
     }
-    print_log("DEBUG: 11. Filled in col 11: synonyms.");
+    # print_log("DEBUG: 11. Filled in col 11: synonyms.");
 
     # col 12 - determine type of transcript - assume only one but with miRNA exception
     # current GAF1 default = 'gene'
     #  $line .= "gene\t";
 
-    ##################################################################################################
-    ##################################################################################################
-    ##################################################################################################
-    ##################################################################################################
-    ##################################################################################################
-    ##################################################################################################
-    ##################################################################################################
-    ##################################################################################################
-    ##################################################################################################
-    ##################################################################################################
-    # BOB
-    # Probably need to update this code block for DB-943.
-    # It seems to already look up promoted gene type, so perhaps only minor modification is required.
-    # BILLY: Is this a SLOW step?
     # query for GAF2 format getting product type from promoted gene type
     # for product type - do lookup
     my $type = 'gene_product';
     if ( $seen_gns{$fid} ) {
         $type = $seen_gns{$fid};
         $type = 'gene_product' if $type eq 'pseudogene';
-    # BILLY: Is this a SLOW step?
     }
     else {
         $partyq->bind_param( 1, $fid );
@@ -612,29 +584,19 @@ while (
         }
     }
     $line .= "$type\t";
-    print_log("DEBUG: 12. Filled in col 12: gene product type.");
-    ##################################################################################################
-    ##################################################################################################
-    ##################################################################################################
-    ##################################################################################################
-    ##################################################################################################
-    ##################################################################################################
-    ##################################################################################################
-    ##################################################################################################
-    ##################################################################################################
-    ##################################################################################################
+    # print_log("DEBUG: 12. Filled in col 12: gene product type.");
 
     # col 13
     $line .= "taxon:$TAX{$orgn}\t";
-    print_log("DEBUG: 13. Filled in col 13: taxon.");
+    # print_log("DEBUG: 13. Filled in col 13: taxon.");
 
     # col 14
     $line .= "$date\t";
-    print_log("DEBUG: 14. Filled in col 14: date.");
+    # print_log("DEBUG: 14. Filled in col 14: date.");
 
     # col 15
     $line .= "$src\t";
-    print_log("DEBUG: 15. Filled in col15: source.");
+    # print_log("DEBUG: 15. Filled in col15: source.");
 
     # col 16
     # handle GO annotation extensions.
@@ -644,7 +606,7 @@ while (
     else {
         $line .= "\n";
     }
-    print_log("DEBUG: 16. Filled in col16: GO annotation extension.");
+    # print_log("DEBUG: 16. Filled in col16: GO annotation extension.");
 
     # add the evidence and with cols to as many lines as needed
     print_log("ERROR: Missing evidence for:\nt$line") and next unless @cols_7_8;
@@ -671,13 +633,13 @@ while (
         $line_w_ev .= "$line_copy";
     }
     $line = $line_w_ev;
-    print_log("DEBUG: 17. Went back and filled in cols 7-8: evidence.");
+    # print_log("DEBUG: 17. Went back and filled in cols 7-8: evidence.");
 
     # and here's where to decide what to do with the line
     #  print $line;
     # and we'd like to sort if first by gene symbol and then by pub so build a HOH
     push @{ $GA_results{$symb}{$pub} }, $line;
-    print_log("DEBUG: 18. Add line to hash.");
+    # print_log("DEBUG: 18. Add line to hash.");
 
     # generate lines for problem reports
     if ($pseudoflag) {
@@ -686,7 +648,6 @@ while (
         push @{ $pseudos_withdrawn{$symb}{$pub} }, $rep_line;
     }
 
-    # BILLY: Is this a SLOW step?
     if ($tyq) {
         $tyq->bind_param( 1, $fid );
         $tyq->execute or die print_log("Can't do gene type query");
@@ -707,18 +668,9 @@ while (
         $rep_line =~ s/\n/TAB IN: $extratabsflag\n/;
         push @{ $pseudos_withdrawn{$symb}{$pub} }, $rep_line;
     }
-    print_log("DEBUG: 19. Done with additional lines checks.");
+    # print_log("DEBUG: 19. Done with additional lines checks.");
 }
-##################################################################################################################
-##################################################################################################################
-##################################################################################################################
-##################################################################################################################
-##################################################################################################################
-##################################################################################################################
-##################################################################################################################
-##################################################################################################################
-##################################################################################################################
-##################################################################################################################
+# End of main loop assessing GO annotations.
 
 # and here we output the sorted lines sorted first by symbol and then by FBrf number
 print_log("INFO: Producing output file");
@@ -809,7 +761,6 @@ sub parse_evidence_bits {
             next;
         }
 
-        # BILLY: Is this a slow step?
         # Fourth, get the list of xrefs using the get_dbxrefs() subroutine.
         ( my $col8, my $mismatch ) = get_dbxrefs( $dbxrefs, $dbh, $evc )
           if $dbxrefs;
