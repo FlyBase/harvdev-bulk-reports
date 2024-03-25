@@ -480,9 +480,24 @@ arg3 - string feature.type name
  arg - string of residues
  @return 1 if residues are consistent with any nucleic acid including ambiguity codes
 
+=item C<get_formatted_time>
+
+ Gets localtime() and returns the time stamp in this format: YYYY-MM-DD HH:MM:SS.
+
+=item C<get_highest_caller_line_number>
+
+ Gets the highest stack level from which a function was called and returns the line number.
+ This is useful in logging.
+
+=item C<print_log>
+
+ arg - text to print out
+ Adds timestamp to start of print text; makes debug of slow steps easier.
+
 =head1 AUTHOR
 
 Andy Schroeder - andy@morgan.harvard.edu
+Gil dos Santos - dossantos@morgan.harvard.edu
 
 =cut
 
@@ -490,6 +505,10 @@ Andy Schroeder - andy@morgan.harvard.edu
 #############################################################################################
 ######################### general utility functions #########################################
 #############################################################################################
+
+use Time::Piece;
+use Time::HiRes qw(gettimeofday);
+
 # return the organism_id for the given feature
 sub get_organism_id_for_feature {
   my $dbh = shift;
@@ -1855,6 +1874,36 @@ sub unescape {
   #$v =~ tr/+/ /;
   $v =~ s/%([0-9a-fA-F]{2})/chr hex($1)/ge;
   return $v;
+}
+
+sub get_highest_caller_line_number {
+    my $level = 0;
+    my $line_number;
+    while (my @caller_info = caller($level++)) {
+        $line_number = $caller_info[2];
+    }
+    return $line_number;
+}
+
+sub get_formatted_time {
+  # Low res time.
+  # my $current_time = localtime();
+  # my $formatted_time = $current_time->strftime("%Y-%m-%d %H:%M:%S");
+  # High res time.
+  # DID NOT WORK
+  # my $current_time = Time::Piece->new(gettimeofday());
+  # my $formatted_time = $current_time->strftime("%Y-%m-%d %H:%M:%S") . sprintf(".%03d", ($current_time->microsecond / 1000));
+  my ($seconds, $microseconds) = gettimeofday();
+  my $current_time = Time::Piece->new($seconds, $microseconds);
+  my $formatted_time = $current_time->strftime("%Y-%m-%d %H:%M:%S") . sprintf(".%03d", ($microseconds / 1000));
+  return $formatted_time;
+}
+
+sub print_log {
+  my $text = shift;
+  my $time = get_formatted_time();
+  my $line_number = get_highest_caller_line_number();
+  print "$time : Line No $line_number : $text\n";
 }
 
 1;
