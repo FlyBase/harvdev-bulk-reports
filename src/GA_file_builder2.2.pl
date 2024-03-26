@@ -283,11 +283,11 @@ my $pmid_query = $dbh->prepare(
     )
 );
 
-# Build, in layers, a gene feature_id-keyed hash of gene product types.
 # DB-943: Improve gene product types listed for ncRNA genes.
+# Build, in layers, a gene feature_id-keyed hash of gene product types.
 print_log("INFO: Get gene product types.");
 # 1. Create feature_id-keyed hash of types based on annotated transcripts.
-# This assumes only one transcript type per gene, which is the current restriction.
+#    This assumes one transcript type per gene, the current convention.
 my %gene_product_types;
 my $transcript_type_query = $dbh->prepare(
     sprintf("
@@ -328,6 +328,7 @@ print_log("INFO: Found $trpt_type_counter gene product types for current localiz
 
 # 2. Get more detailed gene product types for some ncRNA genes.
 #    This only works on reporting builds where 'promoted_gene_type' is available.
+#    For a production db, ncRNA genes simply have 'ncRNA' gene product.
 my %ncrna_gene_class_mapping = (
     '@SO0001269:SRP_RNA_gene@' => 'SRP_RNA',
     '@SO0001640:RNase_MRP_RNA_gene@' => 'RNase_MRP_RNA',
@@ -410,7 +411,7 @@ while (
   )
 {
     $rows++;
-    print_log("DEBUG: 1. Start processing row #$rows: feature_cvterm_id=$fcvtid");
+    # print_log("DEBUG: 1. Start processing row #$rows: feature_cvterm_id=$fcvtid");
     my $pseudoflag;
     my $extratabsflag;
 
@@ -584,7 +585,7 @@ while (
     else {
         $line .= "\t";
     }
-    print_log("DEBUG: 11. Filled in col 11: synonyms.");
+    # print_log("DEBUG: 11. Filled in col 11: synonyms.");
 
     # col 12 - determine the gene product type.
     # DB-943: Use more detailed gene product descriptors.
@@ -604,11 +605,11 @@ while (
         }
     }
     $line .= "$gp_type\t";
-    print_log("DEBUG: 12. Filled in col 12: gene product type.");
+    # print_log("DEBUG: 12. Filled in col 12: gene product type.");
 
     # col 13
     $line .= "taxon:$TAX{$orgn}\t";
-    print_log("DEBUG: 13. Filled in col 13: taxon.");
+    # print_log("DEBUG: 13. Filled in col 13: taxon.");
 
     # col 14
     $line .= "$date\t";
