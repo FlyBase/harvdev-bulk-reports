@@ -503,7 +503,7 @@ while (
     # and one or more of them may have info for col 8
     # lets set up a sub to do the parsing and then figure out the best way to deal with
     # multiple lines
-    my @cols_7_8 = parse_evidence_bits( $evid, $dbh );
+    my @cols_7_8 = parse_evidence_bits( $fcvt_id, $evid, $dbh );
     # print_log("DEBUG: 3. Parsed evidence bits.");
 
     # start building the line
@@ -751,8 +751,8 @@ sub check4doi {
 # of the FB gene) that should not be reported). All this extra stuff must be
 # stripped out to report a comma-separated list of db:accession strings.
 sub parse_evidence_bits {
-    my $evbit = shift
-      ; # The $evbit corresponds to the evidence_code feature_cvtermprop.value passed to the sub.
+    my $fcvt_id = shift;    # The feature_cvterm_id for the annotation. 
+    my $evbit = shift;      # The evidence_code feature_cvtermprop.value.
     my $dbh = shift;
     my @evlines;
 
@@ -783,7 +783,7 @@ sub parse_evidence_bits {
         }
 
         # Fourth, get the list of xrefs using the get_dbxrefs() subroutine.
-        ( my $col8, my $mismatch ) = get_dbxrefs( $dbxrefs, $dbh, $evc )
+        ( my $col8, my $mismatch ) = get_dbxrefs( $fcvt_id, $dbxrefs, $dbh, $evc )
           if $dbxrefs;
 
         # Fifth, combine the evidence code abbreviation and the xrefs as a
@@ -806,6 +806,7 @@ sub parse_evidence_bits {
 # we should return "FB:FBgn0003268,FB:FBgn0004643",
 # rather than "FB:FBgn0003268,FLYBASE:Zw10" (currently the case).
 sub get_dbxrefs {
+    my $fcvt_id = shift;    # The feature_cvterm_id for the annotation.
     my $inline  = shift;
     my $dbh     = shift;
     my $evc     = shift;
@@ -841,7 +842,7 @@ sub get_dbxrefs {
         if ( $parts[0] =~ /FLYBASE:(.+)/ ) {
             my $symb = $1;
             $symb = decon($symb);
-            print_log("WARNING: Missing Symbol in evidence code line $inline\n")
+            print_log("WARNING: feature_cvterm_id=$fcvt_id: missing symbol in evidence code line: $inline\n")
               unless ($symb);
             if ( $parts[1] =~ /FB:(FBgn[0-9]{7})/ ) {
                 my $fbgn = $1;
@@ -851,14 +852,14 @@ sub get_dbxrefs {
                 $query->bind_param( 2, $fbgn );
                 $query->execute
                   or
-                  print_log("WARNING: Can't execute $stmt FOR $symb:$fbgn");
+                  print_log("WARNING: feature_cvterm_id=$fcvt_id: can't execute $stmt FOR $symb:$fbgn");
                 unless ( $query->rows() > 0 ) {
                     $nomatch = $fbgn . ':' . $symb;
-                    print_log("WARNING: WE HAVE A MISMATCH for $symb:$fbgn");
+                    print_log("WARNING: feature_cvterm_id=$fcvt_id: WE HAVE A MISMATCH for $symb:$fbgn");
                 }
             }
             else {
-                print_log("WARNING: No FBgn provided for $symb in evidence code line");
+                print_log("WARNING: feature_cvterm_id=$fcvt_id: no FBgn provided for $symb in evidence code line: $inline");
             }
         }
     }
