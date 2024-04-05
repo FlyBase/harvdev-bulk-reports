@@ -235,6 +235,7 @@ class HTXprnReporter(object):
                 gene.uniquename.op('~')(self.gene_regex),
                 sample.is_obsolete.is_(False),
                 sample.uniquename.op('~')(self.lib_regex),
+                sample.name == sample_name,
                 unit.name.in_((self.xprn_types_to_report)),
             )
             results = session.query(sample, gene, unit, value).\
@@ -281,8 +282,8 @@ class HTXprnReporter(object):
     def query_chado(self, session):
         """Run query methods."""
         log.info('Starting "query_chado" method.')
-        self.get_ht_project_data(session)
         self.get_ht_sample_data(session)
+        self.get_ht_project_data(session)
         log.info('Method "query_chado" is done.')
         return
 
