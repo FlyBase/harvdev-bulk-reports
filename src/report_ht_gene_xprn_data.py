@@ -215,7 +215,7 @@ class HTXprnReporter(object):
                 self.data_to_export.append(this_data_dict[i])
             counter += this_counter
             log.info(f'Found {this_counter} expression values for {dataset_name}.')
-        log.info(f'Found {counter} expression values overall.')
+        log.info(f'Found {counter} expression values for dataset projects overall.')
         return
 
     def get_ht_sample_data(self, session):
@@ -275,7 +275,7 @@ class HTXprnReporter(object):
                 self.data_to_export.append(this_data_dict[i])
             counter += this_counter
             log.info(f'Found {this_counter} expression values for {sample_name}.')
-        log.info(f'Found {counter} expression values overall.')
+        log.info(f'Found {counter} expression values for individual datasets overall.')
         return
 
     def query_chado(self, session):
