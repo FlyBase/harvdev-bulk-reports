@@ -131,7 +131,8 @@ class HTXprnReporter(object):
         'RPKM',
         'RPMM',
         'TPM',
-        'LFQ_geom_mean_intensity'
+        'LFQ_geom_mean_intensity',
+        'testis_specificity_index_score',
     ]
 
     def get_ht_data(self, session):
