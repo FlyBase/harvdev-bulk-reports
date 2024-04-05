@@ -110,7 +110,11 @@ class HTXprnReporter(object):
         'Lai_miRNA_RPMM_expression_tissues': 'Development miRNA RNA-Seq',
         'Lai_miRNA_RPMM_expression_cells': 'Cell Lines miRNA RNA-Seq',
         'Casas-Vila_proteome_life_cycle': 'Developmental Proteome: Life Cycle',
-        'Casas-Vila_proteome_embryogenesis': 'Developmental Proteome: Embryogenesis'
+        'Casas-Vila_proteome_embryogenesis': 'Developmental Proteome: Embryogenesis',
+    }
+    # HT datasets lacking a parental dataset.
+    samples_to_report = {
+        'testis_specificity_index_2021_Vedelek': 'Testis Specificity Index',
     }
     xprn_section_order = {
         'FlyAtlas2 Anatomy RNA-Seq': 0,
@@ -124,19 +128,21 @@ class HTXprnReporter(object):
         'Development miRNA RNA-Seq': 8,
         'Cell Lines miRNA RNA-Seq': 9,
         'Developmental Proteome: Life Cycle': 10,
-        'Developmental Proteome: Embryogenesis': 11
+        'Developmental Proteome: Embryogenesis': 11,
+        'Testis Specificity Index': 12,
     }
     # Data types to report.
     xprn_types_to_report = [
         'RPKM',
         'RPMM',
         'TPM',
-        'LFQ_geom_mean_intensity'
+        'LFQ_geom_mean_intensity',
+        'testis_specificity_index_score',
     ]
 
-    def get_ht_data(self, session):
-        """Get high-throughput data."""
-        log.info('Get high-throughput data.')
+    def get_ht_project_data(self, session):
+        """Get high-throughput data for datasets having many samples."""
+        log.info('Get high-throughput data for datasets having many samples.')
         dataset = aliased(Library, name='dataset')
         sample = aliased(Library, name='sample')
         gene = aliased(Feature, name='gene')
@@ -209,14 +215,76 @@ class HTXprnReporter(object):
                 self.data_to_export.append(this_data_dict[i])
             counter += this_counter
             log.info(f'Found {this_counter} expression values for {dataset_name}.')
-        log.info(f'Found {counter} expression values overall.')
+        log.info(f'Found {counter} expression values for dataset projects overall.')
+        return
+
+    def get_ht_sample_data(self, session):
+        """Get high-throughput data for individual samples/analyses."""
+        log.info('Get high-throughput data for individual samples/analyses.')
+        sample = aliased(Library, name='sample')
+        gene = aliased(Feature, name='gene')
+        value = aliased(LibraryFeatureprop, name='value')
+        unit = aliased(Cvterm, name='unit')
+        counter = 0
+        for sample_name, xprn_section in self.samples_to_report.items():
+            log.info(f'Get expression data for {sample_name}.')
+            xprn_section_rank = self.xprn_section_order[xprn_section]
+            # Get the data.
+            filters = (
+                gene.is_obsolete.is_(False),
+                gene.uniquename.op('~')(self.gene_regex),
+                sample.is_obsolete.is_(False),
+                sample.uniquename.op('~')(self.lib_regex),
+                sample.name == sample_name,
+                unit.name.in_((self.xprn_types_to_report)),
+            )
+            results = session.query(sample, gene, unit, value).\
+                select_from(gene).\
+                join(LibraryFeature, (LibraryFeature.feature_id == gene.feature_id)).\
+                join(sample, (sample.library_id == LibraryFeature.library_id)).\
+                join(value, (value.library_feature_id == LibraryFeature.library_feature_id)).\
+                join(unit, (unit.cvterm_id == value.type_id)).\
+                filter(*filters).\
+                distinct()
+            # Process the data into data dicts for export.
+            this_counter = 0
+            this_data_dict = {}
+            for result in results:
+                xprn_section_to_use = xprn_section
+                xprn_section_rank_to_use = xprn_section_rank
+                unit_to_use = result.unit.name
+                # Record the xprn_section, sample id and gene id as the data dict key for sorting.
+                data_dict_key = (xprn_section_rank_to_use, result.sample.uniquename, result.gene.uniquename)
+                # Build the dict itself.
+                data_dict = {
+                    'High_Throughput_Expression_Section': xprn_section_to_use,
+                    'Dataset_ID': None,
+                    'Dataset_Name': None,
+                    'Sample_ID': result.sample.uniquename,
+                    'Sample_Name': result.sample.name,
+                    'Gene_ID': result.gene.uniquename,
+                    'Gene_Symbol': result.gene.name,
+                    'Expression_Unit': unit_to_use,
+                    'Expression_Value': result.value.value
+                }
+                this_data_dict[data_dict_key] = data_dict
+                this_counter += 1
+            # Sort all data before sending it to the export list.
+            data_keys = list(this_data_dict.keys())
+            data_keys.sort()
+            for i in data_keys:
+                self.data_to_export.append(this_data_dict[i])
+            counter += this_counter
+            log.info(f'Found {this_counter} expression values for {sample_name}.')
+        log.info(f'Found {counter} expression values for individual datasets overall.')
         return
 
     def query_chado(self, session):
-        """Run write methods."""
-        log.info('Starting "write_to_chado" method.')
-        self.get_ht_data(session)
-        log.info('Method "write_to_chado" is done.')
+        """Run query methods."""
+        log.info('Starting "query_chado" method.')
+        self.get_ht_project_data(session)
+        self.get_ht_sample_data(session)
+        log.info('Method "query_chado" is done.')
         return
 
 
