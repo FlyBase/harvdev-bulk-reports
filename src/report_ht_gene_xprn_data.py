@@ -113,7 +113,7 @@ class HTXprnReporter(object):
         'Casas-Vila_proteome_embryogenesis': 'Developmental Proteome: Embryogenesis',
     }
     # HT datasets lacking a parental dataset.
-    samples_to_reports = {
+    samples_to_report = {
         'testis_specificity_index_2021_Vedelek': 'Testis Specificity Index',
     }
     xprn_section_order = {
