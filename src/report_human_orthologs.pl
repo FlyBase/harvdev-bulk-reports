@@ -73,7 +73,43 @@ my $dioptwc = 'diopt%';
 
 my @pouts;
 ## Get Dmel genes w/ Hsap orthologs
-my $oq = $dbh->prepare("SELECT f.feature_id as fid, f.uniquename as funame, f.name as fname, h.feature_id as hid, h.uniquename as huname, h.name as hname, fr.value from feature f, feature h, feature_relationship fr, cvterm cvt, organism ho, organism fo where f.is_obsolete = 'f' and f.organism_id = fo.organism_id and fo.abbreviation = 'Dmel' and f.feature_id = fr.subject_id and fr.object_id = h.feature_id and h.is_obsolete = 'f' and h.organism_id = ho.organism_id and ho.abbreviation = 'Hsap' and fr.type_id = cvt.cvterm_id and cvt.name = 'orthologous_to' UNION SELECT f.feature_id as fid, f.uniquename as funame, f.name as fname, h.feature_id as hid, h.uniquename as huname, h.name as hname, fr.value from feature f, feature h, feature_relationship fr, cvterm cvt, organism ho, organism fo where f.is_obsolete = 'f' and f.organism_id = fo.organism_id and fo.abbreviation = 'Dmel' and h.feature_id = fr.subject_id and fr.object_id = f.feature_id and h.is_obsolete = 'f' and h.organism_id = ho.organism_id and ho.abbreviation = 'Hsap' and fr.type_id = cvt.cvterm_id and cvt.name = 'orthologous_to'");
+my $oq = $dbh->prepare("
+SELECT DISTINCT
+  f.feature_id AS fid,
+  f.uniquename AS funame,
+  f.name AS fname,
+  h.feature_id AS hid,
+  h.uniquename AS huname,
+  h.name AS hname,
+  fr.value
+FROM feature f
+JOIN organism fo ON fo.organism_id = f.organism_id AND fo.abbreviation = 'Dmel'
+JOIN feature_relationship fr ON fr.subject_id = f.feature_id AND fr.type_id = (SELECT cvterm_id FROM cvterm WHERE cv_id = 4 AND name = 'orthologous_to')
+JOIN feature h ON h.feature_id = fr.object_id
+JOIN organism ho ON ho.organism_id = h.organism_id AND ho.abbreviation = 'Hsap'
+WHERE f.is_obsolete IS FALSE
+  AND f.uniquename ~ '^FBgn[0-9]{7}\$'
+  AND h.is_obsolete IS FALSE
+  AND h.uniquename ~ '^FB(og|gn)[0-9]+'
+UNION
+SELECT DISTINCT
+  f.feature_id AS fid,
+  f.uniquename AS funame,
+  f.name AS fname,
+  h.feature_id AS hid,
+  h.uniquename AS huname,
+  h.name AS hname,
+  fr.value
+FROM feature f
+JOIN organism fo ON fo.organism_id = f.organism_id AND fo.abbreviation = 'Dmel'
+JOIN feature_relationship fr ON fr.Object_id = f.feature_id AND fr.type_id = (SELECT cvterm_id FROM cvterm WHERE cv_id = 4 AND name = 'orthologous_to')
+JOIN feature h ON h.feature_id = fr.subject_id
+JOIN organism ho ON ho.organism_id = h.organism_id AND ho.abbreviation = 'Hsap'
+WHERE f.is_obsolete IS FALSE
+  AND f.uniquename ~ '^FBgn[0-9]{7}\$'
+  AND h.is_obsolete IS FALSE
+  AND h.uniquename ~ '^FB(og|gn)[0-9]+'
+");
 $oq->execute or die "WARNING: ERROR: Unable to execute fly-hsap query\n";
 while (my %or = %{$oq->fetchrow_hashref}) {
 #    print "\nProcessing ortholog pair:\t$or{fid}\t$or{funame}\t$or{fname}\t$or{hid}\t$or{huname}\t$or{hname}\t";
