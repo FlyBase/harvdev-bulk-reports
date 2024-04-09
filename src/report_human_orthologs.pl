@@ -102,7 +102,7 @@ SELECT DISTINCT
   fr.value
 FROM feature f
 JOIN organism fo ON fo.organism_id = f.organism_id AND fo.abbreviation = 'Dmel'
-JOIN feature_relationship fr ON fr.Object_id = f.feature_id AND fr.type_id = (SELECT cvterm_id FROM cvterm WHERE cv_id = 4 AND name = 'orthologous_to')
+JOIN feature_relationship fr ON fr.object_id = f.feature_id AND fr.type_id = (SELECT cvterm_id FROM cvterm WHERE cv_id = 4 AND name = 'orthologous_to')
 JOIN feature h ON h.feature_id = fr.subject_id
 JOIN organism ho ON ho.organism_id = h.organism_id AND ho.abbreviation = 'Hsap'
 WHERE f.is_obsolete IS FALSE
