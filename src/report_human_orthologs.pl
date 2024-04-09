@@ -112,7 +112,7 @@ while (my %or = %{$oq->fetchrow_hashref}) {
 	    if ($ohash{$or{hname}}{OMIM_GENE}) {  # Sometimes theres not an OMIM_GENE record, e.g.: FBog0000403309 / Hsap\PROP1
 		my $hsymb = $or{hname};
 		$hsymb =~ s/Hsap\\//g;
-		push(@pouts,sprintf("%s\t%s\tHGNC:%d\tOMIM:%d\t%s\t%d\t%s\t%s\n",$or{funame},$or{fname},$ohash{$or{hname}}{HGNC},$ohash{$or{hname}}{OMIM_GENE},$hsymb,$dscore,join(',',sort(@{$ohash{$or{hname}}{OMIM_PHENO_IDS}})),join(',',sort(@{$ohash{$or{hname}}{OMIM_PHENO_FULL}}))));
+		push(@pouts,sprintf("%s\t%s\tHGNC:%d\tMIM:%d\t%s\t%d\t%s\t%s\n",$or{funame},$or{fname},$ohash{$or{hname}}{HGNC},$ohash{$or{hname}}{OMIM_GENE},$hsymb,$dscore,join(',',sort(@{$ohash{$or{hname}}{OMIM_PHENO_IDS}})),join(',',sort(@{$ohash{$or{hname}}{OMIM_PHENO_FULL}}))));
 	    }
 	    else {
 		my $hsymb = $or{hname};
