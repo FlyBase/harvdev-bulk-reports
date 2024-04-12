@@ -131,8 +131,8 @@ def get_rnai_info(db_connection):
         JOIN cv ON cv.cv_id = cvt.cv_id
         WHERE f.is_obsolete = false and f.is_analysis = false
           and f.uniquename ~ '^FBal[0-9]{7}$'
-          and cv.name = 'FlyBase miscellaneous CV'
-          and cvt.name in ('in vitro construct - RNAi');"""
+          and cv.name = 'SO'
+          and cvt.name = 'RNAi_reagent';"""
     ret_rnai_fbal = connect(rnai_fbal_query, 'no_query', db_connection)
     log.info('TIME: {}. Found {} RNAi alleles.'.format(now(), len(ret_rnai_fbal)))
 
