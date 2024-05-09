@@ -886,20 +886,39 @@ sub fetch_and_parse_gorefs {
     my $response = $ua->request($req);
     my $page     = $response->content;
     unless ( $page =~ /^- id: GO_REF:/ ) {
-        print_log("ERROR: Cannot open GOREFS document");
+        print_log("ERROR: Cannot open the gorefs.yaml document.");
         return;
     }
     my @lines = split /\n/, $page;
     my %fbrf2goref;
     my $goid = '';
     my $fbrf = '';
+    my $current_go_ref = 1;
     foreach my $l (@lines) {
-        $goid = $1 if ( $l =~ /^-\sid:\s(GO_REF:[0-9]+)/ );
-        if ( $l =~ /^\s-\sFB:(FBrf[0-9]{7})/ ) {
-            $fbrf = $1;
-            $fbrf2goref{$fbrf} = $goid;
+        if ( $l =~ /^-\sid:\s(GO_REF:[0-9]+)/ ) {
+            # Before parsing next stanza, check if previous one represented a
+            # current GO_REF-to-FBrf xref and add to hash if it does.
+            if ( $goid && $fbrf && $current_go_ref ) {
+                $fbrf2goref{$fbrf} = $goid;
+            }
+            # Reset stanza info once the previous one has been recorded.
+            $goid = $1;
+            $fbrf = '';
+            $current_go_ref = 1;
         }
+        $fbrf = $1 if ( $l =~ /^\s-\sFB:(FBrf[0-9]{7})/ );
+        $current_go_ref = 0 if ( $l =~ /^\sis_obsolete:\strue/ );
     }
+    # Just in case the last stanza had a GO-FB xref, add it.
+    # Because in loop above, hash additions happen when a new stanza is found.
+    # There is no marker to the end of a GO_REF other than the start of the next
+    # one, or, the end of the file.
+    if ( $goid && $fbrf && $current_go_ref ) {
+        $fbrf2goref{$fbrf} = $goid;
+    }
+
+
+
     # $fbrf2goref{'FBrf0253064'} = 'GO_REF:0000115';    # DB-767
     # # $fbrf2goref{'FBrf0253063'} = 'GO_REF:0000024';    # DB-823
     # $fbrf2goref{'FBrf0255270'} = 'GO_REF:0000024';    # DB-823
