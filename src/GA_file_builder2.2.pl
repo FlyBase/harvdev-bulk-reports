@@ -881,31 +881,30 @@ sub fetch_and_parse_gorefs {
     my $ua = LWP::UserAgent->new;
     my $req =
       HTTP::Request->new( GET =>
-'https://raw.githubusercontent.com/geneontology/go-site/master/metadata/gorefs/README.md'
+'https://github.com/geneontology/go-site/blob/master/metadata/gorefs.yaml'
       );
     my $response = $ua->request($req);
     my $page     = $response->content;
-    unless ( $page =~ /^# GO REFs/ ) {
+    unless ( $page =~ /^- id: GO_REF:/ ) {
+        print_log("ERROR: Cannot open GOREFS document");
         return;
     }
     my @lines = split /\n/, $page;
     my %fbrf2goref;
     my $goid = '';
+    my $fbrf = '';
     foreach my $l (@lines) {
-        next       if $l =~ /^#/;       # skip comments
-        next       if $l =~ /^\s*$/;    # and blank lines
-        $goid = $1 if ( $l =~ /^\s\*\sid:\s\[(GO_REF:[0-9]+)\]/ );
-        next       if ( $goid eq "GO_REF:0000033" );
-        if ( $l =~ /^\s\*\sext\sxref:\sFB:(FBrf[0-9]{7})/ ) {
-            my $fbrf = $1;
+        $goid = $1 if ( $l =~ /^-\sid:\s(GO_REF:[0-9]+)/ );
+        if ( $l =~ /^-\sFB:(FBrf[0-9]{7})/ ) {
+            $fbrf = $1;
             $fbrf2goref{$fbrf} = $goid;
         }
     }
-    $fbrf2goref{'FBrf0253064'} = 'GO_REF:0000115';    # DB-767
-        # $fbrf2goref{'FBrf0253063'} = 'GO_REF:0000024';    # DB-823
-    $fbrf2goref{'FBrf0255270'} = 'GO_REF:0000024';    # DB-823
-    $fbrf2goref{'FBrf0254415'} = 'GO_REF:0000047';    # DB-811
-    $fbrf2goref{'FBrf0258542'} = 'GO_REF:0000033';    # DB-928
+    # $fbrf2goref{'FBrf0253064'} = 'GO_REF:0000115';    # DB-767
+    # # $fbrf2goref{'FBrf0253063'} = 'GO_REF:0000024';    # DB-823
+    # $fbrf2goref{'FBrf0255270'} = 'GO_REF:0000024';    # DB-823
+    # $fbrf2goref{'FBrf0254415'} = 'GO_REF:0000047';    # DB-811
+    # $fbrf2goref{'FBrf0258542'} = 'GO_REF:0000033';    # DB-928
 
     print_log("INFO: Constructed FBrf -> GO_REF Mapping:");
     print Dumper( \%fbrf2goref );
