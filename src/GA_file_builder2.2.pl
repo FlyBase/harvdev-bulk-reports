@@ -895,7 +895,7 @@ sub fetch_and_parse_gorefs {
     my $fbrf = '';
     foreach my $l (@lines) {
         $goid = $1 if ( $l =~ /^-\sid:\s(GO_REF:[0-9]+)/ );
-        if ( $l =~ /^-\sFB:(FBrf[0-9]{7})/ ) {
+        if ( $l =~ /^\s-\sFB:(FBrf[0-9]{7})/ ) {
             $fbrf = $1;
             $fbrf2goref{$fbrf} = $goid;
         }
