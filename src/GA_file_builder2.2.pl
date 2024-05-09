@@ -896,6 +896,7 @@ sub fetch_and_parse_gorefs {
     my $current_go_ref = 1;
     $fbrf2goref{'test_key'} = 'test_value';
     foreach my $l (@lines) {
+        print_log("DEBUG: BOB: Assess this line: $l");
         if ( $l =~ /^-\sid:\s(GO_REF:[0-9]+)/ ) {
             print_log("DEBUG: Assess this new GO entry: $l");
             # Before parsing next stanza, check if previous one represented a
