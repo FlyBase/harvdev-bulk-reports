@@ -899,16 +899,28 @@ sub fetch_and_parse_gorefs {
             print_log("DEBUG: Assess this new GO entry: $l");
             # Before parsing next stanza, check if previous one represented a
             # current GO_REF-to-FBrf xref and add to hash if it does.
+            print_log("DEBUG: Previous GO ID: $goid");
+            print_log("DEBUG: Previous FBrf ID: $fbrf");
+            print_log("DEBUG: Previous current status: $current_go_ref\n");
             if ( $goid && $fbrf && $current_go_ref ) {
                 $fbrf2goref{$fbrf} = $goid;
+                print_log("DEBUG: Add to hash.");
             }
             # Reset stanza info once the previous one has been recorded.
             $goid = $1;
+            print_log("DEBUG:Have this new GO ID to analyze: $1");
+            print_log("DEBUG:Have this new GO ID to analyze: $goid");
             $fbrf = '';
             $current_go_ref = 1;
         }
-        $fbrf = $1 if ( $l =~ /^\s-\sFB:(FBrf[0-9]{7})/ );
-        $current_go_ref = 0 if ( $l =~ /^\sis_obsolete:\strue/ );
+        if ( $l =~ /^\s-\sFB:(FBrf[0-9]{7})/ ) {
+            $fbrf = $1 if ( $l =~ /^\s-\sFB:(FBrf[0-9]{7})/ );
+            print_log("DEBUG: Assess this FBrf ID: $fbrf");
+        }
+        if ( $l =~ /^\sis_obsolete:\strue/ ) {
+            $current_go_ref = 0;
+            print_log("DEBUG: Found obsolete term: $goid");
+        }
     }
     # Just in case the last stanza had a GO-FB xref, add it.
     # Because in loop above, hash additions happen when a new stanza is found.
