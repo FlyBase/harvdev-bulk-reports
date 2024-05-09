@@ -894,33 +894,23 @@ sub fetch_and_parse_gorefs {
     my $goid = '';
     my $fbrf = '';
     my $current_go_ref = 1;
-    $fbrf2goref{'test_key'} = 'test_value';
     foreach my $l (@lines) {
-        print_log("DEBUG: BOB: Assess this line: $l");
         if ( $l =~ /^-\sid:\s(GO_REF:[0-9]+)/ ) {
-            print_log("DEBUG: Assess this new GO entry: $l");
             # Before parsing next stanza, check if previous one represented a
             # current GO_REF-to-FBrf xref and add to hash if it does.
-            print_log("DEBUG: Previous GO ID: $goid");
-            print_log("DEBUG: Previous FBrf ID: $fbrf");
-            print_log("DEBUG: Previous current status: $current_go_ref");
             if ( $goid && $fbrf && $current_go_ref ) {
                 $fbrf2goref{$fbrf} = $goid;
-                print_log("DEBUG: Add to hash.");
             }
             # Reset stanza info once the previous one has been recorded.
             $goid = $1;
-            print_log("DEBUG:Have this new GO ID to analyze: $goid");
             $fbrf = '';
             $current_go_ref = 1;
         }
         elsif ( $l =~ /-\sFB:(FBrf[0-9]{7})/ ) {
             $fbrf = $1 if ( $l =~ /-\sFB:(FBrf[0-9]{7})/ );
-            print_log("DEBUG: Found FBrf ID: $fbrf");
         }
         elsif ( $l =~ /is_obsolete:\strue/ ) {
             $current_go_ref = 0;
-            print_log("DEBUG: Found obsolete term: $goid");
         }
     }
     # Just in case the last stanza had a GO-FB xref, add it.
@@ -936,7 +926,6 @@ sub fetch_and_parse_gorefs {
     # $fbrf2goref{'FBrf0255270'} = 'GO_REF:0000024';    # DB-823
     # $fbrf2goref{'FBrf0254415'} = 'GO_REF:0000047';    # DB-811
     # $fbrf2goref{'FBrf0258542'} = 'GO_REF:0000033';    # DB-928
-
     print_log("INFO: Constructed FBrf -> GO_REF Mapping:");
     print Dumper( \%fbrf2goref );
     return \%fbrf2goref;
