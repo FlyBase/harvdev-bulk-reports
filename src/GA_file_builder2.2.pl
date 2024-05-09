@@ -910,13 +910,12 @@ sub fetch_and_parse_gorefs {
             }
             # Reset stanza info once the previous one has been recorded.
             $goid = $1;
-            print_log("DEBUG:Have this new GO ID to analyze: $1");
             print_log("DEBUG:Have this new GO ID to analyze: $goid");
             $fbrf = '';
             $current_go_ref = 1;
         }
         elsif ( $l =~ /-\sFB:(FBrf[0-9]{7})/ ) {
-            $fbrf = $1 if ( $l =~ /^\s-\sFB:(FBrf[0-9]{7})/ );
+            $fbrf = $1 if ( $l =~ /-\sFB:(FBrf[0-9]{7})/ );
             print_log("DEBUG: Found FBrf ID: $fbrf");
         }
         elsif ( $l =~ /is_obsolete:\strue/ ) {
