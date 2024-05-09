@@ -894,6 +894,7 @@ sub fetch_and_parse_gorefs {
     my $goid = '';
     my $fbrf = '';
     my $current_go_ref = 1;
+    $fbrf2goref{'test_key'} = 'test_value';
     foreach my $l (@lines) {
         if ( $l =~ /^-\sid:\s(GO_REF:[0-9]+)/ ) {
             print_log("DEBUG: Assess this new GO entry: $l");
