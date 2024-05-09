@@ -917,7 +917,7 @@ sub fetch_and_parse_gorefs {
         }
         elsif ( $l =~ /-\sFB:(FBrf[0-9]{7})/ ) {
             $fbrf = $1 if ( $l =~ /^\s-\sFB:(FBrf[0-9]{7})/ );
-            print_log("DEBUG: Assess this FBrf ID: $fbrf");
+            print_log("DEBUG: Found FBrf ID: $fbrf");
         }
         elsif ( $l =~ /is_obsolete:\strue/ ) {
             $current_go_ref = 0;
