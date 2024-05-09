@@ -881,7 +881,7 @@ sub fetch_and_parse_gorefs {
     my $ua = LWP::UserAgent->new;
     my $req =
       HTTP::Request->new( GET =>
-'https://github.com/geneontology/go-site/blob/master/metadata/gorefs.yaml'
+'https://raw.githubusercontent.com/geneontology/go-site/master/metadata/gorefs.yaml'
       );
     my $response = $ua->request($req);
     my $page     = $response->content;
