@@ -896,6 +896,7 @@ sub fetch_and_parse_gorefs {
     my $current_go_ref = 1;
     foreach my $l (@lines) {
         if ( $l =~ /^-\sid:\s(GO_REF:[0-9]+)/ ) {
+            print_log("DEBUG: Assess this new GO entry: $l");
             # Before parsing next stanza, check if previous one represented a
             # current GO_REF-to-FBrf xref and add to hash if it does.
             if ( $goid && $fbrf && $current_go_ref ) {
@@ -916,9 +917,7 @@ sub fetch_and_parse_gorefs {
     if ( $goid && $fbrf && $current_go_ref ) {
         $fbrf2goref{$fbrf} = $goid;
     }
-
-
-
+    # Suppressing hard-coded associations as these seem to be in the gorefs.yaml file.
     # $fbrf2goref{'FBrf0253064'} = 'GO_REF:0000115';    # DB-767
     # # $fbrf2goref{'FBrf0253063'} = 'GO_REF:0000024';    # DB-823
     # $fbrf2goref{'FBrf0255270'} = 'GO_REF:0000024';    # DB-823
