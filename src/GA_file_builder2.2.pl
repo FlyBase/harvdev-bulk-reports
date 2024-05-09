@@ -901,7 +901,7 @@ sub fetch_and_parse_gorefs {
             # current GO_REF-to-FBrf xref and add to hash if it does.
             print_log("DEBUG: Previous GO ID: $goid");
             print_log("DEBUG: Previous FBrf ID: $fbrf");
-            print_log("DEBUG: Previous current status: $current_go_ref\n");
+            print_log("DEBUG: Previous current status: $current_go_ref");
             if ( $goid && $fbrf && $current_go_ref ) {
                 $fbrf2goref{$fbrf} = $goid;
                 print_log("DEBUG: Add to hash.");
@@ -913,11 +913,11 @@ sub fetch_and_parse_gorefs {
             $fbrf = '';
             $current_go_ref = 1;
         }
-        if ( $l =~ /^\s-\sFB:(FBrf[0-9]{7})/ ) {
+        elsif ( $l =~ /-\sFB:(FBrf[0-9]{7})/ ) {
             $fbrf = $1 if ( $l =~ /^\s-\sFB:(FBrf[0-9]{7})/ );
             print_log("DEBUG: Assess this FBrf ID: $fbrf");
         }
-        if ( $l =~ /^\sis_obsolete:\strue/ ) {
+        elsif ( $l =~ /is_obsolete:\strue/ ) {
             $current_go_ref = 0;
             print_log("DEBUG: Found obsolete term: $goid");
         }
