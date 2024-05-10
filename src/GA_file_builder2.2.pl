@@ -881,32 +881,51 @@ sub fetch_and_parse_gorefs {
     my $ua = LWP::UserAgent->new;
     my $req =
       HTTP::Request->new( GET =>
-'https://raw.githubusercontent.com/geneontology/go-site/master/metadata/gorefs/README.md'
+'https://raw.githubusercontent.com/geneontology/go-site/master/metadata/gorefs.yaml'
       );
     my $response = $ua->request($req);
     my $page     = $response->content;
-    unless ( $page =~ /^# GO REFs/ ) {
+    unless ( $page =~ /^- id: GO_REF:/ ) {
+        print_log("ERROR: Cannot open the gorefs.yaml document.");
         return;
     }
     my @lines = split /\n/, $page;
     my %fbrf2goref;
     my $goid = '';
+    my $fbrf = '';
+    my $current_go_ref = 1;
     foreach my $l (@lines) {
-        next       if $l =~ /^#/;       # skip comments
-        next       if $l =~ /^\s*$/;    # and blank lines
-        $goid = $1 if ( $l =~ /^\s\*\sid:\s\[(GO_REF:[0-9]+)\]/ );
-        next       if ( $goid eq "GO_REF:0000033" );
-        if ( $l =~ /^\s\*\sext\sxref:\sFB:(FBrf[0-9]{7})/ ) {
-            my $fbrf = $1;
-            $fbrf2goref{$fbrf} = $goid;
+        if ( $l =~ /^-\sid:\s(GO_REF:[0-9]+)/ ) {
+            # Before parsing next stanza, check if previous one represented a
+            # current GO_REF-to-FBrf xref and add to hash if it does.
+            if ( $goid && $fbrf && $current_go_ref ) {
+                $fbrf2goref{$fbrf} = $goid;
+            }
+            # Reset stanza info once the previous one has been recorded.
+            $goid = $1;
+            $fbrf = '';
+            $current_go_ref = 1;
+        }
+        elsif ( $l =~ /-\sFB:(FBrf[0-9]{7})/ ) {
+            $fbrf = $1 if ( $l =~ /-\sFB:(FBrf[0-9]{7})/ );
+        }
+        elsif ( $l =~ /is_obsolete:\strue/ ) {
+            $current_go_ref = 0;
         }
     }
-    $fbrf2goref{'FBrf0253064'} = 'GO_REF:0000115';    # DB-767
-        # $fbrf2goref{'FBrf0253063'} = 'GO_REF:0000024';    # DB-823
-    $fbrf2goref{'FBrf0255270'} = 'GO_REF:0000024';    # DB-823
-    $fbrf2goref{'FBrf0254415'} = 'GO_REF:0000047';    # DB-811
-    $fbrf2goref{'FBrf0258542'} = 'GO_REF:0000033';    # DB-928
-
+    # Just in case the last stanza had a GO-FB xref, add it.
+    # Because in loop above, hash additions happen when a new stanza is found.
+    # There is no marker to the end of a GO_REF other than the start of the next
+    # one, or, the end of the file.
+    if ( $goid && $fbrf && $current_go_ref ) {
+        $fbrf2goref{$fbrf} = $goid;
+    }
+    # Suppressing hard-coded associations as these seem to be in the gorefs.yaml file.
+    # $fbrf2goref{'FBrf0253064'} = 'GO_REF:0000115';    # DB-767
+    # # $fbrf2goref{'FBrf0253063'} = 'GO_REF:0000024';    # DB-823
+    # $fbrf2goref{'FBrf0255270'} = 'GO_REF:0000024';    # DB-823
+    # $fbrf2goref{'FBrf0254415'} = 'GO_REF:0000047';    # DB-811
+    # $fbrf2goref{'FBrf0258542'} = 'GO_REF:0000033';    # DB-928
     print_log("INFO: Constructed FBrf -> GO_REF Mapping:");
     print Dumper( \%fbrf2goref );
     return \%fbrf2goref;
