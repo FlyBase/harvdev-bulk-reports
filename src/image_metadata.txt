@@ -290,7 +290,7 @@ Scer\GAL4[Toll-6-D42] pupal motor neurons	FBal0047062_1.png	FBrf0220342	Figure S
 Scer\GAL4[Toll-6-D42] larval motor neurons	FBal0047062_2.png	FBrf0219102	Figure 1D	granted access
 Scer\GAL4[upd1-E132] wing disc	FBal0047063_1.png	FBrf0234404	Figure 1C	open access
 Scer\GAL4[upd1-E132] eye disc	FBal0047063_2.png	FBrf0092657	Figure 1B	granted access
-Scer\GAL4[vg.PM] presumptive wing margin	FBal0047077_2.png	FBrf0158875	Figure 1B	granted access
+Scer\GAL4[vg.PM] presumptive wing margin	FBal0047077_1.png	FBrf0158875	Figure 1B	granted access
 Scer\GAL4[prd.RG1] pair rule	FBal0048793_1.png	FBrf0251537	Figure 3G	open access
 Scer\GAL4[tsh-md621] imaginal disc	FBal0052372_1.png	FBrf0190272	Figure 4A-C	granted access
 Scer\GAL4[pros.PMG] garland cell	FBal0052375_1.png	FBrf0218912	Figure 2A	open access
