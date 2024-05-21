@@ -1,4 +1,4 @@
-#Last updated: 20231025
+#Last updated: 20240521
 #imageDescription	imageFileName	publicationId	pubFigure	permission
 GAL4[path-c135] carpet glia.jpg	FBal0042565_1.jpg	FBrf0242008	Figure 1B-C (top panels)	open access
 GAL4[path-c135] DH31 and copper cells.png	FBal0042565_2.png	FBrf0211737	Figure 1B	open access
@@ -274,3 +274,155 @@ GAL4[Rh5.PT] 	FBal0117649_3.png	FBrf0134582	Figure 4H	granted access
 GAL4[Rh5.PT] 	FBal0117649_2.jpg	FBrf0144829	Figure 7C-D	granted access
 GAL4[Rh5.PT] 	FBal0117649_1.jpeg	FBrf0144829	Figure 1D	granted access
 GAL4[yolk] fat body	FBal0126479_1.jpg	FBrf0226737	Figure S1A'	granted access
+Scer\GAL4[l(3)31-1-31-1] embryo	FBal0040462_1.png	FBrf0064375	Figure 3D-F	granted access
+Scer\GAL4[l(3)31-1-31-1] embryonic neuroblasts	FBal0040462_2.png	FBrf0064375	Figure 3G	granted access
+Scer\GAL4[l(3)31-1-31-1] eo neuron	FBal0040462_3.png	FBrf0105854	Figure 2C	granted access
+Scer\GAL4[sca-537.4] SOP wing disc	FBal0040466_1.png	FBrf0216675	Figure S2A	granted access
+Scer\GAL4[sca-537.4] SOP 3rd instar	FBal0040466_2.png	FBrf0216675	Figure S2C,E	granted access
+Scer\GAL4[sca-537.4] bristle precursors	FBal0040466_3.png	FBrf0158884	Figure 1B	granted access
+Scer\GAL4[Kr.PM]	FBal0040475_1.png	FBrf0250933	Figure 4B	open access
+Scer\GAL4[Kr.PM]	FBal0040475_2.png	FBrf0241328	Figure 4C	granted access
+Scer\GAL4[Kr.PM]	FBal0040475_3.png	FBrf0241328	Figure 4D	granted access
+Scer\GAL4[twi.PG] mesoderm GFP	FBal0040491_1.png	FBrf0179446	Figure 5A-C	granted access
+Scer\GAL4[twi.PG] mesoderm lacZ	FBal0040491_2.png	FBrf0207844	Figure S2	granted access
+Scer\GAL4[salm-459.2]	FBal0047047_1.png	FBrf0235670	Figure 1E	open access
+Scer\GAL4[Toll-6-D42] pupal motor neurons	FBal0047062_1.png	FBrf0220342	Figure S4	granted access
+Scer\GAL4[Toll-6-D42] larval motor neurons	FBal0047062_2.png	FBrf0219102	Figure 1D	granted access
+Scer\GAL4[upd1-E132] wing disc	FBal0047063_1.png	FBrf0234404	Figure 1C	open access
+Scer\GAL4[upd1-E132] eye disc	FBal0047063_2.png	FBrf0092657	Figure 1B	granted access
+Scer\GAL4[vg.PM] presumptive wing margin	FBal0047077_2.png	FBrf0158875	Figure 1B	granted access
+Scer\GAL4[prd.RG1] pair rule	FBal0048793_1.png	FBrf0251537	Figure 3G	open access
+Scer\GAL4[tsh-md621] imaginal disc	FBal0052372_1.png	FBrf0190272	Figure 4A-C	granted access
+Scer\GAL4[pros.PMG] garland cell	FBal0052375_1.png	FBrf0218912	Figure 2A	open access
+Scer\GAL4[pnr-MD237] adult thorax, imaginal discs	FBal0052376_1.png	FBrf0088194	Figure 4	granted access
+Scer\GAL4[pnr-MD237] adult abdomen	FBal0052376_2.png	FBrf0228267	Figure S3A-B	open access
+Scer\GAL4[ap-md544] wing disc	FBal0052383_2.png	FBrf0242901	Figure 4A	granted access
+Scer\GAL4[ap-md544] embryo	FBal0052383_3.png	FBrf0255236	Figure 5A	open access
+Scer\GAL4[ap-md544] retina	FBal0052383_4.png	FBrf0245850	Figure 4E	open access
+Scer\GAL4[34B] wing disc	FBal0052393_1.png	FBrf0238340	Figure 9g	open access
+Scer\GAL4[34B] salivary gland	FBal0052393_2.png	FBrf0190281	Figure 7C	granted access
+Scer\GAL4[sca-109-68] SOP	FBal0052395_1.png	FBrf0128367	Figure 2B	granted access
+Scer\GAL4[sim.P3.7] embryo	FBal0058755_1.png	FBrf0216651	Figure 1B	open access
+Scer\GAL4[sim.PS] ventral midline	FBal0058755_2.png	FBrf0190277	Figure 6K	granted access
+Scer\GAL4[sca-C253] SOP wing disc	FBal0058810_1.png	FBrf0209592	Figure S6F	granted access
+Scer\GAL4[sca-C253] SOP larval brain	FBal0058810_2.png	FBrf0252377	Figure 4D	open access
+Scer\GAL4[twi.2PE] head mesoderm	FBal0060664_1.png	FBrf0215231	Figure S4H	open access
+Scer\GAL4[twi.2PE] mesoderm	FBal0060664_2.png	FBrf0214770	Figure S3	open access
+Scer\GAL4[sd-SG29.1] wing disc	FBal0060667_1.png	FBrf0233362	Figure S3A	open access
+Scer\GAL4[sd-SG29.1] 2 wing discs	FBal0060667_2.png	FBrf0218840	Figure 1C,C'	granted access
+Scer\GAL4[VP16.nanos.UTR] egg chamber	FBal0060680_1.png	FBrf0151923	Fig1D	granted access
+Scer\GAL4[tsh-c724] Malpighian tubule type II cell	FBal0061877_1.png	FBrf0220823	Figure 2I-J	granted access
+Scer\GAL4[Ntan1-Mz97] glial cell	FBal0061886_1.png	FBrf0239793	Figure S1A	granted access
+Scer\GAL4[Ntan1-Mz97] glial cell, higher magnification	FBal0061886_2.png	FBrf0239793	Figure S1A'	granted access
+Scer\GAL4[wg.PM] segment polarity	FBal0065090_1.png	FBrf0235880	Figure 1F	granted access
+Scer\GAL4[klu-G410] adult leg	FBal0065091_1.png	FBrf0108607	Figure 2D	granted access
+Scer\GAL4[klu-G410] wing disc	FBal0065091_2.png	FBrf0098281	Figure 4B-C	granted access
+Scer\GAL4[klu-G410] leg disc	FBal0065091_3.png	FBrf0098281	Figure 4D-F	granted access
+Scer\GAL4[klu-G410] spiracles	FBal0065091_4.png	FBrf0103296	Figure 10G-H	granted access
+Scer\GAL4[c42] Malpighian tubule	FBal0065105_2.png	FBrf0247159	Figure 5B	granted access
+Scer\GAL4[c42] ring neuron	FBal0065105_3.png	FBrf0243005	Figure S6C	open access
+Scer\GAL4[Ser.PGF] wing disc	FBal0065106_1.png	FBrf0221264	Figure 3A	granted access
+Scer\GAL4[CY2] follicle cell lacZ	FBal0066080_1.png	FBrf0099032	Figure 4H	granted access
+Scer\GAL4[CY2] follicle cell GFP	FBal0066080_2.png	FBrf0245341	Figure S4N	granted access
+Scer\GAL4[vg.int2.1] presumptive wing margin	FBal0083444_1.png	FBrf0222340	Figure 3D	granted access
+Scer\GAL4[Eh.2.4] larval EH neuron	FBal0083453_2.png	FBrf0249161	Figure 2-figure supplement 1C	open access
+Scer\GAL4[VP16.mat.αTub67C] germline cell	FBal0086843_1.png	FBrf0227151	Figure S10A	open access
+Scer\GAL4[tim.PE] period neuron	FBal0094697_1.png	FBrf0252701	Figure 5I-L	open access
+Scer\GAL4[tey-5053A] muscle cell	FBal0094778_1.png	FBrf0209122	Figure 4A,B	granted access
+Scer\GAL4[fat] fat body	FBal0098822_1.png	FBrf0229051	Figure 7B	open access
+Scer\GAL4[tim.UAS] pacemaker neuron	FBal0102833_1.png	FBrf0209505	Figure S2A	open access
+Scer\GAL4[sev.EP] eye disc	FBal0102834_1.png	FBrf0144823	Figure 4A-B	granted access
+Scer\GAL4[sev.EP] posterior to morphogenetic furrow	FBal0102834_2.png	FBrf0246671	Figure 1E-G	open access
+Scer\GAL4[C164] adult brain	FBal0102842_1.png	FBrf0218124	Figure S6A	open access
+Scer\GAL4[ato.3.6] chordotonal organ	FBal0105106_1.png	FBrf0158891	Figure 2I	granted access
+Scer\GAL4[ato.3.6] adult brain	FBal0105106_2.png	FBrf0192599	Figure 1A-J	open access
+Scer\GAL4[ato.3.6] DCN	FBal0105106_3.png	FBrf0220977	Figure 1A-A'''	open access
+Scer\GAL4[ninaE.PT] photoreceptor cell	FBal0117645_1.png	FBrf0252331	Figure 3C	open access
+Scer\GAL4[Or47a.8.239] olfactory lobe	FBal0118363_2.png	FBrf0155701	Figure 1G	granted access
+Scer\GAL4[sr-md710] wing disc	FBal0120626_1.png	FBrf0180184	Figure 2A-D	granted access
+Scer\GAL4[sr-md710] pupal leg	FBal0120626_2.png	FBrf0180184	Figure 4B	granted access
+Scer\GAL4[neur-GAL4-A101] adult EO neuron	FBal0120628_1.png	FBrf0244986	Figure 2A-E	open access
+Scer\GAL4[c316] mushroom body	FBal0120631_1.png	FBrf0249765	Figure 3M	open access
+Scer\GAL4[c316] adult brain	FBal0120631_2.png	FBrf0227396	Figure 1-figure supplement 1	open access
+Scer\GAL4[neur-P72] sensory mother cell	FBal0121958_1.png	FBrf0151947	Figure 1	granted access
+Scer\GAL4[Gr21a.9.323] Gr21a neurons	FBal0125316_2.png	FBrf0192657	Figure 3C-D	open access
+Scer\GAL4[repo] glial cell	FBal0127275_1.png	FBrf0213916	Figure 4 E-E'	open access
+Scer\GAL4[repo] brain glia	FBal0127275_2.png	FBrf0216775	Figure 3A	open access
+Scer\GAL4[Rh6.PD] Bolwig	FBal0128080_1.png	FBrf0215584	Figure 6A	open access
+Scer\GAL4[Rh6.PD] retina	FBal0128080_2.png	FBrf0226257	Figure 2K	open access
+Scer\GAL4[G7] somatic muscle	FBal0130714_1.png	FBrf0247048	Figure 3A-C	open access
+Scer\GAL4[RapGAP1-OK6] larval motor neuron	FBal0134159_1.png	FBrf0255443	Figure 1C-F	open access
+Scer\GAL4[RapGAP1-OK6] pupal motor neuron	FBal0134159_2.png	FBrf0255443	Figure 2	open access
+Scer\GAL4[RapGAP1-OK6] pupal motor neuron GFP	FBal0134159_3.png	FBrf0255443	Figure S2	open access
+Scer\GAL4[rn-GAL4-5] wing disc	FBal0137358_1.png	FBrf0236363	Figure 1A	open access
+Scer\GAL4[rn-GAL4-5] leg, antennal discs	FBal0137358_2.png	FBrf0222037	Figure 6A-B	open access
+Scer\GAL4[puc-GAL4E69] JNK-activated cells	FBal0138406_1.png	FBrf0245230	Figure 6-figure supplement 2A	open access
+Scer\GAL4[Sgs3.PD] salivary gland	FBal0141496_1.png	FBrf0155871	Figure 1 B-C	granted access
+Scer\GAL4[VP16.bam] testis	FBal0144584_1.png	FBrf0228090	Figure S2C-D	open access
+Scer\GAL4[VP16.bam] ovary	FBal0144584_2.png	FBrf0227449	Figure 2B	open access
+Scer\GAL4[tin.CΔ4] pupal heart	FBal0147431_1.png	FBrf0190311	Figure S1C-D	granted access
+Scer\GAL4[tin.CΔ4] larval heart	FBal0147431_2.png	FBrf0230878	Figure 3A	open access
+Scer\GAL4[pain-GAL4] adult brain	FBal0147445_1.png	FBrf0224083	Figure 2	open access
+Scer\GAL4[pain-GAL4] femur	FBal0147445_2.png	FBrf0224083	Figure S2B,D,F	open access
+Scer\GAL4[pain-GAL4] EO	FBal0147445_3.png	FBrf0224083	Figure S2H	open access
+Scer\GAL4[nan.PK] Johnston organ	FBal0147448_1.png	FBrf0210994	Figure 6A	open access
+Scer\GAL4[nan.PK] olfactory neuron	FBal0147448_2.png	FBrf0222842	Figure S2C	open access
+Scer\GAL4[nan.PK] antennal lobe	FBal0147448_3.png	FBrf0225118	Figure 1A	open access
+Scer\GAL4[cry.PZ] clock neuron	FBal0147468_1.png	FBrf0254428	Figure 1A	open access
+Scer\GAL4[ppl.PP] fat body	FBal0152196_1.png	FBrf0207766	Figure S8	open access
+Scer\GAL4[ppk.1.9] multidendritic neuron	FBal0152201_1.png	FBrf0222485	Figure 1B	open access
+Scer\GAL4[Or22a.8197] olfactory lobe	FBal0152215_1.png	FBrf0222517	Figure 5A	open access
+Scer\GAL4[Mz19] projection neuron	FBal0155865_1.png	FBrf0234767	Figure 15B1-3	open access
+Scer\GAL4[Mz19] also projection neuron 4 panel	FBal0155865_2.png	FBrf0234767	Figure 15D1-4	open access
+Scer\GAL4[Mz19] projection neuron enlarged	FBal0155865_3.png	FBrf0234767	Figure 15E1-3	open access
+Scer\GAL4[upd3.PA] lymph gland	FBal0181583_1.png	FBrf0248223	Figure 7A	open access
+Scer\GAL4[upd3.PA] midgut	FBal0181583_2.png	FBrf0221791	Figure S2B	open access
+Scer\GAL4[GMR.PFa] retina	FBal0181667_1.png	FBrf0255333	Figure 1A	open access
+Scer\GAL4[phtm.PO] prothoracic organ	FBal0189907_1.png	FBrf0224744	Figure 3D	open access
+Scer\GAL4[salm.EPv] wing disc	FBal0190891_1.png	FBrf0229449	Figure 2F	open access
+Scer\GAL4[wor.PA] optic anlage	FBal0191277_1.png	FBrf0202883	Figure 3H	granted access
+Scer\GAL4[wor.PA] optic anlage (black & white)	FBal0191277_2.png	FBrf0202883	Figure S3A	granted access
+Scer\GAL4[Pxn.PS] adult hemocytes	FBal0194298_1.png	FBrf0209472	Figure S1A	granted access
+Scer\GAL4[Pxn.PS] embryonic hemocytes	FBal0194298_2.png	FBrf0208475	Figure 2A	granted access
+Scer\GAL4[Pxn.PS] hemocytes	FBal0194298_3.png	FBrf0207026	Figure 1A-C	granted access
+Scer\GAL4[Pxn.PS] larval hemocytes	FBal0194298_4.png	FBrf0207026	Figure 2	granted access
+Scer\GAL4[VGlut-OK371] L2 monopolar cells	FBal0194519_1.png	FBrf0210240	Figure 7A-B	open access
+Scer\GAL4[VGlut-OK371] thoracic glutamatergic neuron	FBal0194519_2.png	FBrf0214030	Figure 4B	open access
+Scer\GAL4[VGlut-OK371] abdominal glutamatergic neuron	FBal0194519_3.png	FBrf0214030	Figure 5B1	open access
+Scer\GAL4[VGlut-OK371] adult motor neuron	FBal0194519_4.png	FBrf0238459	Figure 1A	open access
+Scer\GAL4[VGlut.PD] brain	FBal0194614_1.png	FBrf0221326	Figure 3A	open access
+Scer\GAL4[srp.Hemo] embryo	FBal0197807_1.png	FBrf0216818	Figure 4H	granted access
+Scer\GAL4[srp.Hemo] hemocytes	FBal0197807_2.png	FBrf0223621	Figure S2A	granted access
+Scer\GAL4[ppk.PG] multidendritic neuron	FBal0217476_1.png	FBrf0215584	Figure 4A,D	open access
+Scer\GAL4[nSyb.PS] adult brain	FBal0230185_2.png	FBrf0247159	Figure 6C	granted access
+Scer\GAL4[mirr-DE] eye disc dorsal compartment	FBal0241017_1.png	FBrf0249305	Figure S7B	open access
+Scer\GAL4[peb-GAL4] Johnston organ	FBal0244361_1.png	FBrf0231605	Figure 7D	open access
+Scer\GAL4[peb-GAL4] olfactory lobe	FBal0244361_2.png	FBrf0228270	Figure 2E	open access
+Scer\GAL4[peb-GAL4] olfactory system	FBal0244361_3.png	FBrf0247159	Figure 7	granted access
+Scer\GAL4[gcm-rA87.C] adult brain glia	FBal0244689_1.png	FBrf0255897	Figure 3E	open access
+Scer\GAL4[gcm-rA87.C] laminar monopolar neuron	FBal0244689_2.png	FBrf0183939	Figure 1B,D	granted access
+Scer\GAL4[gcm-rA87.C] larval brain glia	FBal0244689_3.png	FBrf0245107	Figure 4A	granted access
+Scer\GAL4[gcm-rA87.C] pupal brain glia	FBal0244689_4.png	FBrf0245107	Figure 4D,E,G,H	granted access
+Scer\GAL4[21-7] md neuron	FBal0246937_1.png	FBrf0237004	Figure S2A	open access
+Scer\GAL4[apolpp.PB] adult fat body	FBal0247186_1.png	FBrf0257286	Figure 1A	open access
+Scer\GAL4[apolpp.PB] larval fat body	FBal0247186_2.png	FBrf0252708	Figure 5A	open access
+Scer\GAL4[NP1624] ovary	FBal0247218_1.png	FBrf0255802	Figure 5A	granted access
+Scer\GAL4[NP1624] somatic cyst cell	FBal0247218_2.png	FBrf0252222	Figure 5B	open access
+Scer\GAL4[ppk23.2.695] adult VNC	FBal0277044_1.png	FBrf0247030	Figure 4A-D	open access
+Scer\GAL4[ppk23.2.695] leg	FBal0277044_2.png	FBrf0228919	Figure 3-figure supplement 5A	open access
+Scer\GAL4[ppk23.2.695] larval	FBal0277044_3.png	FBrf0227181	Figure 1D-E	open access
+Scer\GAL4[NP0001] enterocyte	FBal0277702_1.png	FBrf0255879	Figure 1-figure supplement 1D	open access
+Scer\GAL4[GSG5966] enterocyte GFP	FBal0280522_1.png	FBrf0233829	Figure S1L	open access
+Scer\GAL4[GSG5966] enterocyte co-labled	FBal0280522_2.png	FBrf0227510	Figure 3C,C'	granted access
+Scer\GAL4[shot-OK307] giant fiber	FBal0285438_1.png	FBrf0209456	Figure 3B	open access
+Scer\GAL4[shot-OK307] brain	FBal0285438_2.png	FBrf0208014	Figure S4C	open access
+Scer\GAL4[Switch1.106] gut	FBal0286168_1.png	FBrf0226277	Figure S3	open access
+Scer\GAL4[Switch1.106] adult fat body	FBal0286168_2.png	FBrf0254803	Figure S5	open access
+Scer\GAL4[nSyb.PP] adult brain	FBal0288658_1.png	FBrf0247159	Figure 6C	granted access
+Scer\GAL4[Mhc.PK] larval muscle	FBal0294941_1.png	FBrf0249823	Figure 5A'	open access
+Scer\GAL4[ple.PF] dopaminergic neuron	FBal0322968_1.png	FBrf0234216	Figure S1	open access
+Scer\GAL4[Tdc2.PC] adult brain	FBal0338174_1.png	FBrf0220349	Figure 3A,B	open access
+Scer\GAL4[Tdc2.PC] adult CNS	FBal0338174_2.png	FBrf0240407	Figure 1A,B	open access
+Scer\GAL4[Clk.1.5] DN1p	FBal0362632_1.png	FBrf0253505	Figure 5A-B	open access
+
+
