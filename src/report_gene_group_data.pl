@@ -89,7 +89,7 @@ my $grq = $dbh3->prepare(sprintf("
     JOIN cv ON cv.cv_id = cvt.cv_id
     WHERE g.is_obsolete IS FALSE
       AND cv.name = 'FlyBase miscellaneous CV'
-      AND cvt.name %s= 'pathway group'
+      AND cvt.name %s= 'signaling pathway group'
 ", $ggtype_query{$pathway}));
 $grq->execute or die "WARNING: ERROR: Unable to execute grp name/uniquename query\n";
 while (my %grr = %{$grq->fetchrow_hashref}) {
