@@ -1,4 +1,4 @@
-#Last updated: 20240521
+#Last updated: 20240621
 #imageDescription	imageFileName	publicationId	pubFigure	permission
 GAL4[path-c135] carpet glia.jpg	FBal0042565_1.jpg	FBrf0242008	Figure 1B-C (top panels)	open access
 GAL4[path-c135] DH31 and copper cells.png	FBal0042565_2.png	FBrf0211737	Figure 1B	open access
@@ -302,8 +302,8 @@ Scer\GAL4[ap-md544] retina	FBal0052383_4.png	FBrf0245850	Figure 4E	open access
 Scer\GAL4[34B] wing disc	FBal0052393_1.png	FBrf0238340	Figure 9g	open access
 Scer\GAL4[34B] salivary gland	FBal0052393_2.png	FBrf0190281	Figure 7C	granted access
 Scer\GAL4[sca-109-68] SOP	FBal0052395_1.png	FBrf0128367	Figure 2B	granted access
-Scer\GAL4[sim.P3.7] embryo	FBal0058755_1.png	FBrf0216651	Figure 1B	open access
-Scer\GAL4[sim.PS] ventral midline	FBal0058755_2.png	FBrf0190277	Figure 6K	granted access
+Scer\GAL4[sim.P3.7] embryo	FBal0060666_1.png	FBrf0216651	Figure 1B	open access
+Scer\GAL4[sim.PS] ventral midline	FBal0058755_1.png	FBrf0190277	Figure 6K	granted access
 Scer\GAL4[sca-C253] SOP wing disc	FBal0058810_1.png	FBrf0209592	Figure S6F	granted access
 Scer\GAL4[sca-C253] SOP larval brain	FBal0058810_2.png	FBrf0252377	Figure 4D	open access
 Scer\GAL4[twi.2PE] head mesoderm	FBal0060664_1.png	FBrf0215231	Figure S4H	open access
