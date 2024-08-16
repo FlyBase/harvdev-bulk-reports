@@ -253,9 +253,13 @@ def get_fu_gal4_json(database_host, database, username, password, annotation_rel
         
         qid = (gene[3],)
         gid = (gene[0],)
+        allele_uniquename = gene[1]
+        allele_name = gene[2]
+        xprn_uniquename = gene[4]
+        xprn_name = gene[5]
 
         if gid in allele_ids_already_handled:
-            logging.warning(f'Skip duplicate xprn feature found for allele {gid}: feature_id={qid}')
+            logging.warning(f'Skip duplicate xprn feature found for allele {allele_name} ({allele_uniquename}): {xprn_name} ({xprn_uniquename})')
             continue
         else:
             allele_ids_already_handled.append(gid)
