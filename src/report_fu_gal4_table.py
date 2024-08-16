@@ -247,11 +247,18 @@ def get_fu_gal4_json(database_host, database, username, password, annotation_rel
                         'AND fr.object_id = g.feature_id '
                         'AND g.is_obsolete = \'f\'')
     fu_genes = connect(get_fu_gal4_genes, 'no_query', conn)
+    allele_ids_already_handled = []
     for gene in fu_genes:
         logging.debug('\nProcessing gene: %s\t%s\t%s\t%s\t%s\t%s' % (gene))
         
         qid = (gene[3],)
         gid = (gene[0],)
+
+        if gid in allele_ids_already_handled:
+            logging.warning(f'Skip duplicate xprn feature found for allele {gid}: feature_id={qid}')
+            continue
+        else:
+            allele_ids_already_handled.append(gid)
 
         gsyn = get_synonym_sgml(gid,conn)
 
