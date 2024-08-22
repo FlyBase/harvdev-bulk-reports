@@ -117,6 +117,7 @@ my $rows;
 
 $pcgq->execute or die "Can't do PCG query\n";
 
+print "BILLY BOB!!!\n";
 print "Processing results of PCG query\n";
 while ( my ($fid, $uniquename, $transcript_type) = $pcgq->fetchrow_array()) {
   $rows++;
@@ -184,6 +185,7 @@ while ( my ($fid, $uniquename, $transcript_type) = $pcgq->fetchrow_array()) {
 ################################################################################
 
 ## Main driver query.
+print "Get protein complexes now.\n";
 my $protein_complex_query = $dbh->prepare(
     ("
     SELECT DISTINCT grp.uniquename, dbx.accession, s.name
