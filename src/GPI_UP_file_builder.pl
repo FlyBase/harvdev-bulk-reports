@@ -217,7 +217,7 @@ print "Processed $rows protein complex gene group results.\n";
 
 my $end = localtime();
 print "STARTED: $start\tENDED: $end\n";
-s
+
 # returns uniprot ids based on specification provided 
 # may evolve 
 # initially checks for SwissProt IDs associated with gene and returns if found
