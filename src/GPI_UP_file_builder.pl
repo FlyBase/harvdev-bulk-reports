@@ -205,8 +205,9 @@ my $protein_complex_query = $dbh->prepare(
       AND grpdbx.is_current IS TRUE
       AND db.name = 'ComplexPortal'
       AND grps.is_current IS TRUE
-      AND t.name = 'fullname' "
-    ));
+      AND t.name = 'fullname'
+      ORDER BY grp.uniquename
+    "));
 
 # Fetch the results.
 $rows = 0;
