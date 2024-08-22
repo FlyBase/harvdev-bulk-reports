@@ -3,6 +3,7 @@
 # script to build the GPI file for submission to protein2go group that contains UniProt
 # IDs in the dbxref field - built for only annotated protein coding genes
 # specification for this file can be found in comments in JIRA DC-331
+# DB-980: This script now also reports protein complexes (gene groups).
 # Usage: perl GPI_UP_file_builder server dbname user pass outfile
 
 use strict;
@@ -50,8 +51,10 @@ $header .= "!date: $DATE \$\n!from: FlyBase\n!saved-by: Helen Attrill hla28\@gen
 
 print OUT $header;
 
-## set up some queries to get various bits of info given a feature_id
+## Part 1. Protein coding genes.
+################################################################################
 
+## set up some queries to get various bits of info given a feature_id
 
 # gene fullname
 my $fullnameq = $dbh->prepare(
@@ -68,7 +71,7 @@ my $annidq = $dbh->prepare(
          and fd.feature_id = ?"));
 
 
-
+## Main driver query.
 # query for annotated protein-coding genes - results fetched in main loop
 my $pcgq = $dbh->prepare(
     ("
@@ -176,9 +179,45 @@ while ( my ($fid, $uniquename, $transcript_type) = $pcgq->fetchrow_array()) {
   }
 
 }
+
+## Part 2. Protein complexes.
+################################################################################
+
+## Main driver query.
+my $protein_complex_query = $dbh->prepare(
+    ("
+    SELECT DISTINCT grp.uniquename, dbx.accession, s.name
+    FROM grp
+    JOIN grp_cvterm grpcvt ON grpcvt.grp_id = grp.grp_id
+    JOIN cvterm cvt ON cvt.cvterm_id = grpcvt.cvterm_id
+    JOIN grp_dbxref grpdbx ON grpdbx.grp_id = grp.grp_id
+    JOIN dbxref dbx ON dbx.dbxref_id = grpdbx.dbxref_id
+    JOIN db ON db.db_id = dbx.db_id
+    JOIN grp_synonym grps ON grps.grp_id = grp.grp_id
+    JOIN synonym s ON s.synonym_id = grps.synonym_id
+    JOIN cvterm t ON t.cvterm_id = s.type_id
+    WHERE grp.is_obsolete IS FALSE
+      AND cvt.name = 'protein complex group'
+      AND grpdbx.is_current IS TRUE
+      AND db.name = 'ComplexPortal'
+      AND grps.is_current IS TRUE
+      AND t.name = 'fullname' "
+    ));
+
+# Fetch the results.
+my $rows = 0;
+$protein_complex_query->execute or die "Can't do protein complex query\n";
+
+print "Processing results of protein complex gene group query\n";
+while ( my ($grp_uniquename, $complex_portal_symbol, $gene_group_fullname) = $protein_complex_query->fetchrow_array()) {
+  $rows++;
+  print OUT "FB\t$grp_uniquename\t$complex_portal_symbol\t$gene_group_fullname\t\tprotein_complex\ttaxon:7227\n";
+}
+print "Processed $rows protein complex gene group results.\n";
+
 my $end = localtime();
 print "STARTED: $start\tENDED: $end\n";
-
+s
 # returns uniprot ids based on specification provided 
 # may evolve 
 # initially checks for SwissProt IDs associated with gene and returns if found
