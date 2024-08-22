@@ -56,6 +56,8 @@ print OUT $header;
 
 ## set up some queries to get various bits of info given a feature_id
 
+print "Get protein coding genes first.\n";
+
 # gene fullname
 my $fullnameq = $dbh->prepare(
     ("SELECT DISTINCT s.name FROM feature_synonym fs, synonym s, cvterm c
@@ -117,7 +119,6 @@ my $rows;
 
 $pcgq->execute or die "Can't do PCG query\n";
 
-print "BILLY BOB!!!\n";
 print "Processing results of PCG query\n";
 while ( my ($fid, $uniquename, $transcript_type) = $pcgq->fetchrow_array()) {
   $rows++;
@@ -180,6 +181,7 @@ while ( my ($fid, $uniquename, $transcript_type) = $pcgq->fetchrow_array()) {
   }
 
 }
+print "Processed $rows protein coding gene results.\n";
 
 ## Part 2. Protein complexes.
 ################################################################################
@@ -207,7 +209,7 @@ my $protein_complex_query = $dbh->prepare(
     ));
 
 # Fetch the results.
-my $rows = 0;
+$rows = 0;
 $protein_complex_query->execute or die "Can't do protein complex query\n";
 
 print "Processing results of protein complex gene group query\n";
