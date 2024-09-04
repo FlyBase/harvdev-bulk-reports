@@ -145,9 +145,9 @@ def get_fb_chem_synonyms(fb_chem_dict, db_connection):
 def process_chem_dict(fb_chem_dict):
     """Process dict of chemical into final output desired."""
     for chem in fb_chem_dict.values():
-        for chem_attribute in chem.values():
+        for chem_key, chem_attribute in chem.items():
             if type(chem_attribute) is list:
-                chem_attribute = '|'.join(sorted(set(chem_attribute)))
+                chem[chem_key] = '|'.join(sorted(set(chem_attribute)))
     return
 
 
