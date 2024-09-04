@@ -59,7 +59,7 @@ def main():
     log.info('Started main function.')
     fb_chems = run_chem_queries(conn)
     data_to_export_as_tsv = generic_FB_tsv_dict(report_title, database)
-    data_to_export_as_tsv['data'] = fb_chems.values()
+    data_to_export_as_tsv['data'] = list(fb_chems.values())
     tsv_report_dump(data_to_export_as_tsv, output_filename, headers=header_list)
     conn.close()
     log.info('Ended main function.')
