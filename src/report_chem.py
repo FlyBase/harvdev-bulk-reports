@@ -12,10 +12,16 @@ Example:
     python report_chem.py -v -c /path/to/config.cfg
 
 Notes:
-    1. 31 chems have two InChiKeys (e.g., FBch0000162). So, printing them all, separated by a pipe.
-    2. For 10 chems, excluding 22 synonyms having a pipe ("|") character in them, because pipe is the best separator.
+    1. 31 chems have two InChiKeys (e.g., FBch0000162). So, pipes are used to
+       separate multiple InChiKeys.
+    2. For 10 chems, 22 synonyms have a pipe ("|") character in them. So, such
+       synonyms are excluded because the pipe char is the best separator.
     3. Printing ASCII-names only.
-    4. 11 chems have two ChEBI definitions. So, printing them all, separated by a pipe.
+    4. 11 chems have two ChEBI definitions (e.g., definitions); pipes are used
+       to separate multiple definitions.
+    5. Roles loaded into the database are do not match the web page. In chado,
+       only roles of type biological role are represented, and then, only the
+       role definition is loaded (not the role ID or role name itself).
 
 """
 
