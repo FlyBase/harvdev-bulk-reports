@@ -11,6 +11,10 @@ Usage:
 Example:
     python report_chem.py -v -c /path/to/config.cfg
 
+Notes:
+    1. Excluding ~20 synonyms having pipe ("|") character in them.
+    2. Printing ASCII-names only.
+
 """
 
 import argparse
@@ -92,7 +96,7 @@ def get_fb_chems(db_connection):
             'FB_id': result[ID],
             'FB_name': result[NAME],
             'FB_synonyms': [],
-            'InChIKey': None,
+            'InChIKey': [],
             'PubChem_id': None,
             'PubChem_name': None,
             'PubChem_synonyms': [],
@@ -106,6 +110,33 @@ def get_fb_chems(db_connection):
     return fb_chem_dict
 
 
+def get_inchikeys(fb_chem_dict, db_connection):
+    """Add InChiKey IDs to the FBch ID-keyed dict of FlyBase chemical info.
+
+    Args:
+        fb_chem_dict (dict): An FBch ID-keyed dict of chemical dicts.
+        db_connection (psycopg2.extensions.connection): The object used to interact with the database.
+
+    """
+    log.info('Get InChiKey IDs.')
+    fb_inchikey_query = """
+        SELECT DISTINCT f.uniquename, fp.value
+        FROM feature f
+        JOIN featureprop fp ON fp.feature_id = f.feature_id
+        JOIN cvterm cvt ON cvt.cvterm_id = fp.type_id
+        WHERE f.is_obsolete IS FALSE
+          AND f.uniquename ~ '^FBch[0-9]{7}$'
+          AND cvt.name = 'inchikey';
+    """
+    ret_inchikeys = connect(fb_inchikey_query, 'no_query', db_connection)
+    log.info(f'Found {len(ret_inchikeys)} InChiKeys.')
+    ID = 0
+    INCHIKEY = 1
+    for result in ret_inchikeys:
+        fb_chem_dict[result[ID]]['InChIKey'].append(result[INCHIKEY])
+    return
+
+
 def get_external_ids(fb_chem_dict, db_connection):
     """Add external PubChem and CheBI IDs/names to the FBch ID-keyed dict of FlyBase chemical info.
 
@@ -114,7 +145,7 @@ def get_external_ids(fb_chem_dict, db_connection):
         db_connection (psycopg2.extensions.connection): The object used to interact with the database.
 
     """
-    log.info('Get FlyBase PubChem and ChEBI IDs and names.')
+    log.info('Get PubChem and ChEBI IDs and names.')
     fb_external_query = """
         SELECT DISTINCT f.uniquename, db.name, dbx.accession, dbx.description
         FROM feature f
@@ -155,7 +186,7 @@ def get_fb_chem_synonyms(fb_chem_dict, db_connection):
         db_connection (psycopg2.extensions.connection): The object used to interact with the database.
 
     """
-    log.info('Get FlyBase chemical synonyms.')
+    log.info('Get chemical synonyms.')
     fb_chem_synonym_query = """
         SELECT DISTINCT f.uniquename, s.name, p.uniquename
         FROM feature f
@@ -185,6 +216,7 @@ def get_fb_chem_synonyms(fb_chem_dict, db_connection):
 
 def process_chem_dict(fb_chem_dict):
     """Process dict of chemical into final output desired."""
+    log.info('Process chemical info for print output.')
     for chem in fb_chem_dict.values():
         for chem_key, chem_attribute in chem.items():
             if type(chem_attribute) is list:
@@ -204,6 +236,7 @@ def run_chem_queries(db_connection):
     """
     log.info('Generate full chemical dict.')
     fb_chem_dict = get_fb_chems(db_connection)
+    get_inchikeys(fb_chem_dict, db_connection)
     get_external_ids(fb_chem_dict, db_connection)
     get_fb_chem_synonyms(fb_chem_dict, db_connection)
     process_chem_dict(fb_chem_dict)
