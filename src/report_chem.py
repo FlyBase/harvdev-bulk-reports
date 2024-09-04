@@ -51,7 +51,7 @@ the_time = set_up_dict['the_time']
 
 parser = argparse.ArgumentParser(description='inputs')
 args, extra_args = parser.parse_known_args()
-log.info('Parsing args specific to this script; ignoring these: {}'.format(extra_args))
+log.info(f'Parsing args specific to this script; ignoring these: {extra_args}')
 
 
 def main():
@@ -68,6 +68,9 @@ def main():
 def get_fb_chems(db_connection):
     """Generate an FBch ID-keyed dict of chem dicts.
 
+    Args:
+        db_connection (psycopg2.extensions.connection): The object used to interact with the database.
+
     Returns:
         An FBch ID-keyed dict of chem dicts.
 
@@ -80,7 +83,7 @@ def get_fb_chems(db_connection):
           AND f.uniquename ~ '^FBch[0-9]{7}$';
     """
     ret_chem_info = connect(fb_chem_query, 'no_query', db_connection)
-    log.info(f'Found {len(ret_chem_info)} chems in chado.'.format())
+    log.info(f'Found {len(ret_chem_info)} chems in chado.')
     ID = 0
     NAME = 1
     fb_chem_dict = {}
@@ -103,6 +106,42 @@ def get_fb_chems(db_connection):
     return fb_chem_dict
 
 
+def get_fb_chem_synonyms(fb_chem_dict, db_connection):
+    """Add FlyBase synonysm to an FBch ID-keyed dict of FlyBase chemical info.
+
+    Args:
+        fb_chem_dict (dict): An FBch ID-keyed dict of chemical dicts having a "FB_synonyms" key.
+        db_connection (psycopg2.extensions.connection): The object used to interact with the database.
+
+    """
+    log.info('Get FlyBase chemical synonyms.')
+    fb_chem_synonym_query = """
+        SELECT DISTINCT f.uniquename, s.name
+        FROM feature f
+        JOIN feature_synonym fs ON fs.feature_id = f.feature_id
+        JOIN synonym s ON s.synonym_id = fs.synonym_id
+        WHERE f.is_obsolete IS FALSE
+          AND f.uniquename ~ '^FBch[0-9]{7}$'
+          AND fs.is_current IS FALSE
+          AND NOT s.name LIKE '%"%';
+    """
+    ret_chem_synonym_info = connect(fb_chem_synonym_query, 'no_query', db_connection)
+    log.info(f'Found {len(ret_chem_synonym_info)} chem synonyms in chado.')
+    ID = 0
+    SYNONYM_TEXT = 1
+    for result in ret_chem_synonym_info:
+        synonym_text = f'"{result[SYNONYM_TEXT]}"'
+        fb_chem_dict[result[ID]['FB_synonyms']].append(synonym_text)
+    return
+
+
+def process_chem_dict(fb_chem_dict):
+    """Process dict of chemical into final output desired."""
+    for chem in fb_chem_dict.values():
+        chem['FB_synonyms'] = ' | '.join(chem['FB_synonyms'])
+    return
+
+
 def run_chem_queries(db_connection):
     """Generate a fully populated FBch ID-keyed dict of FlyBase chemical info.
 
@@ -115,6 +154,8 @@ def run_chem_queries(db_connection):
     """
     log.info('Generate full chemical dict.')
     fb_chem_dict = get_fb_chems(db_connection)
+    get_fb_chem_synonyms(fb_chem_dict, db_connection)
+    process_chem_dict(fb_chem_dict)
     return fb_chem_dict
 
 
