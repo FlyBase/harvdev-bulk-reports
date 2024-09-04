@@ -95,7 +95,7 @@ def get_fb_chems(db_connection):
             'InChIKey': None,
             'PubChem_id': None,
             'PubChem_name': None,
-            'PubChem_synonyms': {},
+            'PubChem_synonyms': [],
             'ChEBI_id': None,
             'ChEBI_name': None,
             'ChEBI_synonyms': [],
@@ -116,29 +116,38 @@ def get_fb_chem_synonyms(fb_chem_dict, db_connection):
     """
     log.info('Get FlyBase chemical synonyms.')
     fb_chem_synonym_query = """
-        SELECT DISTINCT f.uniquename, s.name
+        SELECT DISTINCT f.uniquename, s.name, p.uniquename
         FROM feature f
         JOIN feature_synonym fs ON fs.feature_id = f.feature_id
         JOIN synonym s ON s.synonym_id = fs.synonym_id
+        JOIN pub p ON p.pub_id = fs.pub_id
         WHERE f.is_obsolete IS FALSE
           AND f.uniquename ~ '^FBch[0-9]{7}$'
-          AND fs.is_current IS FALSE
-          AND NOT s.name LIKE '%"%'
+          AND p.is_obsolete IS FALSE
+          AND s.name != f.name
+          AND NOT s.name LIKE '%|%'
           AND NOT s.name ILIKE 'pubchem:%';
     """
     ret_chem_synonym_info = connect(fb_chem_synonym_query, 'no_query', db_connection)
     log.info(f'Found {len(ret_chem_synonym_info)} chem synonyms in chado.')
     ID = 0
     SYNONYM_TEXT = 1
+    PUB = 2
     for result in ret_chem_synonym_info:
         fb_chem_dict[result[ID]]['FB_synonyms'].append(result[SYNONYM_TEXT])
+        if result[PUB] == 'FBrf0243186':
+            fb_chem_dict[result[ID]]['PubChem_synonyms'].append(result[SYNONYM_TEXT])
+        if result[PUB] == 'FBrf0243181':
+            fb_chem_dict[result[ID]]['ChEBI_synonyms'].append(result[SYNONYM_TEXT])
     return
 
 
 def process_chem_dict(fb_chem_dict):
     """Process dict of chemical into final output desired."""
     for chem in fb_chem_dict.values():
-        chem['FB_synonyms'] = ' | '.join(chem['FB_synonyms'])
+        for chem_attribute in chem.values():
+            if type(chem_attribute) is list:
+                chem_attribute = '|'.join(sorted(set(chem_attribute)))
     return
 
 
