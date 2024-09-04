@@ -131,7 +131,7 @@ def get_fb_chem_synonyms(fb_chem_dict, db_connection):
     SYNONYM_TEXT = 1
     for result in ret_chem_synonym_info:
         synonym_text = f'"{result[SYNONYM_TEXT]}"'
-        fb_chem_dict[result[ID]['FB_synonyms']].append(synonym_text)
+        fb_chem_dict[result[ID]]['FB_synonyms'].append(synonym_text)
     return
 
 
