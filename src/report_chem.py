@@ -106,8 +106,49 @@ def get_fb_chems(db_connection):
     return fb_chem_dict
 
 
+def get_external_ids(fb_chem_dict, db_connection):
+    """Add external PubChem and CheBI IDs/names to the FBch ID-keyed dict of FlyBase chemical info.
+
+    Args:
+        fb_chem_dict (dict): An FBch ID-keyed dict of chemical dicts.
+        db_connection (psycopg2.extensions.connection): The object used to interact with the database.
+
+    """
+    log.info('Get FlyBase PubChem and ChEBI IDs and names.')
+    fb_external_query = """
+        SELECT DISTINCT f.uniquename, db.name, dbx.accession, dbx.description
+        FROM feature f
+        JOIN feature_dbxref fdbx ON fdbx.feature_id = f.feature_id
+        JOIN dbxref dbx ON dbx.dbxref_id = fdbx.dbxref_id
+        JOIN db ON db.db_id = dbx.db_id
+        WHERE f.is_obsolete IS FALSE
+          AND f.uniquename ~ '^FBch[0-9]{7}$'
+          AND fdbx.is_current IS TRUE
+          AND db.name IN ('CHEBI', 'PubChem');
+    """
+    ret_ext_ids = connect(fb_external_query, 'no_query', db_connection)
+    chebi_counter = 0
+    pubchem_counter = 0
+    ID = 0
+    DB = 1
+    ACC = 2
+    NAME = 3
+    for result in ret_ext_ids:
+        if result[DB] == 'PubChem':
+            fb_chem_dict[result[ID]]['PubChem_id'] = f'PubChem:{result[ACC]}'
+            fb_chem_dict[result[ID]]['PubChem_name'] = result[NAME]
+            pubchem_counter += 1
+        elif result[DB] == 'CHEBI':
+            fb_chem_dict[result[ID]]['ChEBI_id'] = f'CHEBI:{result[ACC]}'
+            fb_chem_dict[result[ID]]['ChEBI_name'] = result[NAME]
+            chebi_counter += 1
+    log.info(f'Found {pubchem_counter} PubChem IDs for chemicals.')
+    log.info(f'Found {chebi_counter} ChEBI IDs for chemicals.')
+    return
+
+
 def get_fb_chem_synonyms(fb_chem_dict, db_connection):
-    """Add FlyBase synonysm to an FBch ID-keyed dict of FlyBase chemical info.
+    """Add FlyBase synonyms to the FBch ID-keyed dict of FlyBase chemical info.
 
     Args:
         fb_chem_dict (dict): An FBch ID-keyed dict of chemical dicts having a "FB_synonyms" key.
@@ -163,6 +204,7 @@ def run_chem_queries(db_connection):
     """
     log.info('Generate full chemical dict.')
     fb_chem_dict = get_fb_chems(db_connection)
+    get_external_ids(fb_chem_dict, db_connection)
     get_fb_chem_synonyms(fb_chem_dict, db_connection)
     process_chem_dict(fb_chem_dict)
     return fb_chem_dict
