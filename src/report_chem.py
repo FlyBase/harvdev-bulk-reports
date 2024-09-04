@@ -65,7 +65,7 @@ def main():
     log.info('Ended main function.')
 
 
-def get_fb_chems():
+def get_fb_chems(db_connection):
     """Generate an FBch ID-keyed dict of chem dicts.
 
     Returns:
@@ -79,7 +79,7 @@ def get_fb_chems():
         WHERE f.is_obsolete IS FALSE
           AND f.uniquename ~ '^FBch[0-9]{7}$';
     """
-    ret_chem_info = connect(fb_chem_query, 'no_query', conn)
+    ret_chem_info = connect(fb_chem_query, 'no_query', db_connection)
     log.info(f'Found {len(ret_chem_info)} chems in chado.'.format())
     ID = 0
     NAME = 1
@@ -107,7 +107,7 @@ def run_chem_queries(db_connection):
     """Generate a fully populated FBch ID-keyed dict of FlyBase chemical info.
 
     Args:
-        db_connection (): The psycopg2 db connection entity used to interact with the database.
+        db_connection (psycopg2.extensions.connection): The object used to interact with the database.
 
     Returns:
         fb_chem_dict (dict): The FBch-keyed dict of chemical info.
