@@ -12,8 +12,10 @@ Example:
     python report_chem.py -v -c /path/to/config.cfg
 
 Notes:
-    1. Excluding ~20 synonyms having pipe ("|") character in them.
-    2. Printing ASCII-names only.
+    1. 31 chems have two InChiKeys (e.g., FBch0000162). So, printing them all, separated by a pipe.
+    2. For 10 chems, excluding 22 synonyms having a pipe ("|") character in them, because pipe is the best separator.
+    3. Printing ASCII-names only.
+    4. 11 chems have two ChEBI definitions. So, printing them all, separated by a pipe.
 
 """
 
@@ -103,7 +105,7 @@ def get_fb_chems(db_connection):
             'ChEBI_id': None,
             'ChEBI_name': None,
             'ChEBI_synonyms': [],
-            'ChEBI_definition': None,
+            'ChEBI_definition': [],
             'ChEBI_roles': [],
         }
         fb_chem_dict[result[ID]] = result_chem_dict
@@ -214,13 +216,41 @@ def get_fb_chem_synonyms(fb_chem_dict, db_connection):
     return
 
 
+def get_chebi_descriptions(fb_chem_dict, db_connection):
+    """Add ChEBI descriptions to the FBch ID-keyed dict of FlyBase chemical info.
+
+    Args:
+        fb_chem_dict (dict): An FBch ID-keyed dict of chemical dicts.
+        db_connection (psycopg2.extensions.connection): The object used to interact with the database.
+
+    """
+    log.info('Get ChEBI descriptions.')
+    fb_chebi_definition_query = """
+        SELECT DISTINCT f.uniquename, fp.value
+        FROM feature f
+        JOIN featureprop fp ON fp.feature_id = f.feature_id
+        JOIN cvterm cvt ON cvt.cvterm_id = fp.type_id
+        WHERE f.is_obsolete IS FALSE
+          AND f.uniquename ~ '^FBch[0-9]{7}$'
+          AND cvt.name = 'description'
+          AND fp.value ~ '^ChEBI: ';
+    """
+    ret_chebi_definitions = connect(fb_chebi_definition_query, 'no_query', db_connection)
+    log.info(f'Found {len(ret_chebi_definitions)} ChEBI definitions.')
+    ID = 0
+    DEFINITION = 1
+    for result in ret_chebi_definitions:
+        fb_chem_dict[result[ID]]['ChEBI_definition'].append(result[DEFINITION])
+    return
+
+
 def process_chem_dict(fb_chem_dict):
     """Process dict of chemical into final output desired."""
     log.info('Process chemical info for print output.')
     for chem in fb_chem_dict.values():
         for chem_key, chem_attribute in chem.items():
             if type(chem_attribute) is list:
-                chem[chem_key] = '|'.join(sorted(set(chem_attribute)))
+                chem[chem_key] = ' | '.join(sorted(set(chem_attribute)))
     return
 
 
@@ -239,6 +269,7 @@ def run_chem_queries(db_connection):
     get_inchikeys(fb_chem_dict, db_connection)
     get_external_ids(fb_chem_dict, db_connection)
     get_fb_chem_synonyms(fb_chem_dict, db_connection)
+    get_chebi_descriptions(fb_chem_dict, db_connection)
     process_chem_dict(fb_chem_dict)
     return fb_chem_dict
 
