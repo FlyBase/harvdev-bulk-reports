@@ -216,15 +216,15 @@ def get_fb_chem_synonyms(fb_chem_dict, db_connection):
     return
 
 
-def get_chebi_descriptions(fb_chem_dict, db_connection):
-    """Add ChEBI descriptions to the FBch ID-keyed dict of FlyBase chemical info.
+def get_chebi_definitions(fb_chem_dict, db_connection):
+    """Add ChEBI definitions to the FBch ID-keyed dict of FlyBase chemical info.
 
     Args:
         fb_chem_dict (dict): An FBch ID-keyed dict of chemical dicts.
         db_connection (psycopg2.extensions.connection): The object used to interact with the database.
 
     """
-    log.info('Get ChEBI descriptions.')
+    log.info('Get ChEBI definitions.')
     fb_chebi_definition_query = """
         SELECT DISTINCT f.uniquename, fp.value
         FROM feature f
@@ -269,7 +269,7 @@ def run_chem_queries(db_connection):
     get_inchikeys(fb_chem_dict, db_connection)
     get_external_ids(fb_chem_dict, db_connection)
     get_fb_chem_synonyms(fb_chem_dict, db_connection)
-    get_chebi_descriptions(fb_chem_dict, db_connection)
+    get_chebi_definitions(fb_chem_dict, db_connection)
     process_chem_dict(fb_chem_dict)
     return fb_chem_dict
 
