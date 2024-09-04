@@ -114,7 +114,6 @@ def run_chem_queries(db_connection):
 
     """
     log.info('Generate full chemical dict.')
-    log.debug(f'Have this conn type: {type(db_connection)}.')
     fb_chem_dict = get_fb_chems(db_connection)
     return fb_chem_dict
 
