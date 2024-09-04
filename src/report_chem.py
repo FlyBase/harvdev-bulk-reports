@@ -123,15 +123,15 @@ def get_fb_chem_synonyms(fb_chem_dict, db_connection):
         WHERE f.is_obsolete IS FALSE
           AND f.uniquename ~ '^FBch[0-9]{7}$'
           AND fs.is_current IS FALSE
-          AND NOT s.name LIKE '%"%';
+          AND NOT s.name LIKE '%"%'
+          AND NOT s.name ILIKE 'pubchem:%';
     """
     ret_chem_synonym_info = connect(fb_chem_synonym_query, 'no_query', db_connection)
     log.info(f'Found {len(ret_chem_synonym_info)} chem synonyms in chado.')
     ID = 0
     SYNONYM_TEXT = 1
     for result in ret_chem_synonym_info:
-        synonym_text = f'"{result[SYNONYM_TEXT]}"'
-        fb_chem_dict[result[ID]]['FB_synonyms'].append(synonym_text)
+        fb_chem_dict[result[ID]]['FB_synonyms'].append(result[SYNONYM_TEXT])
     return
 
 
