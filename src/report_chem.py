@@ -221,6 +221,10 @@ def get_fb_chem_synonyms(fb_chem_dict, db_connection):
         # Exclude any synonyms also attributed to the ChEBI or PubChem references.
         if result[SYNONYM_TEXT] in fb_chem_dict[result[ID]]['internal_list_chebi_pubchem_synonyms']:
             continue
+        elif result[SYNONYM_TEXT] == fb_chem_dict[result[ID]]['PubChem_name']:
+            continue
+        elif result[SYNONYM_TEXT] == fb_chem_dict[result[ID]]['ChEBI_name']:
+            continue
         fb_chem_dict[result[ID]]['FB_synonyms'].append(result[SYNONYM_TEXT])
     return
 
