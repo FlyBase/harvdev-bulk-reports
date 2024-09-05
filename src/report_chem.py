@@ -12,16 +12,9 @@ Example:
     python report_chem.py -v -c /path/to/config.cfg
 
 Notes:
-    1. 31 chems have two InChiKeys (e.g., FBch0000162). So, pipes are used to
-       separate multiple InChiKeys.
-    2. For 10 chems, 22 synonyms have a pipe ("|") character in them. So, such
-       synonyms are excluded because the pipe char is the best separator.
-    3. Printing ASCII-names only.
-    4. 11 chems have two ChEBI definitions (e.g., definitions); pipes are used
-       to separate multiple definitions.
-    5. Roles loaded into the database are do not match the web page. In chado,
-       only roles of type biological role are represented, and then, only the
-       role definition is loaded (not the role ID or role name itself).
+    For 10 chems, 22 synonyms contain a pipe ("|") character; these synonyms
+    are excluded since we want to preserve the pipe character as a separator.
+    As per FB bulk file convention, only ASCII-names/aliases will be printed.
 
 """
 
@@ -118,33 +111,6 @@ def get_fb_chems(db_connection):
     return fb_chem_dict
 
 
-def get_inchikeys(fb_chem_dict, db_connection):
-    """Add InChiKey IDs to the FBch ID-keyed dict of FlyBase chemical info.
-
-    Args:
-        fb_chem_dict (dict): An FBch ID-keyed dict of chemical dicts.
-        db_connection (psycopg2.extensions.connection): The object used to interact with the database.
-
-    """
-    log.info('Get InChiKey IDs.')
-    fb_inchikey_query = """
-        SELECT DISTINCT f.uniquename, fp.value
-        FROM feature f
-        JOIN featureprop fp ON fp.feature_id = f.feature_id
-        JOIN cvterm cvt ON cvt.cvterm_id = fp.type_id
-        WHERE f.is_obsolete IS FALSE
-          AND f.uniquename ~ '^FBch[0-9]{7}$'
-          AND cvt.name = 'inchikey';
-    """
-    ret_inchikeys = connect(fb_inchikey_query, 'no_query', db_connection)
-    log.info(f'Found {len(ret_inchikeys)} InChiKeys.')
-    ID = 0
-    INCHIKEY = 1
-    for result in ret_inchikeys:
-        fb_chem_dict[result[ID]]['InChIKey'].append(result[INCHIKEY])
-    return
-
-
 def get_external_ids(fb_chem_dict, db_connection):
     """Add external PubChem and CheBI IDs/names to the FBch ID-keyed dict of FlyBase chemical info.
 
@@ -214,11 +180,12 @@ def get_fb_chem_synonyms(fb_chem_dict, db_connection):
     SYNONYM_TEXT = 1
     PUB = 2
     for result in ret_chem_synonym_info:
-        fb_chem_dict[result[ID]]['FB_synonyms'].append(result[SYNONYM_TEXT])
         if result[PUB] == 'FBrf0243186':
             fb_chem_dict[result[ID]]['PubChem_synonyms'].append(result[SYNONYM_TEXT])
-        if result[PUB] == 'FBrf0243181':
+        elif result[PUB] == 'FBrf0243181':
             fb_chem_dict[result[ID]]['ChEBI_synonyms'].append(result[SYNONYM_TEXT])
+        else:
+            fb_chem_dict[result[ID]]['FB_synonyms'].append(result[SYNONYM_TEXT])
     return
 
 
@@ -230,23 +197,90 @@ def get_chebi_definitions(fb_chem_dict, db_connection):
         db_connection (psycopg2.extensions.connection): The object used to interact with the database.
 
     """
-    log.info('Get ChEBI definitions.')
-    fb_chebi_definition_query = """
-        SELECT DISTINCT f.uniquename, fp.value
-        FROM feature f
-        JOIN featureprop fp ON fp.feature_id = f.feature_id
-        JOIN cvterm cvt ON cvt.cvterm_id = fp.type_id
-        WHERE f.is_obsolete IS FALSE
-          AND f.uniquename ~ '^FBch[0-9]{7}$'
-          AND cvt.name = 'description'
-          AND fp.value ~ '^ChEBI: ';
+    # log.info('Get ChEBI definitions.')
+    # fb_chebi_definition_query = """
+    #     SELECT DISTINCT f.uniquename, fp.value
+    #     FROM feature f
+    #     JOIN featureprop fp ON fp.feature_id = f.feature_id
+    #     JOIN cvterm cvt ON cvt.cvterm_id = fp.type_id
+    #     WHERE f.is_obsolete IS FALSE
+    #       AND f.uniquename ~ '^FBch[0-9]{7}$'
+    #       AND cvt.name = 'description'
+    #       AND fp.value ~ '^ChEBI: ';
+    # """
+    # ret_chebi_definitions = connect(fb_chebi_definition_query, 'no_query', db_connection)
+    # log.info(f'Found {len(ret_chebi_definitions)} ChEBI definitions.')
+    # ID = 0
+    # DEFINITION = 1
+    # for result in ret_chebi_definitions:
+    #     fb_chem_dict[result[ID]]['ChEBI_definition'].append(result[DEFINITION])
+    return
+
+
+def get_inchikeys(fb_chem_dict, db_connection):
+    """Add InChiKey IDs to the FBch ID-keyed dict of FlyBase chemical info.
+
+    Args:
+        fb_chem_dict (dict): An FBch ID-keyed dict of chemical dicts.
+        db_connection (psycopg2.extensions.connection): The object used to interact with the database.
+
     """
-    ret_chebi_definitions = connect(fb_chebi_definition_query, 'no_query', db_connection)
-    log.info(f'Found {len(ret_chebi_definitions)} ChEBI definitions.')
-    ID = 0
-    DEFINITION = 1
-    for result in ret_chebi_definitions:
-        fb_chem_dict[result[ID]]['ChEBI_definition'].append(result[DEFINITION])
+    # log.info('Get InChiKey IDs.')
+    # fb_inchikey_query = """
+    #     SELECT DISTINCT f.uniquename, fp.value
+    #     FROM feature f
+    #     JOIN featureprop fp ON fp.feature_id = f.feature_id
+    #     JOIN cvterm cvt ON cvt.cvterm_id = fp.type_id
+    #     WHERE f.is_obsolete IS FALSE
+    #       AND f.uniquename ~ '^FBch[0-9]{7}$'
+    #       AND cvt.name = 'inchikey';
+    # """
+    # ret_inchikeys = connect(fb_inchikey_query, 'no_query', db_connection)
+    # log.info(f'Found {len(ret_inchikeys)} InChiKeys.')
+    # ID = 0
+    # INCHIKEY = 1
+    # for result in ret_inchikeys:
+    #     fb_chem_dict[result[ID]]['InChIKey'].append(result[INCHIKEY])
+    return
+
+
+def get_chem_featureprops(fb_chem_dict, db_connection):
+    """Add featureprops to the FBch ID-keyed dict of FlyBase chemical info: InChiKey, ChEBI definition and roles.
+
+    Args:
+        fb_chem_dict (dict): An FBch ID-keyed dict of chemical dicts.
+        db_connection (psycopg2.extensions.connection): The object used to interact with the database.
+
+    """
+    log.info('Get chemical featureprops: InChiKey, ChEBI definition, ChEBI roles.')
+    fprop_types = {
+        'InChIKey': ('inchikey'),
+        'ChEBI_definition': ('description'),
+        'ChEBI_roles': ('biological_role', 'application_role'),
+    }
+    for chem_attribute, prop_type_set in fprop_types.items():
+        log.debug(f'Get info for this attribute: {chem_attribute}')
+        fprop_query = f"""
+            SELECT DISTINCT f.uniquename, fp.value
+            FROM feature f
+            JOIN featureprop fp ON fp.feature_id = f.feature_id
+            JOIN cvterm cvt ON cvt.cvterm_id = fp.type_id
+            WHERE f.is_obsolete IS FALSE
+            AND f.uniquename ~ '^FBch[0-9]+$'
+            AND cvt.name IN {prop_type_set}
+        """
+        log.debug(f'Use this query: {fprop_query}')     # BILLY BOB JIM RAY
+        fprop_counter = 0
+        ret_fprops = connect(fprop_query, 'no_query', db_connection)
+        log.info(f'Found {len(ret_fprops)} initial {chem_attribute} featureprops.')
+        ID = 0
+        FPROP_VALUE = 1
+        for result in ret_fprops:
+            if chem_attribute == 'ChEBI_definition' and not result[FPROP_VALUE].startswith('ChEBI: '):
+                continue
+            fb_chem_dict[result[ID]][chem_attribute].append(result[FPROP_VALUE])
+            fprop_counter += 1
+        log.info(f'For attribute {chem_attribute}, added {fprop_counter} featureprop entries.')
     return
 
 
@@ -272,10 +306,9 @@ def run_chem_queries(db_connection):
     """
     log.info('Generate full chemical dict.')
     fb_chem_dict = get_fb_chems(db_connection)
-    get_inchikeys(fb_chem_dict, db_connection)
     get_external_ids(fb_chem_dict, db_connection)
     get_fb_chem_synonyms(fb_chem_dict, db_connection)
-    get_chebi_definitions(fb_chem_dict, db_connection)
+    get_chem_featureprops(fb_chem_dict, db_connection)
     process_chem_dict(fb_chem_dict)
     return fb_chem_dict
 
