@@ -271,7 +271,6 @@ def get_chem_featureprops(fb_chem_dict, db_connection):
             AND fp.value != ''
             AND cvt.name {prop_type_filter};
         """
-        log.debug(f'Use this query: {fprop_query}')     # BILLY BOB JIM RAY
         fprop_counter = 0
         ret_fprops = connect(fprop_query, 'no_query', db_connection)
         log.info(f'Found {len(ret_fprops)} initial {chem_attribute} featureprops.')
