@@ -254,11 +254,11 @@ def get_chem_featureprops(fb_chem_dict, db_connection):
     """
     log.info('Get chemical featureprops: InChiKey, ChEBI definition, ChEBI roles.')
     fprop_types = {
-        'InChIKey': ('inchikey'),
-        'ChEBI_definition': ('description'),
-        'ChEBI_roles': ('biological_role', 'application_role'),
+        'InChIKey': " = 'inchikey' ",
+        'ChEBI_definition': " = 'description' ",
+        'ChEBI_roles': " IN ('biological_role', 'application_role') ",
     }
-    for chem_attribute, prop_type_set in fprop_types.items():
+    for chem_attribute, prop_type_filter in fprop_types.items():
         log.debug(f'Get info for this attribute: {chem_attribute}')
         fprop_query = f"""
             SELECT DISTINCT f.uniquename, fp.value
@@ -267,7 +267,7 @@ def get_chem_featureprops(fb_chem_dict, db_connection):
             JOIN cvterm cvt ON cvt.cvterm_id = fp.type_id
             WHERE f.is_obsolete IS FALSE
             AND f.uniquename ~ '^FBch[0-9]+$'
-            AND cvt.name IN {prop_type_set}
+            AND cvt.name {prop_type_filter};
         """
         log.debug(f'Use this query: {fprop_query}')     # BILLY BOB JIM RAY
         fprop_counter = 0
