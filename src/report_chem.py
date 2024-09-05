@@ -267,6 +267,8 @@ def get_chem_featureprops(fb_chem_dict, db_connection):
             JOIN cvterm cvt ON cvt.cvterm_id = fp.type_id
             WHERE f.is_obsolete IS FALSE
             AND f.uniquename ~ '^FBch[0-9]+$'
+            AND fp.value IS NOT NULL
+            AND fp.value != ''
             AND cvt.name {prop_type_filter};
         """
         log.debug(f'Use this query: {fprop_query}')     # BILLY BOB JIM RAY
@@ -276,7 +278,7 @@ def get_chem_featureprops(fb_chem_dict, db_connection):
         ID = 0
         FPROP_VALUE = 1
         for result in ret_fprops:
-            if chem_attribute == 'ChEBI_definition' and not result[FPROP_VALUE].startswith('ChEBI: '):
+            if chem_attribute == 'ChEBI_definition' and result[FPROP_VALUE] and not result[FPROP_VALUE].startswith('ChEBI: '):
                 continue
             fb_chem_dict[result[ID]][chem_attribute].append(result[FPROP_VALUE])
             fprop_counter += 1
