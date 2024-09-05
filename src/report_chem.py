@@ -106,7 +106,7 @@ def get_fb_chems(db_connection):
             'ChEBI_synonyms': [],
             'ChEBI_definition': [],
             'ChEBI_roles': [],
-            'internal_list_chebi_pubchem_synonym_ids': [],
+            'internal_list_chebi_pubchem_synonyms': [],
         }
         fb_chem_dict[result[ID]] = result_chem_dict
     return fb_chem_dict
@@ -163,7 +163,7 @@ def get_chebi_pubchem_synonyms(fb_chem_dict, db_connection):
     """
     log.info('Get ChEBI and PubChem chemical synonyms.')
     fb_chem_synonym_query = """
-        SELECT DISTINCT f.uniquename, s.synonym_id, s.name, p.uniquename
+        SELECT DISTINCT f.uniquename, s.name, p.uniquename
         FROM feature f
         JOIN feature_synonym fs ON fs.feature_id = f.feature_id
         JOIN synonym s ON s.synonym_id = fs.synonym_id
@@ -179,11 +179,10 @@ def get_chebi_pubchem_synonyms(fb_chem_dict, db_connection):
     ret_chem_synonym_info = connect(fb_chem_synonym_query, 'no_query', db_connection)
     log.info(f'Found {len(ret_chem_synonym_info)} ChEBI/PubChem synonyms in chado.')
     ID = 0
-    SYNONYM_ID = 1
-    SYNONYM_TEXT = 2
-    PUB = 3
+    SYNONYM_TEXT = 1
+    PUB = 2
     for result in ret_chem_synonym_info:
-        fb_chem_dict[result[ID]]['internal_list_chebi_pubchem_synonym_ids'].append(result[SYNONYM_ID])
+        fb_chem_dict[result[ID]]['internal_list_chebi_pubchem_synonyms'].append(result[SYNONYM_TEXT])
         if result[PUB] == 'FBrf0243186':
             fb_chem_dict[result[ID]]['PubChem_synonyms'].append(result[SYNONYM_TEXT])
         elif result[PUB] == 'FBrf0243181':
@@ -201,7 +200,7 @@ def get_fb_chem_synonyms(fb_chem_dict, db_connection):
     """
     log.info('Get FlyBase-only chemical synonyms.')
     fb_chem_synonym_query = """
-        SELECT DISTINCT f.uniquename, s.synonym_id, s.name
+        SELECT DISTINCT f.uniquename, s.name
         FROM feature f
         JOIN feature_synonym fs ON fs.feature_id = f.feature_id
         JOIN synonym s ON s.synonym_id = fs.synonym_id
@@ -217,11 +216,10 @@ def get_fb_chem_synonyms(fb_chem_dict, db_connection):
     ret_chem_synonym_info = connect(fb_chem_synonym_query, 'no_query', db_connection)
     log.info(f'Found {len(ret_chem_synonym_info)} synonyms in chado.')
     ID = 0
-    SYNONYM_ID = 1
-    SYNONYM_TEXT = 2
+    SYNONYM_TEXT = 1
     for result in ret_chem_synonym_info:
         # Exclude any synonyms also attributed to the ChEBI or PubChem references.
-        if result[SYNONYM_ID] in fb_chem_dict[result[ID]]['internal_list_chebi_pubchem_synonym_ids']:
+        if result[SYNONYM_TEXT] in fb_chem_dict[result[ID]]['internal_list_chebi_pubchem_synonyms']:
             continue
         fb_chem_dict[result[ID]]['FB_synonyms'].append(result[SYNONYM_TEXT])
     return
@@ -328,7 +326,7 @@ def process_chem_dict(fb_chem_dict):
     log.info('Process chemical info for print output.')
     for chem in fb_chem_dict.values():
         # First, remove internal fields.
-        del chem['internal_list_chebi_pubchem_synonym_ids']
+        del chem['internal_list_chebi_pubchem_synonyms']
         # Second, convert lists to a string with pipes separating distinct entries.
         for chem_key, chem_attribute in chem.items():
             if type(chem_attribute) is list:
