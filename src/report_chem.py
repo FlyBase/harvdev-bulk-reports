@@ -106,6 +106,7 @@ def get_fb_chems(db_connection):
             'ChEBI_synonyms': [],
             'ChEBI_definition': [],
             'ChEBI_roles': [],
+            'internal_list_chebi_pubchem_synonym_ids': [],
         }
         fb_chem_dict[result[ID]] = result_chem_dict
     return fb_chem_dict
@@ -152,17 +153,17 @@ def get_external_ids(fb_chem_dict, db_connection):
     return
 
 
-def get_fb_chem_synonyms(fb_chem_dict, db_connection):
-    """Add FlyBase synonyms to the FBch ID-keyed dict of FlyBase chemical info.
+def get_chebi_pubchem_synonyms(fb_chem_dict, db_connection):
+    """Add ChEBI and PubChem-attributed synonyms to the FBch ID-keyed dict of FlyBase chemical info.
 
     Args:
         fb_chem_dict (dict): An FBch ID-keyed dict of chemical dicts having a "FB_synonyms" key.
         db_connection (psycopg2.extensions.connection): The object used to interact with the database.
 
     """
-    log.info('Get chemical synonyms.')
+    log.info('Get ChEBI and PubChem chemical synonyms.')
     fb_chem_synonym_query = """
-        SELECT DISTINCT f.uniquename, s.name, p.uniquename
+        SELECT DISTINCT f.uniquename, s.synonym_id, s.name, p.uniquename
         FROM feature f
         JOIN feature_synonym fs ON fs.feature_id = f.feature_id
         JOIN synonym s ON s.synonym_id = fs.synonym_id
@@ -172,20 +173,57 @@ def get_fb_chem_synonyms(fb_chem_dict, db_connection):
           AND p.is_obsolete IS FALSE
           AND s.name != f.name
           AND NOT s.name LIKE '%|%'
-          AND NOT s.name ILIKE 'pubchem:%';
+          AND NOT s.name ILIKE 'pubchem:%'
+          AND p.uniquename IN ('FBrf0243181', 'FBrf0243186');
     """
     ret_chem_synonym_info = connect(fb_chem_synonym_query, 'no_query', db_connection)
-    log.info(f'Found {len(ret_chem_synonym_info)} chem synonyms in chado.')
+    log.info(f'Found {len(ret_chem_synonym_info)} ChEBI/PubChem synonyms in chado.')
     ID = 0
-    SYNONYM_TEXT = 1
-    PUB = 2
+    SYNONYM_ID = 1
+    SYNONYM_TEXT = 2
+    PUB = 3
     for result in ret_chem_synonym_info:
+        fb_chem_dict[result[ID]]['internal_list_chebi_pubchem_synonym_ids'].append(result[SYNONYM_ID])
         if result[PUB] == 'FBrf0243186':
             fb_chem_dict[result[ID]]['PubChem_synonyms'].append(result[SYNONYM_TEXT])
         elif result[PUB] == 'FBrf0243181':
             fb_chem_dict[result[ID]]['ChEBI_synonyms'].append(result[SYNONYM_TEXT])
-        else:
-            fb_chem_dict[result[ID]]['FB_synonyms'].append(result[SYNONYM_TEXT])
+    return
+
+
+def get_fb_chem_synonyms(fb_chem_dict, db_connection):
+    """Add FlyBase-only synonyms to the FBch ID-keyed dict of FlyBase chemical info.
+
+    Args:
+        fb_chem_dict (dict): An FBch ID-keyed dict of chemical dicts having a "FB_synonyms" key.
+        db_connection (psycopg2.extensions.connection): The object used to interact with the database.
+
+    """
+    log.info('Get FlyBase-only chemical synonyms.')
+    fb_chem_synonym_query = """
+        SELECT DISTINCT f.uniquename, s.synonym_id, s.name
+        FROM feature f
+        JOIN feature_synonym fs ON fs.feature_id = f.feature_id
+        JOIN synonym s ON s.synonym_id = fs.synonym_id
+        JOIN pub p ON p.pub_id = fs.pub_id
+        WHERE f.is_obsolete IS FALSE
+          AND f.uniquename ~ '^FBch[0-9]{7}$'
+          AND p.is_obsolete IS FALSE
+          AND s.name != f.name
+          AND NOT s.name LIKE '%|%'
+          AND NOT s.name ILIKE 'pubchem:%'
+          AND NOT p.uniquename IN ('FBrf0243181', 'FBrf0243186');
+    """
+    ret_chem_synonym_info = connect(fb_chem_synonym_query, 'no_query', db_connection)
+    log.info(f'Found {len(ret_chem_synonym_info)} synonyms in chado.')
+    ID = 0
+    SYNONYM_ID = 1
+    SYNONYM_TEXT = 2
+    for result in ret_chem_synonym_info:
+        # Exclude any synonyms also attributed to the ChEBI or PubChem references.
+        if result[SYNONYM_ID] in fb_chem_dict[result[ID]]['internal_list_chebi_pubchem_synonym_ids']:
+            continue
+        fb_chem_dict[result[ID]]['FB_synonyms'].append(result[SYNONYM_TEXT])
     return
 
 
@@ -289,6 +327,9 @@ def process_chem_dict(fb_chem_dict):
     """Process dict of chemical into final output desired."""
     log.info('Process chemical info for print output.')
     for chem in fb_chem_dict.values():
+        # First, remove internal fields.
+        del chem['internal_list_chebi_pubchem_synonym_ids']
+        # Second, convert lists to a string with pipes separating distinct entries.
         for chem_key, chem_attribute in chem.items():
             if type(chem_attribute) is list:
                 chem[chem_key] = ' | '.join(sorted(set(chem_attribute)))
@@ -308,6 +349,7 @@ def run_chem_queries(db_connection):
     log.info('Generate full chemical dict.')
     fb_chem_dict = get_fb_chems(db_connection)
     get_external_ids(fb_chem_dict, db_connection)
+    get_chebi_pubchem_synonyms(fb_chem_dict, db_connection)
     get_fb_chem_synonyms(fb_chem_dict, db_connection)
     get_chem_featureprops(fb_chem_dict, db_connection)
     process_chem_dict(fb_chem_dict)
