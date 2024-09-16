@@ -1,4 +1,4 @@
-#Last updated: 20240621
+#Last updated: 20240916
 #imageDescription	imageFileName	publicationId	pubFigure	permission
 GAL4[path-c135] carpet glia.jpg	FBal0042565_1.jpg	FBrf0242008	Figure 1B-C (top panels)	open access
 GAL4[path-c135] DH31 and copper cells.png	FBal0042565_2.png	FBrf0211737	Figure 1B	open access
@@ -424,5 +424,23 @@ Scer\GAL4[ple.PF] dopaminergic neuron	FBal0322968_1.png	FBrf0234216	Figure S1	op
 Scer\GAL4[Tdc2.PC] adult brain	FBal0338174_1.png	FBrf0220349	Figure 3A,B	open access
 Scer\GAL4[Tdc2.PC] adult CNS	FBal0338174_2.png	FBrf0240407	Figure 1A,B	open access
 Scer\GAL4[Clk.1.5] DN1p	FBal0362632_1.png	FBrf0253505	Figure 5A-B	open access
-
-
+Scer\GAL4[arm.PS]	FBal0058766-1.png	FBrf0206887	Figure 1	open access
+Scer\GAL4[da.G32]	FBal0042573-1.png	FBrf0206887	Figure 1	open access
+Scer\GAL4[da.Switch.PT]	FBal0249022-1.png	FBrf0250370	Figure S1B	open access
+Scer\GAL4[da.Switch.PT]	FBal0249022-2.png	FBrf0250370	Figure S1C	open access
+Scer\GAL4[Eq]	FBal0126488-1.png	FBrf0138359	Figure 3A-B	granted access
+Scer\GAL4[GMR60D05]	FBal0253873-1.png	FBrf0235609	Figure 1G	open access
+Scer\GAL4[GMR60D05]	FBal0253873-2.png	FBrf0235609	Figure 7B	open access
+Scer\GAL4[GMR86E01]	FBal0255664-1.png	FBrf0256517	Figure 1a-b	open access
+Scer\GAL4[GMR86E01]	FBal0255664-2.png	FBrf0234767	Figure 1B4	open access
+Scer\GAL4[JO15]	FBal0141511-1.png	FBrf0210994	Figure 6B	open access
+Scer\GAL4[JO15]	FBal0141511-2.png	FBrf0237740	Figure S4A	open access
+Scer\GAL4[JO15]	FBal0141511-3.png	FBrf0229838	Figure 1-figure supplement 3G	open access
+Scer\GAL4[mex1.2.1]	FBal0244042-1.png	FBrf0247159	Figure 5A	granted access
+Scer\GAL4[NP0225]	FBal0181651-1.png	FBrf0252931	Figure S3B	open access
+Scer\GAL4[NP0225]	FBal0181651-2.png	FBrf0247779	Figure 7A	open access
+Scer\GAL4[NP0225]	FBal0181651-3.png	FBrf0227178	Fig 15, supplement 1D	open access
+Scer\GAL4[Or47b.7.467]	FBal0118362-1.png	FBrf0220272	Figure 3B1	open access
+Scer\GAL4[Or47b.7.467]	FBal0118362-2.png	FBrf0192657	Figure 3B	open access
+Scer\GAL4[Su(H).GBE]	FBal0256628-1.png	FBrf0230512	Figure 1B	open access
+Scer\GAL4[TIGS-2]	FBal0241122-1.png	FBrf0250370	Figure S4	open access
