@@ -83,7 +83,7 @@ def get_image_metadata():
                 this_image['permission'] = line.split('\t')[4].rstrip()
                 # REJECT cases where...
                 # 1. Reject if imageFilename has unexpected file extension. Note that *.tif/*.tiff files are not allowed.
-                if not re.search(r'^fbal[0-9]{7}_[0-9]{1,2}(\.jpg|\.jpeg|\.gif|\.png)$', this_filename.lower()):
+                if not re.search(r'^fbal[0-9]{7}(_|-)[0-9]{1,2}(\.jpg|\.jpeg|\.gif|\.png)$', this_filename.lower()):
                     logging.warning(f'IMAGES: Line {line_counter} "imageFileName" has unexpected file extension: {this_filename}.')
                     key_checks_failed_counter += 1
                 # 2. Reject if publicationId is specified (not empty string) but is not an FBrf ID.
@@ -99,14 +99,14 @@ def get_image_metadata():
                 if permission_granted is False:
                     logging.warning(f'IMAGES: Line {line_counter} "permission" is not correctly indicated: {this_image["permission"]}')
                     key_checks_failed_counter += 1
-                # FLAG cases where ...
+                # FLAG (but keep) cases where ...
                 # 1. Flag if imageDescription appears many times.
                 if this_image['imageDescription'] in files_processed:
                     logging.warning(f'IMAGES: Line {line_counter} lists "imageFileName" {this_image["imageDescription"]} again.')
                 else:
                     files_processed.append(this_image['imageDescription'])
                 # 2. Flag if pubFigure does not contain "Fig" string.
-                if 'fig' not in this_image['pubFigure'].lower():
+                if 'fig' not in this_image['pubFigure'].lower() and this_image['pubFigure'] != 'Virtual Fly Brain':
                     logging.warning(f'IMAGES: Line {line_counter} "pubFigure" does not mention any "fig": {this_image["pubFigure"]}')
                 # FINAL assessment of image metadata.
                 if key_checks_failed_counter > 0:
