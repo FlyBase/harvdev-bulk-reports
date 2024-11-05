@@ -444,3 +444,39 @@ Scer\GAL4[Or47b.7.467]	FBal0118362_1.png	FBrf0220272	Figure 3B1	open access
 Scer\GAL4[Or47b.7.467]	FBal0118362_2.png	FBrf0192657	Figure 3B	open access
 Scer\GAL4[Su(H).GBE]	FBal0256628_1.png	FBrf0230512	Figure 1B	open access
 Scer\GAL4[TIGS-2]	FBal0241122_1.png	FBrf0250370	Figure S4	open access
+Scer\GAL4[GMR.PY]	FBal0152222_1.png	FBrf0250313	Figure 1a-a''	open access
+Ecol\lexA[VP16.Orco]	FBal0221467_1.png	FBrf0235102	Figure 1D	granted access
+Ecol\lexA[GAD.repo]	FBal0221468_1.png	FBrf0255277	Figure 3G	open access
+Ecol\lexA[GAD.repo]	FBal0221468_2.png	FBrf0244419	Figure 8F	open access
+Ecol\lexA[GAD.repo]	FBal0221468_3.png	FBrf0242896	Figure S1A-C	open access
+Ecol\lexA[fru.P1]	FBal0244777_1.png	FBrf0210735	Figure 6A-D	open access
+Ecol\lexA[fru.P1]	FBal0244777_2.png	FBrf0248284	Figure 5C	open access
+Ecol\lexA[fru.P1]	FBal0244777_3.png	FBrf0256597	Figure S6	open access
+Ecol\lexA[fru.P1]	FBal0244777_4.png	FBrf0209580	Figure 3A-C	granted access
+Ecol\lexA[VP16.Gr5a.cGa]	FBal0265027_1.png	FBrf0256693	Figure S4E-F	open access
+Ecol\lexA[VP16.Gr5a.cGa]	FBal0265027_2.png	FBrf0234627	Figure 3C	open access
+Ecol\lexA[VP16.Gr5a.cGa]	FBal0265027_3.png	FBrf0233513	Figure 4B	open access
+Ecol\lexA[VP16.Mef2.247]	FBal0265180_1.png	FBrf0222789	Figure 1C1	open access
+Ecol\lexA[GMR71G01]	FBal0277015_1.png	FBrf0229653	Figure 8 supplement 1C	open access
+Ecol\lexA[GMR71G01]	FBal0277015_2.png	FBrf0245457	Figure 5C	open access
+Ecol\lexA[Gr66a.PS]	FBal0277069_1.png	FBrf0259413	Figure 4F	open access
+Ecol\lexA[Gr66a.PS]	FBal0277069_2.png	FBrf0258293	Figure 1 C-D	open access
+Ecol\lexA[GMR58E02]	FBal0289823_1.png	FBrf0252547	Figure S1B	open access
+Ecol\lexA[GMR58E02]	FBal0289823_2.png	FBrf0254940	Figure 4G	open access
+Ecol\lexA[p65.nompC]	FBal0291604_1.png	FBrf0248869	Figure 3E	open access
+Ecol\lexA[p65.nompC]	FBal0291604_2.png	FBrf0245827	Figure S1	open access
+Ecol\lexA[p65.nompC]	FBal0291604_3.png	FBrf0223255	Figure 3A-C	open access
+Ecol\lexA[VP16.Pdf]	FBal0295486_1.png	FBrf0258922	Figure 1C	open access
+Ecol\lexA[VP16.Pdf]	FBal0295486_2.png	FBrf0248519	Figure S7H	open access
+Scer\GAL4[VGlut-MI04979-TG4.2]	FBal0304251_1.png	FBrf0256675	Figure S1B	open access
+Scer\GAL4[VGlut-MI04979-TG4.2]	FBal0304251_2.png	FBrf0246918	Figure 1 supplement 1 R-S	open access
+Scer\GAL4[VGlut-MI04979-TG4.2]	FBal0304251_3.png	FBrf0242251	Figure 7 supplement 1Bi	open access
+Scer\GAL4[VGlut-MI04979-TG4.2]	FBal0304251_4.png	FBrf0227693	Figure 1B	open access
+Ecol\lexA[ChAT-MI04508-TlexA:QFAD.0]	FBal0304276_1.png	FBrf0245850	Figure 4C	open access
+Ecol\lexA[ChAT-MI04508-TlexA:QFAD.0]	FBal0304276_2.png	FBrf0258259	Figure 5A-B	open access
+Ecol\lexA[VGlut-MI04979-TlexA:QFAD.2]	FBal0304277_1.png	FBrf0238459	Figure 8i-j	open access
+Ecol\lexA[VGlut-MI04979-TlexA:QFAD.2]	FBal0304277_2.png	FBrf0258259	Figure 6C	open access
+Ecol\lexA[VGlut-MI04979-TlexA:QFAD.2]	FBal0304277_3.png	FBrf0245850	Figure 4G	open access
+Ecol\lexA[Gad1-MI09277-TlexA:QFAD.2]	FBal0304278_1.png	FBrf0245850	Figure 4E	open access
+Ecol\lexA[Gad1-MI09277-TlexA:QFAD.2]	FBal0304278_2.png	FBrf0257390	Figure 2A	open access
+Ecol\lexA[Gad1-MI09277-TlexA:QFAD.2]	FBal0304278_3.png	FBrf0258259	Figure 4A	open access
