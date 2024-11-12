@@ -24,11 +24,11 @@ if (@ARGV <5) {
 # Look for pathway option.
 my $grp_type = '';
 GetOptions ("t=s" => \$grp_type);
-my %grp_type_to_title = {
+my %grp_type_to_title = (
     '' => 'Gene Groups',
     'signaling' => 'Signaling Pathways',
     'metabolic' => 'Metabolic Pathways',
-};
+);
 my %grp_type_to_term = (
     'signaling' => 'signaling pathway group',
     'metabolic' => 'metabolic pathway group',
@@ -65,7 +65,7 @@ $dbh5 = DBI->connect($dsource,$user,$pwd) or die "cannot connect to $dsource\n";
 
 ## Print header
 $jetzt = scalar localtime;
-print "## FlyBase " . $grp_type_to_title{$grp_type} . " report\n## Generated: $jetzt\n## Using chado datasource: $dsource\n\n";
+print "## FlyBase $grp_type_to_title{$grp_type} report\n## Generated: $jetzt\n## Using chado datasource: $dsource\n\n";
 print "## Where groups are arranged into hierarchies, note that:\n";
 print "## i) the member genes are only associated with the terminal subgroups\n";
 print "## ii) the immediate parent of any subgroup is identified in the 'Parent_FB_group_id' and 'Parent_FB_group_symbol' columns\n\n";
