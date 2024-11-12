@@ -77,7 +77,7 @@ if ($grp_type) {
     $cvterm_query_bit = "AND cvt.name = " . $dbh3->quote($grp_type_to_term{$grp_type});
 } else {
     my @cvterms_to_exclude = values %grp_type_to_term;
-    my $cvterms_to_exclude_str = join("', '", map { $dbh3->quote($_) } @cvterms_to_exclude);
+    my $cvterms_to_exclude_str = join(", ", map { $dbh3->quote($_) } @cvterms_to_exclude);
     $cvterm_query_bit = "AND NOT cvt.name IN ('$cvterms_to_exclude_str')";
 }
 
