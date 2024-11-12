@@ -28,7 +28,7 @@ my %grp_type_to_title = {
     '' => 'Gene Groups',
     'signaling' => 'Signaling Pathways',
     'metabolic' => 'Metabolic Pathways',
-}
+};
 my %grp_type_to_term = (
     'signaling' => 'signaling pathway group',
     'metabolic' => 'metabolic pathway group',
