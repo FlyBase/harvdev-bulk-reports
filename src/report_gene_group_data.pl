@@ -22,7 +22,7 @@ if (@ARGV <5) {
   exit();
 }
 # Look for pathway option.
-my $grp_type = 0;
+my $grp_type = '';
 GetOptions ("t=s" => \$grp_type);
 my %grp_type_to_term = (
     'signaling' => 'signaling pathway group',
