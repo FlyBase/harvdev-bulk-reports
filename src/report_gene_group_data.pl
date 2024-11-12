@@ -64,8 +64,7 @@ print "## FlyBase $ggtype{$pathway} report\n## Generated: $jetzt\n## Using chado
 print "## Where groups are arranged into hierarchies, note that:\n";
 print "## i) the member genes are only associated with the terminal subgroups\n";
 print "## ii) the immediate parent of any subgroup is identified in the 'Parent_FB_group_id' and 'Parent_FB_group_symbol' columns\n\n";
-print "## FB_group_id\tFB_group_symbol\tFB_group_name\tParent_FB_group_id\tParent_FB_group_symbol\tGroup_member_FB_gene_id\tGroup_member_FB_gene_symbol\n";
-
+print "# FB_group_id\tFB_group_symbol\tFB_group_name\tParent_FB_group_id\tParent_FB_group_symbol\tGroup_member_FB_gene_id\tGroup_member_FB_gene_symbol\n";
 
 #
 ## Main method
