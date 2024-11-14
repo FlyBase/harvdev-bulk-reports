@@ -2,14 +2,15 @@
 # report_gene_group_data
 #
 #       Perl script reports FlyBase FBgg gene group or pathway data for public
-#       bulk report. The "-p" option restricts output to pathways. If no "-p",
-#       only non-pathway gene groups are reported.
+#       bulk report. The "-t" option restricts output to a given set of groups;
+#       if the -t option is not used, groups in defined sets will be excluded
+#       instead so that only non-pathway gene groups are reported.
 #
 #-----------------------------------------------------------------------------#
 #
 #       NOTES
 #       
-#       See JIRA DB-261, DB-794 for more details
+#       See JIRA DB-261, DB-794, DB-992 for more details
 #       
 #
 #-----------------------------------------------------------------------------#
@@ -17,16 +18,22 @@ use DBI;
 use Getopt::Long;
 
 if (@ARGV <5) {
-  print "\n USAGE: report_gene_group_data pg_server db_name pg_username pg_password report_output_filename (-p)\n\n";
+  print "\n USAGE: report_gene_group_data pg_server db_name pg_username pg_password report_output_filename (-t (signaling|metabolic))\n\n";
   exit();
 }
 # Look for pathway option.
-my $pathway = 0;
-GetOptions ("pathway" => \$pathway);
-my %ggtype = (
-    0 => 'Gene Groups',
-    1 => 'Pathways'
+my $grp_type = '';
+GetOptions ("t=s" => \$grp_type);
+my %grp_type_to_title = (
+    '' => 'Gene Groups',
+    'signaling' => 'Signaling Pathways',
+    'metabolic' => 'Metabolic Pathways',
 );
+my %grp_type_to_term = (
+    'signaling' => 'signaling pathway group',
+    'metabolic' => 'metabolic pathway group',
+);
+print "Running the " . __FILE__ . " script with the -t option set to grp_type=" . $grp_type . ".\n";
 my $server = shift(@ARGV);
 my $db = shift(@ARGV);
 my $user = shift(@ARGV);
@@ -58,26 +65,27 @@ $dbh5 = DBI->connect($dsource,$user,$pwd) or die "cannot connect to $dsource\n";
 
 ## Print header
 $jetzt = scalar localtime;
-print "## FlyBase $ggtype{$pathway} report\n## Generated: $jetzt\n## Using chado datasource: $dsource\n\n";
-
-
+print "## FlyBase $grp_type_to_title{$grp_type} report\n## Generated: $jetzt\n## Using chado datasource: $dsource\n\n";
 print "## Where groups are arranged into hierarchies, note that:\n";
 print "## i) the member genes are only associated with the terminal subgroups\n";
 print "## ii) the immediate parent of any subgroup is identified in the 'Parent_FB_group_id' and 'Parent_FB_group_symbol' columns\n\n";
-
-print "## FB_group_id\tFB_group_symbol\tFB_group_name\tParent_FB_group_id\tParent_FB_group_symbol\tGroup_member_FB_gene_id\tGroup_member_FB_gene_symbol\n";
-
+print "# FB_group_id\tFB_group_symbol\tFB_group_name\tParent_FB_group_id\tParent_FB_group_symbol\tGroup_member_FB_gene_id\tGroup_member_FB_gene_symbol\n";
 
 #
 ## Main method
 #
 
 ## Populate hash %gnh of all grp grp_id, uniquename, name, and gene(s) if any
-## Modify query depending on $pathway argument.
-my %ggtype_query = (
-    0 => '!',
-    1 => ''
-);
+# Modify query depending on the $grp_type argument.
+my $cvterm_query_bit;
+if ($grp_type) {
+    $cvterm_query_bit = "AND cvt.name = " . $dbh3->quote($grp_type_to_term{$grp_type});
+} else {
+    my @cvterms_to_exclude = values %grp_type_to_term;
+    my $cvterms_to_exclude_str = join(", ", map { $dbh3->quote($_) } @cvterms_to_exclude);
+    $cvterm_query_bit = "AND NOT cvt.name IN ($cvterms_to_exclude_str)";
+}
+
 my %gnh;
 my $grq = $dbh3->prepare(sprintf("
     SELECT g.grp_id,
@@ -89,8 +97,8 @@ my $grq = $dbh3->prepare(sprintf("
     JOIN cv ON cv.cv_id = cvt.cv_id
     WHERE g.is_obsolete IS FALSE
       AND cv.name = 'FlyBase miscellaneous CV'
-      AND cvt.name %s= 'signaling pathway group'
-", $ggtype_query{$pathway}));
+      %s
+", $cvterm_query_bit));
 $grq->execute or die "WARNING: ERROR: Unable to execute grp name/uniquename query\n";
 while (my %grr = %{$grq->fetchrow_hashref}) {
 #    print "Adding grp to gnh:\t$grr{grp_id}\t$grr{name}\t$grr{uniquename}\n";
