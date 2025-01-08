@@ -62,9 +62,15 @@ log.info(f'Parsing args specific to this script; ignoring these: {extra_args}')
 def main():
     """Retrieve, repackage and print out database information."""
     log.info('Started main function.')
+    # Get chem data and sort it by FBch ID.
     fb_chems = run_chem_queries(conn)
+    sorted_fb_chem_ids = sorted(fb_chems.keys())
+    id_sorted_chems = []
+    for fb_chem_id in sorted_fb_chem_ids:
+        id_sorted_chems.append(fb_chems[fb_chem_id])
+    # Export the data to file.
     data_to_export_as_tsv = generic_FB_tsv_dict(report_title, database)
-    data_to_export_as_tsv['data'] = list(fb_chems.values())
+    data_to_export_as_tsv['data'] = id_sorted_chems
     tsv_report_dump(data_to_export_as_tsv, output_filename, headers=header_list)
     conn.close()
     log.info('Ended main function.')
