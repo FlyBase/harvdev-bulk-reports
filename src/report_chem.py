@@ -64,9 +64,8 @@ def main():
     log.info('Started main function.')
     # Get chem data and sort it by FBch ID.
     fb_chems = run_chem_queries(conn)
-    sorted_fb_chem_ids = sorted(fb_chems.keys())
     id_sorted_chems = []
-    for fb_chem_id in sorted_fb_chem_ids:
+    for fb_chem_id in sorted(fb_chems.keys()):
         id_sorted_chems.append(fb_chems[fb_chem_id])
     # Export the data to file.
     data_to_export_as_tsv = generic_FB_tsv_dict(report_title, database)
