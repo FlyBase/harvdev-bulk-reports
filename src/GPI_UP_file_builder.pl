@@ -190,7 +190,7 @@ print "Processed $rows protein coding gene results.\n";
 print "Get protein complexes now.\n";
 my $protein_complex_query = $dbh->prepare(
     ("
-    SELECT DISTINCT grp.uniquename, dbx.accession, s.name
+    SELECT DISTINCT grp.uniquename, grp.name, dbx.accession, s.name
     FROM grp
     JOIN grp_cvterm grpcvt ON grpcvt.grp_id = grp.grp_id
     JOIN cvterm cvt ON cvt.cvterm_id = grpcvt.cvterm_id
@@ -214,9 +214,9 @@ $rows = 0;
 $protein_complex_query->execute or die "Can't do protein complex query\n";
 
 print "Processing results of protein complex gene group query\n";
-while ( my ($grp_uniquename, $complex_portal_symbol, $gene_group_fullname) = $protein_complex_query->fetchrow_array()) {
+while ( my ($grp_uniquename, $grp_name, $complex_portal_symbol, $gene_group_fullname) = $protein_complex_query->fetchrow_array()) {
   $rows++;
-  print OUT "FB\t$grp_uniquename\t$complex_portal_symbol\t$gene_group_fullname\t\tprotein_complex\ttaxon:7227\n";
+  print OUT "FB\t$grp_uniquename\t$grp_name\t$gene_group_fullname\t\tprotein_complex\ttaxon:7227\t\tComplexPortal:$complex_portal_symbol\n";
 }
 print "Processed $rows protein complex gene group results.\n";
 
