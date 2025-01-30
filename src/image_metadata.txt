@@ -310,7 +310,7 @@ Scer\GAL4[twi.2PE] head mesoderm	FBal0060664_1.png	FBrf0215231	Figure S4H	open a
 Scer\GAL4[twi.2PE] mesoderm	FBal0060664_2.png	FBrf0214770	Figure S3	open access
 Scer\GAL4[sd-SG29.1] wing disc	FBal0060667_1.png	FBrf0233362	Figure S3A	open access
 Scer\GAL4[sd-SG29.1] 2 wing discs	FBal0060667_2.png	FBrf0218840	Figure 1C,C'	granted access
-Scer\GAL4[VP16.nanos.UTR] egg chamber	FBal0060680_1.png	FBrf0151923	Fig1D	granted access
+Scer\GAL4[VP16.nanos.UTR] germline cell	FBal0060680_1.png	FBrf0151923	Fig1D	granted access
 Scer\GAL4[tsh-c724] Malpighian tubule type II cell	FBal0061877_1.png	FBrf0220823	Figure 2I-J	granted access
 Scer\GAL4[Ntan1-Mz97] glial cell	FBal0061886_1.png	FBrf0239793	Figure S1A	granted access
 Scer\GAL4[Ntan1-Mz97] glial cell, higher magnification	FBal0061886_2.png	FBrf0239793	Figure S1A'	granted access
@@ -480,3 +480,17 @@ Ecol\lexA[VGlut-MI04979-TlexA:QFAD.2]	FBal0304277_3.png	FBrf0245850	Figure 4G	op
 Ecol\lexA[Gad1-MI09277-TlexA:QFAD.2]	FBal0304278_1.png	FBrf0245850	Figure 4E	open access
 Ecol\lexA[Gad1-MI09277-TlexA:QFAD.2]	FBal0304278_2.png	FBrf0257390	Figure 2A	open access
 Ecol\lexA[Gad1-MI09277-TlexA:QFAD.2]	FBal0304278_3.png	FBrf0258259	Figure 4A	open access
+Ecol\lexA[VP16.Gr64f] labellum	FBal0326391_1.png	FBrf0259413	Figure 4E	open access
+Ecol\lexA[VP16.Gr64f] leg	FBal0326391_2.png	FBrf0250180	Figure 8A7	open access
+Ecol\lexA[VP16.Gr64f] brain	FBal0326391_3.png	FBrf0250180	Figure S8A-B	open access
+Ecol\lexA[VP16.Ilp2.PL] larval	FBal0349237_1.png	FBrf0254890	Figure 3A-D	granted access
+Ecol\lexA[VP16.Ilp2.PL] larval, adult	FBal0349237_2.png	FBrf0246538	Figure S3A,C	open access
+Scer\GAL4[SIFa.PT] adult	FBal0246774_1.png	FBrf0244046	Figure 11 A-O	open access
+Scer\GAL4[109-30] follicle cell	FBal0147513_1.png	FBrf0228048	Figure 5A-B	granted access
+Scer\GAL4[BG380] motor neuron	FBal0058814_1.png	FBrf0260098	Figure 1i-j	open access
+Scer\GAL4[VP16.otu] germline cell	FBal0095594_1.png	FBrf0219572	Figure 1D	open access
+Scer\GAL4[455.2] presumptive scutellum	FBal0040464_2.png	FBrf0162073	Figure 4D	granted access
+Ecol\lexA[p65.R57C10.P] VNC	FBal0270226_1.png	FBrf0247391	Figure 3B	open access
+Scer\GAL4[5-HT1B.PY] gamma Kenyon cell	FBal0406224_1.png	FBrf0249782	Figure 3 supplement 1G	open access
+Scer\GAL4[5-HT1B.PY] gamma Kenyon cell	FBal0406224_2.png	FBrf0246518	Figure 6E	open access
+Scer\GAL4[NP3233] astrocyte-like glial cell	FBal0260983_1.png	FBrf0257829	Figure S5E	open access
