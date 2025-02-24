@@ -529,11 +529,12 @@ while (
     # print_log("DEBUG: 5b. Filled in col4: gp2term.");
 
     # cols 5 and 6
-    $line .= "GO:$goid\tFB:$pub";
+    # $line .= "GO:$goid\tFB:$pub";    # DB-1002
+    $line .= "GO:$goid\t";
     # print_log("DEBUG: 6. Filled in cols 5-6: GO & FB pub IDs.");
 
     # check for PMID
-    $line .= "|$pmid" if $pmid;
+    $line .= "$pmid" if $pmid;
     $line .= "\t";
     # print_log("DEBUG: 7. Filled in col 7: PubMed ID.");
 
