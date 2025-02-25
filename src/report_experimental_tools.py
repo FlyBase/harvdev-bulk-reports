@@ -123,7 +123,7 @@ def get_tool_fullnames(fb_tool_dict):
     for result in ret_fb_tool_fullnames:
         fb_tool_dict[FEAT_ID]['Name'] = result[FULLNAME]
         counter += 1
-    log.info(f'Found {len(counter)} current full names for experimental tools in chado.')
+    log.info(f'Found {counter} current full names for experimental tools in chado.')
     return
 
 
@@ -154,7 +154,7 @@ def get_tool_uses(fb_tool_dict):
         fb_tool_dict[FEAT_ID]['Uses (term)'].append(result[TERM_NAME])
         fb_tool_dict[FEAT_ID]['Uses (id)'].append(result[TERM_CURIE])
         counter += 1
-    log.info(f'Found {len(counter)} "tool_uses" annotations for experimental tools in chado.')
+    log.info(f'Found {counter} "tool_uses" annotations for experimental tools in chado.')
     return
 
 
@@ -178,7 +178,7 @@ def get_tool_descriptions(fb_tool_dict):
     for result in ret_fb_tool_desc:
         fb_tool_dict[FEAT_ID]['Description'].append(result[DESCRIPTION])
         counter += 1
-    log.info(f'Found {len(counter)} descriptions for experimental tools in chado.')
+    log.info(f'Found {counter} descriptions for experimental tools in chado.')
     return
 
 
@@ -217,7 +217,7 @@ def get_compatible_tools(fb_tool_dict):
         for compatible_tool_tuple in fb_tool['compatible_tool_tuples']:
             fb_tool['Compatible tools (symbol)'].append(compatible_tool_tuple[0])
             fb_tool['Compatible tools (id)'].append(compatible_tool_tuple[1])
-    log.info(f'Found {len(counter)} "compatible_tool" relationships in chado.')
+    log.info(f'Found {counter} "compatible_tool" relationships in chado.')
     return
 
 
