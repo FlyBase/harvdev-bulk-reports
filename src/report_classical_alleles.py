@@ -35,7 +35,6 @@ header_list = [
     'Insertion (id)',
     'Inserted element type (term)',
     'Inserted element type (id)',
-    # BOB
     'Regulatory region (symbol)',
     'Regulatory region (id)',
     'Encoded product/allele (symbol)',
@@ -169,6 +168,7 @@ def flag_transgenic_alleles(fb_allele_dict):
         fb_allele_dict[feat_id]['is_transgenic'] = True
         counter += 1
     log.info(f'Flagged {counter} current Dmel alleles as transgenic.')
+    log.info(f'So we have {len(fb_allele_dict) - counter} current classical Dmel alleles in chado.')
     return
 
 
@@ -196,10 +196,12 @@ def get_allele_genes(fb_allele_dict):
     GENE_CURIE = 2
     counter = 0
     for result in ret_fb_allele_genes:
+        if fb_allele_dict[result[FEAT_ID]]['is_transgenic'] is True:
+            continue
         fb_allele_dict[result[FEAT_ID]]['Gene (symbol)'] = result[GENE_NAME]
         fb_allele_dict[result[FEAT_ID]]['Gene (id)'] = result[GENE_CURIE]
         counter += 1
-    log.info(f'Found {counter} parental genes for current Dmel alleles in chado.')
+    log.info(f'Found {counter} parental genes for current non-transgenic Dmel alleles in chado.')
     return
 
 
@@ -222,7 +224,7 @@ def get_allele_classes(fb_allele_dict):
           AND f.uniquename ~ '^FBal[0-9]{7}$'
           AND fcvt.is_not IS FALSE
           AND cvt.is_obsolete = 0
-          AND t.name= 'webcv'
+          AND t.name = 'webcv'
           AND cvtp.value = 'allele_class';
     """
     ret_fb_allele_classes = connect(fb_allele_classes_query, 'no_query', conn)
@@ -231,10 +233,12 @@ def get_allele_classes(fb_allele_dict):
     TERM_CURIE = 2
     counter = 0
     for result in ret_fb_allele_classes:
+        if fb_allele_dict[result[FEAT_ID]]['is_transgenic'] is True:
+            continue
         fb_allele_dict[result[FEAT_ID]]['Allele Class (term)'].append(result[TERM_NAME])
         fb_allele_dict[result[FEAT_ID]]['Allele Class (id)'].append(result[TERM_CURIE])
         counter += 1
-    log.info(f'Found {counter} allele class annotations for current Dmel alleles in chado.')
+    log.info(f'Found {counter} allele class annotations for current non-transgenic Dmel alleles in chado.')
     return
 
 
@@ -262,10 +266,45 @@ def get_insertion_info(fb_allele_dict):
     INS_CURIE = 2
     counter = 0
     for result in ret_fb_allele_insertions:
+        if fb_allele_dict[result[FEAT_ID]]['is_transgenic'] is True:
+            continue
         fb_allele_dict[result[FEAT_ID]]['Insertion (symbol)'].append(result[INS_NAME])
         fb_allele_dict[result[FEAT_ID]]['Insertion (id)'].append(result[INS_CURIE])
         counter += 1
-    log.info(f'Found {counter} current insertions for current Dmel alleles.')
+    log.info(f'Found {counter} current insertions for current non-transgenic Dmel alleles.')
+    return
+
+
+def get_allele_descriptions(fb_allele_dict):
+    """Get allele descriptions."""
+    global conn
+    log.info('Get allele descriptions.')
+    fb_allele_descriptions_query = """
+        SELECT DISTINCT f.feature_id, fp.value, STRING_AGG(p.uniquename, '+')
+        FROM feature f
+        JOIN organism o ON o.organism_id = f.organism_id
+        JOIN featureprop fp ON fp.feature_id = f.feature_id
+        JOIN cvterm cvt ON cvt.cvterm_id = fp.type_id
+        JOIN featureprop_pub fpp ON fpp.featureprop_id = fp.featureprop_id
+        JOIN pub p ON p.pub_id = fpp.pub_id
+        WHERE o.abbreviation = 'Dmel'
+          AND f.is_obsolete IS FALSE
+          AND f.uniquename ~ '^FBal[0-9]{7}$'
+          AND cvt.name IN ('aminoacid_rep', 'molecular_info', 'nucleotide_sub')
+        GROUP BY f.feature_id, fp.value;
+    """
+    ret_fb_allele_descriptions = connect(fb_allele_descriptions_query, 'no_query', conn)
+    FEAT_ID = 0
+    DESC_TEXT = 1
+    PUB_ID = 2
+    counter = 0
+    for result in ret_fb_allele_descriptions:
+        if fb_allele_dict[result[FEAT_ID]]['is_transgenic'] is True:
+            continue
+        fb_allele_dict[result[FEAT_ID]]['Description (text)'].append(result[DESC_TEXT])
+        fb_allele_dict[result[FEAT_ID]]['Description (supporting reference)'].append(result[PUB_ID])
+        counter += 1
+    log.info(f'Found {counter} allele descriptions for current non-transgenic Dmel alleles in chado.')
     return
 
 
@@ -308,10 +347,55 @@ def get_inserted_element_info(fb_allele_dict):
     TERM_CURIE = 2
     counter = 0
     for result in ret_fb_allele_inserted_element_info:
+        if fb_allele_dict[result[FEAT_ID]]['is_transgenic'] is True:
+            continue
         fb_allele_dict[result[FEAT_ID]]['Inserted element type (term)'].append(result[TERM_NAME])
         fb_allele_dict[result[FEAT_ID]]['Inserted element type (id)'].append(result[TERM_CURIE])
         counter += 1
-    log.info(f'Found {counter} inserted element annotations for current Dmel alleles.')
+    log.info(f'Found {counter} inserted element annotations for current non-transgenic Dmel alleles.')
+    return
+
+
+def get_component_info(fb_allele_dict):
+    """Get allele component info."""
+    global conn
+    log.info('Get allele component info.')
+    component_associations = {
+        'has_reg_region': 'Regulatory region',
+        'encodes_tool': 'Encoded product/allele',
+        'tagged_with': 'Tagged with',
+        'also_carries': 'Also carries',
+    }
+    for asso_type, slot_name in component_associations.items():
+        log.info(f'Get "{asso_type}" info.')
+        fb_allele_component_query = f"""
+            SELECT DISTINCT a.feature_id, c.name, c.uniquename
+            FROM feature a
+            JOIN organism o ON o.organism_id = a.organism_id
+            JOIN feature_relationship fr ON fr.subject_id = a.feature_id
+            JOIN feature c ON c.feature_id = fr.object_id
+            JOIN cvterm t ON t.cvterm_id = fr.type_id
+            WHERE o.abbreviation = 'Dmel'
+              AND a.is_obsolete IS FALSE
+              AND a.uniquename ~ '^FBal[0-9]{{7}}$'
+              AND c.is_obsolete IS FALSE
+              AND c.uniquename ~ '^FB[a-z][a-z][0-9]{{7,10}}$'
+              AND t.name = '{asso_type}';
+        """
+        ret_fb_allele_components = connect(fb_allele_component_query, 'no_query', conn)
+        FEAT_ID = 0
+        COMPONENT_NAME = 1
+        COMPONENT_CURIE = 2
+        counter = 0
+        for result in ret_fb_allele_components:
+            if fb_allele_dict[result[FEAT_ID]]['is_transgenic'] is True:
+                continue
+            symbol_slot_name = f'{slot_name} (symbol)'
+            id_slot_name = f'{slot_name} (id)'
+            fb_allele_dict[result[FEAT_ID]][symbol_slot_name].append(result[COMPONENT_NAME])
+            fb_allele_dict[result[FEAT_ID]][id_slot_name].append(result[COMPONENT_CURIE])
+            counter += 1
+        log.info(f'Found {counter} current {asso_type} component associations for current non-transgenic Dmel alleles.')
     return
 
 
@@ -324,7 +408,9 @@ def get_database_info():
     get_allele_genes(allele_dict)
     get_allele_classes(allele_dict)
     get_insertion_info(allele_dict)
+    get_allele_descriptions(allele_dict)
     get_inserted_element_info(allele_dict)
+    # get_component_info(allele_dict)
     return allele_dict.values()
 
 
