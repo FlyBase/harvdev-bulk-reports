@@ -302,7 +302,8 @@ def get_allele_descriptions(fb_allele_dict):
     for result in ret_fb_allele_descriptions:
         if fb_allele_dict[result[FEAT_ID]]['is_transgenic'] is True:
             continue
-        fb_allele_dict[result[FEAT_ID]]['Description (text)'].append(result[DESC_TEXT])
+        desc_text = result[DESC_TEXT].replace('\t', ' ').replace('\n', ' ')
+        fb_allele_dict[result[FEAT_ID]]['Description (text)'].append(desc_text)
         fb_allele_dict[result[FEAT_ID]]['Description (supporting reference)'].append(result[PUB_ID])
         counter += 1
     log.info(f'Found {counter} allele descriptions for current non-transgenic Dmel alleles in chado.')
