@@ -14,6 +14,7 @@ Example:
 """
 
 import argparse
+import re
 from harvdev_utils.general_functions import (
     generic_FB_tsv_dict, tsv_report_dump
 )
@@ -308,6 +309,39 @@ def get_allele_descriptions(fb_allele_dict):
     return
 
 
+def get_allele_stock_info(fb_allele_dict):
+    """Get allele stock info."""
+    global conn
+    log.info('Get allele stock info.')
+    fb_allele_stocks_query = """
+        SELECT DISTINCT f.feature_id, fp.value
+        FROM feature f
+        JOIN organism o ON o.organism_id = f.organism_id
+        JOIN featureprop fp ON fp.feature_id = f.feature_id
+        JOIN cvterm cvt ON cvt.cvterm_id = fp.type_id
+        WHERE o.abbreviation = 'Dmel'
+          AND f.is_obsolete IS FALSE
+          AND f.uniquename ~ '^FBal[0-9]{7}$'
+          AND cvt.name ~ '^derived_stock';
+    """
+    ret_fb_allele_stocks = connect(fb_allele_stocks_query, 'no_query', conn)
+    FEAT_ID = 0
+    STOCK_TEXT = 1
+    stock_id_rgx = r'FBst[0-9]{7}'
+    for result in ret_fb_allele_stocks:
+        if fb_allele_dict[result[FEAT_ID]]['is_transgenic'] is True:
+            continue
+        stock_ids = re.findall(stock_id_rgx, result[STOCK_TEXT])
+        fb_allele_dict[result[FEAT_ID]]['Stock (list)'].extend(stock_ids)
+    counter = 0
+    for allele in fb_allele_dict.values():
+        allele['Stock (list)'] = set(allele['Stock (list)'])
+        allele['Stocks (number)'] = len(allele['Stock (list)'])
+        counter += allele['Stocks (number)']
+    log.info(f'Found {counter} stocks for current non-transgenic Dmel alleles in chado.')
+    return
+
+
 def get_inserted_element_info(fb_allele_dict):
     """Get allele inserted element info."""
     global conn
@@ -356,6 +390,7 @@ def get_inserted_element_info(fb_allele_dict):
     return
 
 
+# BOB - need to finish this. Just a sketch below.
 def get_component_info(fb_allele_dict):
     """Get allele component info."""
     global conn
@@ -409,6 +444,7 @@ def get_database_info():
     get_allele_classes(allele_dict)
     get_insertion_info(allele_dict)
     get_allele_descriptions(allele_dict)
+    get_allele_stock_info(allele_dict)
     get_inserted_element_info(allele_dict)
     # get_component_info(allele_dict)
     return allele_dict.values()
