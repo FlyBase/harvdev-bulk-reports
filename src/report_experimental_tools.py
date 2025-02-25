@@ -209,8 +209,8 @@ def get_compatible_tools(fb_tool_dict):
     for result in ret_fb_compatible_tools:
         sbj_tuple = (result[SBJ_NAME], result[SBJ_CURIE])
         obj_tuple = (result[OBJ_NAME], result[OBJ_CURIE])
-        fb_tool_dict[SBJ_ID]['compatible_tool_tuples'].append(obj_tuple)
-        fb_tool_dict[OBJ_ID]['compatible_tool_tuples'].append(sbj_tuple)
+        fb_tool_dict[result[SBJ_ID]]['compatible_tool_tuples'].append(obj_tuple)
+        fb_tool_dict[result[OBJ_ID]]['compatible_tool_tuples'].append(sbj_tuple)
         counter += 1
     for fb_tool in fb_tool_dict.values():
         fb_tool['compatible_tool_tuples'] = set(fb_tool['compatible_tool_tuples'])
