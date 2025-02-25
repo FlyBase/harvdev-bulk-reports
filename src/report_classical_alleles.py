@@ -38,8 +38,8 @@ header_list = [
     'Inserted element type (id)',
     'Regulatory region (symbol)',
     'Regulatory region (id)',
-    'Encoded product/allele (symbol)',
-    'Encoded product/allele (id)',
+    'Encoded product/tool (symbol)',
+    'Encoded product/tool (id)',
     'Tagged with (symbol)',
     'Tagged with (id)',
     'Also carries (symbol)',
@@ -118,8 +118,8 @@ def get_dmel_alleles():
             'Inserted element type (id)': [],
             'Regulatory region (symbol)': [],
             'Regulatory region (id)': [],
-            'Encoded product/allele (symbol)': [],
-            'Encoded product/allele (id)': [],
+            'Encoded product/tool (symbol)': [],
+            'Encoded product/tool (id)': [],
             'Tagged with (symbol)': [],
             'Tagged with (id)': [],
             'Also carries (symbol)': [],
@@ -397,7 +397,7 @@ def get_direct_component_info(fb_allele_dict):
     log.info('Get allele component info (direct).')
     component_associations = {
         'has_reg_region': 'Regulatory region',
-        'encodes_tool': 'Encoded product/allele',
+        'encodes_tool': 'Encoded product/tool',
         'tagged_with': 'Tagged with',
         'carries_tool': 'Also carries',
     }
@@ -442,7 +442,7 @@ def get_indirect_component_info(fb_allele_dict):
     log.info('Get allele component info (indirect, via insertion-construct chain).')
     component_associations = {
         'has_reg_region': 'Regulatory region',
-        'encodes_tool': 'Encoded product/allele',
+        'encodes_tool': 'Encoded product/tool',
         'tagged_with': 'Tagged with',
         'carries_tool': 'Also carries',
     }
