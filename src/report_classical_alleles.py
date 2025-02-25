@@ -106,6 +106,7 @@ def get_dmel_alleles():
         fb_allele_dict[result[FEAT_ID]] = {
             'Allele (symbol)': result[SYMBOL],
             'Allele (id)': result[FB_CURIE],
+            'is_transgenic': False,
             'Gene (symbol)': None,
             'Gene (id)': None,
             'Allele Class (term)': [],
@@ -129,6 +130,45 @@ def get_dmel_alleles():
         }
     log.info(f'Found {len(ret_fb_alleles)} current Dmel alleles in chado.')
     return fb_allele_dict
+
+
+def flag_transgenic_alleles(fb_allele_dict):
+    """Flag transgenic alleles."""
+    global conn
+    log.info('Flag transgenic alleles.')
+    fb_transgenic_alleles_query = """
+        SELECT DISTINCT a.feature_id
+        FROM feature a
+        JOIN organism o ON o.organism_id = a.organism_id
+        JOIN feature_relationship fr ON fr.subject_id = a.feature_id
+        JOIN feature c ON c.feature_id = fr.object_id
+        JOIN cvterm t ON t.cvterm_id = fr.type_id
+        WHERE o.abbreviation = 'Dmel'
+          AND a.is_obsolete IS FALSE
+          AND a.uniquename ~ '^FBal[0-9]{7}$'
+          AND c.is_obsolete IS FALSE
+          AND c.uniquename ~ '^FBtp[0-9]{7}$'
+          AND t.name = 'associated_with'
+        UNION
+        SELECT DISTINCT f.feature_id
+        FROM feature f
+        JOIN organism o2 ON o2.organism = f.organism_id
+        JOIN feature_cvterm fcvt ON fcvt.feature_id = f.feature_id
+        JOIN cvterm cvt ON cvt.cvterm_id = fcvt.cvterm_id
+        WHERE o2.abbreviation = 'Dmel'
+          AND f.is_obsolete IS FALSE
+          AND f.uniquename ~ '^FBal[0-9]{7}$'
+          AND cvt.name = 'in vitro construct';
+    """
+    ret_transgenic_alleles = connect(fb_transgenic_alleles_query, 'no_query', conn)
+    FEAT_ID = 0
+    transgenic_allele_feature_ids = set([i[FEAT_ID] for i in ret_transgenic_alleles])
+    counter = 0
+    for feat_id in transgenic_allele_feature_ids:
+        fb_allele_dict[feat_id]['is_transgenic'] = True
+        counter += 1
+    log.info(f'Flagged {counter} current Dmel alleles as transgenic.')
+    return
 
 
 def get_allele_genes(fb_allele_dict):
@@ -167,6 +207,7 @@ def get_database_info():
     global conn
     log.info('Query database.')
     allele_dict = get_dmel_alleles()
+    flag_transgenic_alleles(allele_dict)
     get_allele_genes(allele_dict)
     return allele_dict.values()
 
@@ -182,12 +223,20 @@ def process_database_info(input_data):
     """
     log.info('Starting to process current Dmel alleles info retrieved from database.')
     data_list = []
+    keep_counter = 0
+    skip_counter = 0
     for i in input_data:
+        if i['is_transgenic'] is True:
+            skip_counter += 1
+            continue
+        keep_counter += 1
         for k, v in i.items():
             if type(v) is list:
                 i[k] = '|'.join(v)
         data_list.append(i)
     log.info('Done processing current Dmel classical/insertion alleles into a list of dictionaries.')
+    log.info(f'Exporting {keep_counter} current Dmel classical/insertion alleles.')
+    log.info(f'Skipping {skip_counter} current Dmel transgenic alleles.')
     return data_list
 
 
