@@ -33,7 +33,7 @@ header_list = [
     'Allele Class (id)',
     'Insertion (symbol)',
     'Insertion (id)',
-# BOB
+    # BOB
     'Inserted element type (term)',
     'Inserted element type (id)',
     'Regulatory region (symbol)',
@@ -243,7 +243,7 @@ def get_insertion_info(fb_allele_dict):
     global conn
     log.info('Get allele-associated insertions.')
     fb_allele_insertions_query = """
-        SELECT DISTINCT a.feature_id
+        SELECT DISTINCT a.feature_id, i.name, i.uniquename
         FROM feature a
         JOIN organism o ON o.organism_id = a.organism_id
         JOIN feature_relationship fr ON fr.subject_id = a.feature_id
