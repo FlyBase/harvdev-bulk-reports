@@ -25,10 +25,10 @@ from harvdev_utils.psycopg_functions import (
 report_label = 'dmel_classical_and_insertion_allele_descriptions'
 report_title = 'FlyBase D. melanogaster classical and insertion allele descriptions report'
 header_list = [
-    'Allele (symbol)',
-    'Allele (id)',
-    'Gene (symbol)',
-    'Gene (id)',
+    'Allele (symbol)',    # DONE
+    'Allele (id)',    # DONE
+    'Gene (symbol)',    # DONE
+    'Gene (id)',    # DONE
     'Allele Class (term)',
     'Allele Class (id)',
     'Insertion (symbol)',
@@ -152,7 +152,7 @@ def flag_transgenic_alleles(fb_allele_dict):
         UNION
         SELECT DISTINCT f.feature_id
         FROM feature f
-        JOIN organism o2 ON o2.organism = f.organism_id
+        JOIN organism o2 ON o2.organism_id = f.organism_id
         JOIN feature_cvterm fcvt ON fcvt.feature_id = f.feature_id
         JOIN cvterm cvt ON cvt.cvterm_id = fcvt.cvterm_id
         WHERE o2.abbreviation = 'Dmel'
