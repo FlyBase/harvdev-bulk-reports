@@ -33,9 +33,9 @@ header_list = [
     'Allele Class (id)',
     'Insertion (symbol)',
     'Insertion (id)',
-    # BOB
     'Inserted element type (term)',
     'Inserted element type (id)',
+    # BOB
     'Regulatory region (symbol)',
     'Regulatory region (id)',
     'Encoded product/allele (symbol)',
@@ -269,6 +269,52 @@ def get_insertion_info(fb_allele_dict):
     return
 
 
+def get_inserted_element_info(fb_allele_dict):
+    """Get allele inserted element info."""
+    global conn
+    log.info('Get allele inserted element info.')
+    fb_allele_inserted_element_info_query = """
+        SELECT DISTINCT a.feature_id, cvt.name, db.name||':'||dbx.accession
+        FROM feature a
+        JOIN organism o ON o.organism_id = a.organism_id
+        LEFT OUTER JOIN featureprop fp ON fp.feature_id = a.feature_id
+          AND fp.type_id IN (SELECT cvterm_id FROM cvterm WHERE name = 'propagate_transgenic_uses')
+        JOIN feature_relationship ai ON ai.subject_id = a.feature_id
+          AND ai.type_id IN (SELECT cvterm_id FROM cvterm WHERE name = 'associated_with')
+        JOIN feature i ON i.feature_id = ai.object_id
+        JOIN feature_relationship ic ON ic.subject_id = i.feature_id
+          AND ic.type_id IN (SELECT cvterm_id FROM cvterm WHERE name = 'producedby')
+        JOIN feature c ON c.feature_id = ic.object_id
+        JOIN feature_cvterm fcvt ON fcvt.feature_id = c.feature_id
+        JOIN cvterm cvt ON cvt.cvterm_id = fcvt.cvterm_id
+        JOIN dbxref dbx ON dbx.dbxref_id = cvt.dbxref_id
+        JOIN db ON db.db_id = dbx.db_id
+        JOIN feature_cvtermprop fcvtp ON fcvtp.feature_cvterm_id = fcvt.feature_cvterm_id
+          AND fcvtp.type_id IN (SELECT cvterm_id FROM cvterm WHERE name = 'tool_uses')
+        WHERE o.abbreviation = 'Dmel'
+          AND a.is_obsolete IS FALSE
+          AND a.uniquename ~ '^FBal[0-9]{7}$'
+          AND fp.value IS NULL
+          AND i.is_obsolete IS FALSE
+          AND i.uniquename ~ '^FBti[0-9]{7}$'
+          AND c.is_obsolete IS FALSE
+          AND c.uniquename ~ '^FBtp[0-9]{7}$'
+          AND fcvt.is_not IS FALSE
+          AND cvt.is_obsolete = 0;
+    """
+    ret_fb_allele_inserted_element_info = connect(fb_allele_inserted_element_info_query, 'no_query', conn)
+    FEAT_ID = 0
+    TERM_NAME = 1
+    TERM_CURIE = 2
+    counter = 0
+    for result in ret_fb_allele_inserted_element_info:
+        fb_allele_dict[result[FEAT_ID]]['Inserted element type (term)'].append(result[TERM_NAME])
+        fb_allele_dict[result[FEAT_ID]]['Inserted element type (id)'].append(result[TERM_CURIE])
+        counter += 1
+    log.info(f'Found {counter} inserted element annotations for current Dmel alleles.')
+    return
+
+
 def get_database_info():
     """Run chado db queries in sequence."""
     global conn
@@ -278,6 +324,7 @@ def get_database_info():
     get_allele_genes(allele_dict)
     get_allele_classes(allele_dict)
     get_insertion_info(allele_dict)
+    get_inserted_element_info(allele_dict)
     return allele_dict.values()
 
 
