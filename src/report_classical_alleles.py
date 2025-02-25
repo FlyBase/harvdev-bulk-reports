@@ -391,32 +391,33 @@ def get_inserted_element_info(fb_allele_dict):
     return
 
 
-# BOB - need to finish this. Just a sketch below.
-def get_component_info(fb_allele_dict):
-    """Get allele component info."""
+def get_direct_component_info(fb_allele_dict):
+    """Get allele component info (direct)."""
     global conn
-    log.info('Get allele component info.')
+    log.info('Get allele component info (direct).')
     component_associations = {
         'has_reg_region': 'Regulatory region',
         'encodes_tool': 'Encoded product/allele',
         'tagged_with': 'Tagged with',
-        'also_carries': 'Also carries',
+        'carries_tool': 'Also carries',
     }
     for asso_type, slot_name in component_associations.items():
         log.info(f'Get "{asso_type}" info.')
         fb_allele_component_query = f"""
-            SELECT DISTINCT a.feature_id, c.name, c.uniquename
+            SELECT DISTINCT a.feature_id, component.name, component.uniquename
             FROM feature a
             JOIN organism o ON o.organism_id = a.organism_id
+            LEFT OUTER JOIN featureprop fp ON fp.feature_id = a.feature_id
+              AND fp.type_id IN (SELECT cvterm_id FROM cvterm WHERE name = 'propagate_transgenic_uses')
             JOIN feature_relationship fr ON fr.subject_id = a.feature_id
-            JOIN feature c ON c.feature_id = fr.object_id
-            JOIN cvterm t ON t.cvterm_id = fr.type_id
+              AND fr.type_id IN (SELECT cvterm_id FROM cvterm WHERE name = '{asso_type}')
+            JOIN feature component ON component.feature_id = fr.object_id
             WHERE o.abbreviation = 'Dmel'
               AND a.is_obsolete IS FALSE
               AND a.uniquename ~ '^FBal[0-9]{{7}}$'
-              AND c.is_obsolete IS FALSE
-              AND c.uniquename ~ '^FB[a-z][a-z][0-9]{{7,10}}$'
-              AND t.name = '{asso_type}';
+              AND fp.value IS NULL
+              AND component.is_obsolete IS FALSE
+              AND component.uniquename ~ '^FB[a-z]{{2}}[0-9]{{7,10}}$';
         """
         ret_fb_allele_components = connect(fb_allele_component_query, 'no_query', conn)
         FEAT_ID = 0
@@ -431,7 +432,62 @@ def get_component_info(fb_allele_dict):
             fb_allele_dict[result[FEAT_ID]][symbol_slot_name].append(result[COMPONENT_NAME])
             fb_allele_dict[result[FEAT_ID]][id_slot_name].append(result[COMPONENT_CURIE])
             counter += 1
-        log.info(f'Found {counter} current {asso_type} component associations for current non-transgenic Dmel alleles.')
+        log.info(f'Found {counter} current {asso_type} direct component associations for current non-transgenic Dmel alleles.')
+    return
+
+
+def get_indirect_component_info(fb_allele_dict):
+    """Get allele component info (indirect, via insertion-construct chain)."""
+    global conn
+    log.info('Get allele component info (indirect, via insertion-construct chain).')
+    component_associations = {
+        'has_reg_region': 'Regulatory region',
+        'encodes_tool': 'Encoded product/allele',
+        'tagged_with': 'Tagged with',
+        'carries_tool': 'Also carries',
+    }
+    for asso_type, slot_name in component_associations.items():
+        log.info(f'Get "{asso_type}" info.')
+        fb_allele_component_query = f"""
+        SELECT DISTINCT a.feature_id, component.name, component.uniquename
+        FROM feature a
+        JOIN organism o ON o.organism_id = a.organism_id
+        LEFT OUTER JOIN featureprop fp ON fp.feature_id = a.feature_id
+          AND fp.type_id IN (SELECT cvterm_id FROM cvterm WHERE name = 'propagate_transgenic_uses')
+        JOIN feature_relationship ai ON ai.subject_id = a.feature_id
+          AND ai.type_id IN (SELECT cvterm_id FROM cvterm WHERE name = 'associated_with')
+        JOIN feature i ON i.feature_id = ai.object_id
+        JOIN feature_relationship ic ON ic.subject_id = i.feature_id
+          AND ic.type_id IN (SELECT cvterm_id FROM cvterm WHERE name = 'producedby')
+        JOIN feature c ON c.feature_id = ic.object_id
+        JOIN feature_relationship fr ON fr.subject_id = c.feature_id
+          AND fr.type_id IN (SELECT cvterm_id FROM cvterm WHERE name = '{asso_type}')
+        JOIN feature component ON component.feature_id = fr.object_id
+        WHERE o.abbreviation = 'Dmel'
+          AND a.is_obsolete IS FALSE
+          AND a.uniquename ~ '^FBal[0-9]{{7}}$'
+          AND fp.value IS NULL
+          AND i.is_obsolete IS FALSE
+          AND i.uniquename ~ '^FBti[0-9]{{7}}$'
+          AND c.is_obsolete IS FALSE
+          AND c.uniquename ~ '^FBtp[0-9]{{7}}$'
+          AND component.is_obsolete IS FALSE
+          AND component.uniquename ~ '^FB[a-z]{{2}}[0-9]{{7,10}}$';
+        """
+        ret_fb_allele_components = connect(fb_allele_component_query, 'no_query', conn)
+        FEAT_ID = 0
+        COMPONENT_NAME = 1
+        COMPONENT_CURIE = 2
+        counter = 0
+        for result in ret_fb_allele_components:
+            if fb_allele_dict[result[FEAT_ID]]['is_transgenic'] is True:
+                continue
+            symbol_slot_name = f'{slot_name} (symbol)'
+            id_slot_name = f'{slot_name} (id)'
+            fb_allele_dict[result[FEAT_ID]][symbol_slot_name].append(result[COMPONENT_NAME])
+            fb_allele_dict[result[FEAT_ID]][id_slot_name].append(result[COMPONENT_CURIE])
+            counter += 1
+        log.info(f'Found {counter} current {asso_type} indirect component associations for current non-transgenic Dmel alleles.')
     return
 
 
@@ -447,7 +503,8 @@ def get_database_info():
     get_allele_descriptions(allele_dict)
     get_allele_stock_info(allele_dict)
     get_inserted_element_info(allele_dict)
-    # get_component_info(allele_dict)
+    get_direct_component_info(allele_dict)
+    get_indirect_component_info(allele_dict)
     return allele_dict.values()
 
 
