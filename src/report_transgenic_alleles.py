@@ -149,7 +149,7 @@ def get_transgenic_constructs(fb_allele_dict):
         fb_allele_dict[result[FEAT_ID]]['Transgenic Construct (symbol)'].append(result[CONS_NAME])
         fb_allele_dict[result[FEAT_ID]]['Transgenic Construct (id)'].append(result[CONS_CURIE])
         counter += 1
-    log.info(f'Flagged {counter} current constructs for current alleles.')
+    log.info(f'Found {counter} current constructs for current alleles.')
     return
 
 
@@ -170,7 +170,7 @@ def get_allele_transgenic_product_classes(fb_allele_dict):
           AND f.uniquename ~ '^FBal[0-9]{7}$'
           AND fcvt.is_not IS FALSE
           AND cvt.is_obsolete = 0
-          AND t.name = 'transgenic_product_class
+          AND t.name = 'transgenic_product_class'
           AND db.name = 'SO';
     """
     ret_fb_allele_classes = connect(fb_allele_classes_query, 'no_query', conn)
