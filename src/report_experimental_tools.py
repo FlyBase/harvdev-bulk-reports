@@ -208,12 +208,18 @@ def get_compatible_tools(fb_tool_dict):
     OBJ_NAME = 4
     OBJ_CURIE = 5
     counter = 0
+    # Chado feature_relationships seem to go only in one direction.
+    # So for each pair, record each feature in a relationship as a tuple.
+    # Then associate the tuple of one feature as a compatible tool of the other feature.
+    # Storing as tuples allows the list to be converted to a set of unique comp. tools.
     for result in ret_fb_compatible_tools:
         sbj_tuple = (result[SBJ_NAME], result[SBJ_CURIE])
         obj_tuple = (result[OBJ_NAME], result[OBJ_CURIE])
         fb_tool_dict[result[SBJ_ID]]['compatible_tool_tuples'].append(obj_tuple)
         fb_tool_dict[result[OBJ_ID]]['compatible_tool_tuples'].append(sbj_tuple)
         counter += 1
+    # Take the unique set of compatible tools for each tool.
+    # Then, split out info into separate symbol and id attributes.
     for fb_tool in fb_tool_dict.values():
         fb_tool['compatible_tool_tuples'] = set(fb_tool['compatible_tool_tuples'])
         for compatible_tool_tuple in fb_tool['compatible_tool_tuples']:
@@ -242,9 +248,9 @@ def process_database_info(input_data):
         input_data (list): A list of dicts representing FB experimental tools.
 
     Returns:
-        A list of dictionaries representing, in this case, paralog information.
+        A list of dictionaries representing experimental tools.
     """
-    log.info('Starting to process paralog info retrieved from database.')
+    log.info('Starting to process experimental tool info retrieved from database.')
     data_list = []
     for i in input_data:
         i['Uses (term)'] = '|'.join(i['Uses (term)'])
@@ -253,7 +259,7 @@ def process_database_info(input_data):
         i['Compatible tools (symbol)'] = '|'.join(i['Compatible tools (symbol)'])
         i['Compatible tools (id)'] = '|'.join(i['Compatible tools (id)'])
         data_list.append(i)
-    log.info('Done processing paralog info into a list of dictionaries.')
+    log.info('Done processing experimental tool info into a list of dictionaries.')
     return data_list
 
 
