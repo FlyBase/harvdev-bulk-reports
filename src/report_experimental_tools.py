@@ -57,7 +57,7 @@ log.info('Parsing args specific to this script; ignoring these: {}'.format(extra
 def main():
     """Retrieve, repackage and print out database information."""
     log.info('Started main function.')
-    database_info = get_database_info(conn)
+    database_info = get_database_info()
     data_to_export_as_tsv = generic_FB_tsv_dict(report_title, database)
     data_to_export_as_tsv['data'] = process_database_info(database_info)
     tsv_report_dump(data_to_export_as_tsv, output_filename, headers=header_list)
