@@ -257,7 +257,7 @@ def get_direct_component_info(fb_allele_dict):
     log.info('Get allele component info (direct).')
     component_associations = {
         'has_reg_region': 'Regulatory region',
-        'encodes_tool': 'Encoded product/allele',
+        'encodes_tool': 'Encoded product/tool',
         'tagged_with': 'Tagged with',
         'carries_tool': 'Also carries',
     }
