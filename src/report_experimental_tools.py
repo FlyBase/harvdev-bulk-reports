@@ -250,7 +250,7 @@ def process_database_info(input_data):
         i['Description'] = '|'.join(i['Description'])
         i['Compatible tools (symbol)'] = '|'.join(i['Compatible tools (symbol)'])
         i['Compatible tools (id)'] = '|'.join(i['Compatible tools (id)'])
-    data_list.append(i)
+        data_list.append(i)
     log.info('Done processing paralog info into a list of dictionaries.')
     return data_list
 
