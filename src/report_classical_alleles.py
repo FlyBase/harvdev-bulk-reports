@@ -131,29 +131,34 @@ def get_dmel_alleles():
     return fb_allele_dict
 
 
-def get_allele_fullnames(fb_allele_dict):
-    """Get allele full names."""
+def get_allele_genes(fb_allele_dict):
+    """Get allele genes."""
     global conn
-    log.info('Get allele full names.')
-    fb_allele_fullnames_query = """
-        SELECT DISTINCT f.feature_id, s.name
-        FROM feature f
-        JOIN feature_synonym fs ON fs.feature_id = f.feature_id
-        JOIN synonym s ON s.synonym_id = fs.synonym_id
-        JOIN cvterm t ON t.cvterm_id = s.type_id
-        WHERE f.is_obsolete IS FALSE
-          AND f.uniquename ~ '^FBal[0-9]{7}$'
-          AND fs.is_current IS TRUE
-          AND t.name = 'fullname';
+    log.info('Get allele genes.')
+    fb_allele_genes_query = """
+        SELECT DISTINCT a.feature_id, g.name, g.uniquename
+        FROM feature a
+        JOIN organism o ON o.organism_id = a.organism_id
+        JOIN feature_relationship fr ON fr.subject_id = a.feature_id
+        JOIN feature g ON g.feature_id = fr.object_id
+        JOIN cvterm t ON t.cvterm_id = fr.type_id
+        WHERE o.abbreviation = 'Dmel'
+          AND a.is_obsolete IS FALSE
+          AND a.uniquename ~ '^FBal[0-9]{7}$'
+          AND g.is_obsolete IS FALSE
+          AND g.uniquename ~ '^FBgn[0-9]{7}$'
+          AND t.name = 'alleleof';
     """
-    ret_fb_allele_fullnames = connect(fb_allele_fullnames_query, 'no_query', conn)
+    ret_fb_allele_genes = connect(fb_allele_genes_query, 'no_query', conn)
     FEAT_ID = 0
-    FULLNAME = 1
+    GENE_NAME = 1
+    GENE_CURIE = 2
     counter = 0
-    for result in ret_fb_allele_fullnames:
-        fb_allele_dict[result[FEAT_ID]]['Name'] = result[FULLNAME]
+    for result in ret_fb_allele_genes:
+        fb_allele_dict[result[FEAT_ID]]['Gene (symbol)'] = result[GENE_NAME]
+        fb_allele_dict[result[FEAT_ID]]['Gene (id)'] = result[GENE_CURIE]
         counter += 1
-    log.info(f'Found {counter} current full names for experimental alleles in chado.')
+    log.info(f'Found {counter} parental genes for current Dmel alleles in chado.')
     return
 
 
@@ -162,6 +167,7 @@ def get_database_info():
     global conn
     log.info('Query database.')
     allele_dict = get_dmel_alleles()
+    get_allele_genes(allele_dict)
     return allele_dict.values()
 
 
