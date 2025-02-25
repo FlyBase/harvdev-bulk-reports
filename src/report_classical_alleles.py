@@ -25,12 +25,13 @@ from harvdev_utils.psycopg_functions import (
 report_label = 'dmel_classical_and_insertion_allele_descriptions'
 report_title = 'FlyBase D. melanogaster classical and insertion allele descriptions report'
 header_list = [
-    'Allele (symbol)',    # DONE
-    'Allele (id)',    # DONE
-    'Gene (symbol)',    # DONE
-    'Gene (id)',    # DONE
+    'Allele (symbol)',
+    'Allele (id)',
+    'Gene (symbol)',
+    'Gene (id)',
     'Allele Class (term)',
     'Allele Class (id)',
+# BOB
     'Insertion (symbol)',
     'Insertion (id)',
     'Inserted element type (term)',
@@ -202,6 +203,41 @@ def get_allele_genes(fb_allele_dict):
     return
 
 
+def get_allele_classes(fb_allele_dict):
+    """Get allele classes."""
+    global conn
+    log.info('Get allele classes.')
+    fb_allele_classes_query = """
+        SELECT DISTINCT f.feature_id, cvt.name, db.name||':'||dbx.accession
+        FROM feature f
+        JOIN organism o ON o.organism_id = f.organism_id
+        JOIN feature_cvterm fcvt ON fcvt.feature_id = f.feature_id
+        JOIN cvterm cvt ON cvt.cvterm_id = fcvt.cvterm_id
+        JOIN dbxref dbx ON dbx.dbxref_id = cvt.dbxref_id
+        JOIN db ON db.db_id = dbx.db_id
+        JOIN cvtermprop cvtp ON cvtp.cvterm_id = cvt.cvterm_id
+        JOIN cvterm t ON t.cvterm_id = cvtp.type_id
+        WHERE o.abbreviation = 'Dmel'
+          AND f.is_obsolete IS FALSE
+          AND f.uniquename ~ '^FBal[0-9]{7}$'
+          AND fcvt.is_not IS FALSE
+          AND cvt.is_obsolete = 0
+          AND t.name= 'webcv'
+          AND cvtp.value = 'allele_class';
+    """
+    ret_fb_allele_classes = connect(fb_allele_classes_query, 'no_query', conn)
+    FEAT_ID = 0
+    TERM_NAME = 1
+    TERM_CURIE = 2
+    counter = 0
+    for result in ret_fb_allele_classes:
+        fb_allele_dict[result[FEAT_ID]]['Allele Class (term)'].append(result[TERM_NAME])
+        fb_allele_dict[result[FEAT_ID]]['Allele Class (id)'].append(result[TERM_CURIE])
+        counter += 1
+    log.info(f'Found {counter} allele class annotations for current Dmel alleles in chado.')
+    return
+
+
 def get_database_info():
     """Run chado db queries in sequence."""
     global conn
@@ -209,6 +245,7 @@ def get_database_info():
     allele_dict = get_dmel_alleles()
     flag_transgenic_alleles(allele_dict)
     get_allele_genes(allele_dict)
+    get_allele_classes(allele_dict)
     return allele_dict.values()
 
 
