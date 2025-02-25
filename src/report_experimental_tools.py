@@ -78,7 +78,8 @@ def get_exp_tools():
         SELECT DISTINCT f.feature_id, f.name, f.uniquename
         FROM feature f
         WHERE f.is_obsolete IS FALSE
-          AND f.uniquename ~ '^FBto[0-9]{7}$';
+          AND f.uniquename ~ '^FBto[0-9]{7}$'
+        ORDER BY f.uniquename;
     """
     ret_fb_tools = connect(fb_tools_query, 'no_query', conn)
     FEAT_ID = 0
@@ -176,7 +177,8 @@ def get_tool_descriptions(fb_tool_dict):
     DESCRIPTION = 1
     counter = 0
     for result in ret_fb_tool_desc:
-        fb_tool_dict[result[FEAT_ID]]['Description'].append(result[DESCRIPTION])
+        cleaned_text = result[DESCRIPTION].replace('\t', ' ').replace('\n', ' ')
+        fb_tool_dict[result[FEAT_ID]]['Description'].append(cleaned_text)
         counter += 1
     log.info(f'Found {counter} descriptions for experimental tools in chado.')
     return
