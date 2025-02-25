@@ -179,7 +179,7 @@ def process_database_info(input_data):
     for i in input_data:
         for k, v in i.items():
             if type(v) is list:
-                v = '|'.join(v)
+                i[k] = '|'.join(v)
         data_list.append(i)
     log.info('Done processing current Dmel classical/insertion alleles into a list of dictionaries.')
     return data_list
