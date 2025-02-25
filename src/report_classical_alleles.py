@@ -31,9 +31,9 @@ header_list = [
     'Gene (id)',
     'Allele Class (term)',
     'Allele Class (id)',
-# BOB
     'Insertion (symbol)',
     'Insertion (id)',
+# BOB
     'Inserted element type (term)',
     'Inserted element type (id)',
     'Regulatory region (symbol)',
@@ -161,9 +161,9 @@ def flag_transgenic_alleles(fb_allele_dict):
           AND f.uniquename ~ '^FBal[0-9]{7}$'
           AND cvt.name = 'in vitro construct';
     """
-    ret_transgenic_alleles = connect(fb_transgenic_alleles_query, 'no_query', conn)
+    ret_fb_transgenic_alleles = connect(fb_transgenic_alleles_query, 'no_query', conn)
     FEAT_ID = 0
-    transgenic_allele_feature_ids = set([i[FEAT_ID] for i in ret_transgenic_alleles])
+    transgenic_allele_feature_ids = set([i[FEAT_ID] for i in ret_fb_transgenic_alleles])
     counter = 0
     for feat_id in transgenic_allele_feature_ids:
         fb_allele_dict[feat_id]['is_transgenic'] = True
@@ -238,6 +238,37 @@ def get_allele_classes(fb_allele_dict):
     return
 
 
+def get_insertion_info(fb_allele_dict):
+    """Get allele-associated insertions."""
+    global conn
+    log.info('Get allele-associated insertions.')
+    fb_allele_insertions_query = """
+        SELECT DISTINCT a.feature_id
+        FROM feature a
+        JOIN organism o ON o.organism_id = a.organism_id
+        JOIN feature_relationship fr ON fr.subject_id = a.feature_id
+        JOIN feature i ON i.feature_id = fr.object_id
+        JOIN cvterm t ON t.cvterm_id = fr.type_id
+        WHERE o.abbreviation = 'Dmel'
+          AND a.is_obsolete IS FALSE
+          AND a.uniquename ~ '^FBal[0-9]{7}$'
+          AND i.is_obsolete IS FALSE
+          AND i.uniquename ~ '^FBti[0-9]{7}$'
+          AND t.name = 'associated_with';
+    """
+    ret_fb_allele_insertions = connect(fb_allele_insertions_query, 'no_query', conn)
+    FEAT_ID = 0
+    INS_NAME = 1
+    INS_CURIE = 2
+    counter = 0
+    for result in ret_fb_allele_insertions:
+        fb_allele_dict[result[FEAT_ID]]['Insertion (symbol)'].append(result[INS_NAME])
+        fb_allele_dict[result[FEAT_ID]]['Insertion (id)'].append(result[INS_CURIE])
+        counter += 1
+    log.info(f'Found {counter} current insertions for current Dmel alleles.')
+    return
+
+
 def get_database_info():
     """Run chado db queries in sequence."""
     global conn
@@ -246,6 +277,7 @@ def get_database_info():
     flag_transgenic_alleles(allele_dict)
     get_allele_genes(allele_dict)
     get_allele_classes(allele_dict)
+    get_insertion_info(allele_dict)
     return allele_dict.values()
 
 
