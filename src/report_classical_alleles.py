@@ -336,7 +336,7 @@ def get_allele_stock_info(fb_allele_dict):
         fb_allele_dict[result[FEAT_ID]]['Stock (list)'].extend(stock_ids)
     counter = 0
     for allele in fb_allele_dict.values():
-        allele['Stock (list)'] = set(allele['Stock (list)'])
+        allele['Stock (list)'] = list(set(allele['Stock (list)']))
         allele['Stocks (number)'] = len(allele['Stock (list)'])
         counter += allele['Stocks (number)']
     log.info(f'Found {counter} stocks for current non-transgenic Dmel alleles in chado.')
@@ -402,7 +402,7 @@ def get_direct_component_info(fb_allele_dict):
         'carries_tool': 'Also carries',
     }
     for asso_type, slot_name in component_associations.items():
-        log.info(f'Get "{asso_type}" info.')
+        log.info(f'Get direct "{asso_type}" info.')
         fb_allele_component_query = f"""
             SELECT DISTINCT a.feature_id, component.name, component.uniquename
             FROM feature a
@@ -447,7 +447,7 @@ def get_indirect_component_info(fb_allele_dict):
         'carries_tool': 'Also carries',
     }
     for asso_type, slot_name in component_associations.items():
-        log.info(f'Get "{asso_type}" info.')
+        log.info(f'Get indirect "{asso_type}" info.')
         fb_allele_component_query = f"""
         SELECT DISTINCT a.feature_id, component.name, component.uniquename
         FROM feature a
