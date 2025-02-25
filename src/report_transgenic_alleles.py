@@ -102,6 +102,8 @@ def get_alleles():
             'Component Allele (symbol)': result[SYMBOL],
             'Component Allele (id)': result[FB_CURIE],
             'is_transgenic': False,
+            'Gene (symbol)': None,
+            'Gene (id)': None,
             'Transgenic Construct (symbol)': [],
             'Transgenic Construct (id)': [],
             'Transgenic Product class (term)': [],
@@ -150,6 +152,37 @@ def get_transgenic_constructs(fb_allele_dict):
         fb_allele_dict[result[FEAT_ID]]['Transgenic Construct (id)'].append(result[CONS_CURIE])
         counter += 1
     log.info(f'Found {counter} current constructs for current alleles.')
+    return
+
+
+def get_allele_genes(fb_allele_dict):
+    """Get allele genes."""
+    global conn
+    log.info('Get allele genes.')
+    fb_allele_genes_query = """
+        SELECT DISTINCT a.feature_id, g.name, g.uniquename
+        FROM feature a
+        JOIN feature_relationship fr ON fr.subject_id = a.feature_id
+        JOIN feature g ON g.feature_id = fr.object_id
+        JOIN cvterm t ON t.cvterm_id = fr.type_id
+        WHERE a.is_obsolete IS FALSE
+          AND a.uniquename ~ '^FBal[0-9]{7}$'
+          AND g.is_obsolete IS FALSE
+          AND g.uniquename ~ '^FBgn[0-9]{7}$'
+          AND t.name = 'alleleof';
+    """
+    ret_fb_allele_genes = connect(fb_allele_genes_query, 'no_query', conn)
+    FEAT_ID = 0
+    GENE_NAME = 1
+    GENE_CURIE = 2
+    counter = 0
+    for result in ret_fb_allele_genes:
+        if fb_allele_dict[result[FEAT_ID]]['is_transgenic'] is False:
+            continue
+        fb_allele_dict[result[FEAT_ID]]['Gene (symbol)'] = result[GENE_NAME]
+        fb_allele_dict[result[FEAT_ID]]['Gene (id)'] = result[GENE_CURIE]
+        counter += 1
+    log.info(f'Found {counter} parental genes for current transgenic alleles in chado.')
     return
 
 
@@ -300,6 +333,7 @@ def get_database_info():
     log.info('Query database.')
     allele_dict = get_alleles()
     get_transgenic_constructs(allele_dict)
+    get_allele_genes(allele_dict)
     get_allele_transgenic_product_classes(allele_dict)
     get_allele_descriptions(allele_dict)
     get_allele_stock_info(allele_dict)
@@ -325,6 +359,10 @@ def process_database_info(input_data):
             skip_counter += 1
             continue
         keep_counter += 1
+        # Minor modification if no encode product/tool is found.
+        if not i['Encoded product/tool (id)']:
+            i['Encoded product/tool (symbol)'] = i['Gene (symbol)']
+            i['Encoded product/tool (id)'] = i['Gene (id)']
         for k, v in i.items():
             if type(v) is list:
                 i[k] = '|'.join(v)
