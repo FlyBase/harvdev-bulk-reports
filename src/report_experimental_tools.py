@@ -86,7 +86,7 @@ def get_exp_tools():
     FB_CURIE = 2
     fb_tool_dict = {}
     for result in ret_fb_tools:
-        fb_tool_dict[FEAT_ID] = {
+        fb_tool_dict[result[FEAT_ID]] = {
             'Symbol': result[SYMBOL],
             'FlyBase ID': result[FB_CURIE],
             'Name': None,
@@ -121,7 +121,7 @@ def get_tool_fullnames(fb_tool_dict):
     FULLNAME = 1
     counter = 0
     for result in ret_fb_tool_fullnames:
-        fb_tool_dict[FEAT_ID]['Name'] = result[FULLNAME]
+        fb_tool_dict[result[FEAT_ID]]['Name'] = result[FULLNAME]
         counter += 1
     log.info(f'Found {counter} current full names for experimental tools in chado.')
     return
@@ -151,8 +151,8 @@ def get_tool_uses(fb_tool_dict):
     TERM_CURIE = 2
     counter = 0
     for result in ret_fb_tool_uses:
-        fb_tool_dict[FEAT_ID]['Uses (term)'].append(result[TERM_NAME])
-        fb_tool_dict[FEAT_ID]['Uses (id)'].append(result[TERM_CURIE])
+        fb_tool_dict[result[FEAT_ID]]['Uses (term)'].append(result[TERM_NAME])
+        fb_tool_dict[result[FEAT_ID]]['Uses (id)'].append(result[TERM_CURIE])
         counter += 1
     log.info(f'Found {counter} "tool_uses" annotations for experimental tools in chado.')
     return
@@ -176,7 +176,7 @@ def get_tool_descriptions(fb_tool_dict):
     DESCRIPTION = 1
     counter = 0
     for result in ret_fb_tool_desc:
-        fb_tool_dict[FEAT_ID]['Description'].append(result[DESCRIPTION])
+        fb_tool_dict[result[FEAT_ID]]['Description'].append(result[DESCRIPTION])
         counter += 1
     log.info(f'Found {counter} descriptions for experimental tools in chado.')
     return
