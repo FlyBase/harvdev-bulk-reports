@@ -257,11 +257,9 @@ def process_database_info(input_data):
     log.info('Starting to process experimental tool info retrieved from database.')
     data_list = []
     for i in input_data:
-        i['Uses (term)'] = '|'.join(i['Uses (term)'])
-        i['Uses (id)'] = '|'.join(i['Uses (id)'])
-        i['Description'] = '|'.join(i['Description'])
-        i['Compatible tools (symbol)'] = '|'.join(i['Compatible tools (symbol)'])
-        i['Compatible tools (id)'] = '|'.join(i['Compatible tools (id)'])
+        for k, v in i.items():
+            if type(v) is list:
+                i[k] = '|'.join(v)
         data_list.append(i)
     log.info('Done processing experimental tool info into a list of dictionaries.')
     return data_list
