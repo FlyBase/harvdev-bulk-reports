@@ -227,7 +227,8 @@ def get_allele_classes(fb_allele_dict):
           AND fcvt.is_not IS FALSE
           AND cvt.is_obsolete = 0
           AND t.name = 'webcv'
-          AND cvtp.value = 'allele_class';
+          AND cvtp.value = 'allele_class'
+        ORDER BY cvt.name;
     """
     ret_fb_allele_classes = connect(fb_allele_classes_query, 'no_query', conn)
     FEAT_ID = 0
@@ -260,7 +261,8 @@ def get_insertion_info(fb_allele_dict):
           AND a.uniquename ~ '^FBal[0-9]{7}$'
           AND i.is_obsolete IS FALSE
           AND i.uniquename ~ '^FBti[0-9]{7}$'
-          AND t.name = 'associated_with';
+          AND t.name = 'associated_with'
+        ORDER BY i.name;
     """
     ret_fb_allele_insertions = connect(fb_allele_insertions_query, 'no_query', conn)
     FEAT_ID = 0
@@ -375,7 +377,8 @@ def get_inserted_element_info(fb_allele_dict):
           AND c.is_obsolete IS FALSE
           AND c.uniquename ~ '^FBtp[0-9]{7}$'
           AND fcvt.is_not IS FALSE
-          AND cvt.is_obsolete = 0;
+          AND cvt.is_obsolete = 0
+        ORDER BY cvt.name;
     """
     ret_fb_allele_inserted_element_info = connect(fb_allele_inserted_element_info_query, 'no_query', conn)
     FEAT_ID = 0
@@ -415,7 +418,8 @@ def get_direct_component_info(fb_allele_dict):
               AND a.is_obsolete IS FALSE
               AND a.uniquename ~ '^FBal[0-9]{{7}}$'
               AND component.is_obsolete IS FALSE
-              AND component.uniquename ~ '^FB[a-z]{{2}}[0-9]{{7,10}}$';
+              AND component.uniquename ~ '^FB[a-z]{{2}}[0-9]{{7,10}}$'
+            ORDER BY component.name;
         """
         ret_fb_allele_components = connect(fb_allele_component_query, 'no_query', conn)
         FEAT_ID = 0
@@ -470,7 +474,8 @@ def get_indirect_component_info(fb_allele_dict):
           AND c.is_obsolete IS FALSE
           AND c.uniquename ~ '^FBtp[0-9]{{7}}$'
           AND component.is_obsolete IS FALSE
-          AND component.uniquename ~ '^FB[a-z]{{2}}[0-9]{{7,10}}$';
+          AND component.uniquename ~ '^FB[a-z]{{2}}[0-9]{{7,10}}$'
+        ORDER BY component.name;
         """
         ret_fb_allele_components = connect(fb_allele_component_query, 'no_query', conn)
         FEAT_ID = 0

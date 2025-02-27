@@ -146,6 +146,7 @@ def get_tool_uses(fb_tool_dict):
           AND f.uniquename ~ '^FBto[0-9]{7}$'
           AND cvt.is_obsolete = 0
           AND t.name = 'tool_uses'
+        ORDER BY cvt.name;
     """
     ret_fb_tool_uses = connect(fb_tool_uses_query, 'no_query', conn)
     FEAT_ID = 0
@@ -171,7 +172,8 @@ def get_tool_descriptions(fb_tool_dict):
         JOIN cvterm t ON t.cvterm_id = fp.type_id
         WHERE f.is_obsolete IS FALSE
           AND f.uniquename ~ '^FBto[0-9]{7}$'
-          AND t.name = 'description';
+          AND t.name = 'description'
+        ORDER BY fp.value;
     """
     ret_fb_tool_desc = connect(fb_tool_desc_query, 'no_query', conn)
     FEAT_ID = 0
@@ -199,7 +201,8 @@ def get_compatible_tools(fb_tool_dict):
           AND s.uniquename ~ '^FBto[0-9]{7}$'
           AND o.is_obsolete IS FALSE
           AND o.uniquename ~ '^FBto[0-9]{7}$'
-          AND t.name = 'compatible_tool';
+          AND t.name = 'compatible_tool'
+        ORDER BY s.name, o.name;
     """
     ret_fb_compatible_tools = connect(fb_compatible_tools_query, 'no_query', conn)
     SBJ_ID = 0

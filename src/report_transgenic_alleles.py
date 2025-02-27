@@ -140,7 +140,8 @@ def get_transgenic_constructs(fb_allele_dict):
           AND a.uniquename ~ '^FBal[0-9]{7}$'
           AND c.is_obsolete IS FALSE
           AND c.uniquename ~ '^FBtp[0-9]{7}$'
-          AND t.name = 'associated_with';
+          AND t.name = 'associated_with'
+        ORDER BY c.name;
     """
     ret_fb_transgenic_constructs = connect(fb_transgenic_constructs_query, 'no_query', conn)
     FEAT_ID = 0
@@ -205,7 +206,8 @@ def get_allele_transgenic_product_classes(fb_allele_dict):
           AND fcvt.is_not IS FALSE
           AND cvt.is_obsolete = 0
           AND t.name = 'transgenic_product_class'
-          AND db.name = 'SO';
+          AND db.name = 'SO'
+        ORDER BY cvt.name;
     """
     ret_fb_allele_classes = connect(fb_allele_classes_query, 'no_query', conn)
     FEAT_ID = 0
@@ -309,7 +311,8 @@ def get_direct_component_info(fb_allele_dict):
               AND a.uniquename ~ '^FBal[0-9]{{7}}$'
             --  AND fp.value IS NULL
               AND component.is_obsolete IS FALSE
-              AND component.uniquename ~ '^FB[a-z]{{2}}[0-9]{{7,10}}$';
+              AND component.uniquename ~ '^FB[a-z]{{2}}[0-9]{{7,10}}$'
+            ORDER BY component.name;
         """
         ret_fb_allele_components = connect(fb_allele_component_query, 'no_query', conn)
         FEAT_ID = 0
