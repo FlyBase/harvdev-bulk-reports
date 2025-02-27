@@ -15,6 +15,7 @@ Example:
 
 import argparse
 import re
+from harvdev_utils.char_conversions import clean_free_text
 from harvdev_utils.general_functions import (
     generic_FB_tsv_dict, tsv_report_dump
 )
@@ -43,7 +44,7 @@ header_list = [
     'Description (text)',
     'Description (supporting reference)',
     'Stocks (number)',
-    'Stock (list)'
+    # 'Stock (list)'
 ]
 
 # Proceed with generic setup.
@@ -245,7 +246,7 @@ def get_allele_descriptions(fb_allele_dict):
     for result in ret_fb_allele_descriptions:
         if fb_allele_dict[result[FEAT_ID]]['is_transgenic'] is False:
             continue
-        desc_text = result[DESC_TEXT].replace('\t', ' ').replace('\n', ' ')
+        desc_text = clean_free_text(result[DESC_TEXT])
         fb_allele_dict[result[FEAT_ID]]['Description (text)'].append(desc_text)
         fb_allele_dict[result[FEAT_ID]]['Description (supporting reference)'].append(result[PUB_ID])
         counter += 1
@@ -299,14 +300,14 @@ def get_direct_component_info(fb_allele_dict):
         fb_allele_component_query = f"""
             SELECT DISTINCT a.feature_id, component.name, component.uniquename
             FROM feature a
-            LEFT OUTER JOIN featureprop fp ON fp.feature_id = a.feature_id
-              AND fp.type_id IN (SELECT cvterm_id FROM cvterm WHERE name = 'propagate_transgenic_uses')
+            --LEFT OUTER JOIN featureprop fp ON fp.feature_id = a.feature_id
+            --  AND fp.type_id IN (SELECT cvterm_id FROM cvterm WHERE name = 'propagate_transgenic_uses')
             JOIN feature_relationship fr ON fr.subject_id = a.feature_id
               AND fr.type_id IN (SELECT cvterm_id FROM cvterm WHERE name = '{asso_type}')
             JOIN feature component ON component.feature_id = fr.object_id
             WHERE a.is_obsolete IS FALSE
               AND a.uniquename ~ '^FBal[0-9]{{7}}$'
-              AND fp.value IS NULL
+            --  AND fp.value IS NULL
               AND component.is_obsolete IS FALSE
               AND component.uniquename ~ '^FB[a-z]{{2}}[0-9]{{7,10}}$';
         """

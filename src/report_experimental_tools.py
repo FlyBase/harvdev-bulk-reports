@@ -14,6 +14,7 @@ Example:
 """
 
 import argparse
+from harvdev_utils.char_conversions import clean_free_text
 from harvdev_utils.general_functions import (
     generic_FB_tsv_dict, tsv_report_dump
 )
@@ -174,11 +175,11 @@ def get_tool_descriptions(fb_tool_dict):
     """
     ret_fb_tool_desc = connect(fb_tool_desc_query, 'no_query', conn)
     FEAT_ID = 0
-    DESCRIPTION = 1
+    DESC_TEXT = 1
     counter = 0
     for result in ret_fb_tool_desc:
-        cleaned_text = result[DESCRIPTION].replace('\t', ' ').replace('\n', ' ')
-        fb_tool_dict[result[FEAT_ID]]['Description'].append(cleaned_text)
+        desc_text = clean_free_text(result[DESC_TEXT])
+        fb_tool_dict[result[FEAT_ID]]['Description'].append(desc_text)
         counter += 1
     log.info(f'Found {counter} descriptions for experimental tools in chado.')
     return
