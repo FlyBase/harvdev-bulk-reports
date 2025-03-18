@@ -494,3 +494,15 @@ Ecol\lexA[p65.R57C10.P] VNC	FBal0270226_1.png	FBrf0247391	Figure 3B	open access
 Scer\GAL4[5-HT1B.PY] gamma Kenyon cell	FBal0406224_1.png	FBrf0249782	Figure 3 supplement 1G	open access
 Scer\GAL4[5-HT1B.PY] gamma Kenyon cell	FBal0406224_2.png	FBrf0246518	Figure 6E	open access
 Scer\GAL4[NP3233] astrocyte-like glial cell	FBal0260983_1.png	FBrf0257829	Figure S5E	open access
+Scer\GAL4[ey.3.5.Exel]	FBal0155840_1.png	FBrf0237532	Figure S1A-B	granted access
+Scer\GAL4[Gr32a.3.7.PW]	FBal0249480_1.png	FBrf0246379	Figure 4d-e	open access
+Scer\GAL4[Gr32a.3.7.PW]	FBal0249480_2.png	FBrf0240975	Figure 5, Supplement 6	open access
+Scer\GAL4[GMR71G10]	FBal0254473_1.png	FBrf0255999	Figure 1C	open access
+Scer\GAL4[GMR71G10]	FBal0254473_2.png	FBrf0245184	Figure 1D,F,H,J	open access
+Ecol\lexA[GMR13F02]	FBal0288887_1.png	FBrf0260277	Figure 3D1	open access
+Scer\GAL4[Gr43a-GAL4]	FBal0290234_1.png	FBrf0239761	Figure S1	open access
+Scer\GAL4[Gr43a-GAL4]	FBal0290234_2.png	FBrf0252395	Figure S1E	open access
+Scer\GAL4[Gr43a-GAL4]	FBal0290234_3.png	FBrf0231007	Figure S5	open access
+Scer\GAL4[oc.1.6]	FBal0328180_1.png	FBrf0244278	Figure S1C	open access
+Ecol\lexA[GAD.ple.Tag:NLS(SV40-largeT)]	FBal0340314_1.png	FBrf0255192	Figure 5I	open access
+Ecol\lexA[GAD.ple.Tag:NLS(SV40-largeT)]	FBal0340314_2.png	FBrf0235538	Figure 1B	open access

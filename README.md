@@ -7,6 +7,7 @@
   * [EnvironmentVariables](#EnvironmentVariables)
   * [PipelineSummary](#PipelineSummary)
   * [NextSteps](#NextSteps)
+- [Gal4DriverImages](#Gal4DriverImages)
 - [TroubleShooting](#TroubleShooting)
 
 ## Overview
@@ -51,6 +52,30 @@ The pipeline automates these steps:
 
 ### NextSteps
 1. If both this `Bulk_Reports` GoCD pipeline, and the upstream `Reporting_Build` GoCD pipeline, seem to have completed without issue and all file sizes are normal, then manually start the `Upload_Reporting_Build` GoCD pipeline, which will upload all files related to the release build for various users.  
+
+## Gal4DriverImages
+Occasionally (up to once per FlyBase public release), Sian provides a flash drive with updated images for the Gal4 table. These new images need to be added to the existing set (rarely, there will be replacements). The updated image set needs to be uploaded to the FB FTP for IUDev as a tarball. Also, the metadata needs to be updated so that image names are incorporated into the JSON file that feeds the table.
+
+### Images
+1. Make a new directory for the images (where YYYY-MM-DD in the command below represents today's date).
+cd /data/harvcur/gal4images/
+mkdir -m "FUG4_YYYY-MM-DD"
+2. Move all images from the most recent directory to the new one.
+mv FUG4_YYYY-MM-DD1/** FUG4_YYYY-MM-DD2
+3. Copy new images from the flash drive to the new directory (GUI is easiest).
+4. Make a new tarball.
+cd /data/harvcur/gal4images/
+tar -cvf FUG4_YYYY-MM-DD.tar.gz FUG4_YYYY-MM-DD
+5. Check the tarball (want to see that the directory holding the images is included).
+tar -tf FUG4_YYYY-MM-DD
+6. Copy the tarball to the internal FlyBase FTP site (foriu/gal4images directory).
+
+## Metadata
+1. Make a new branch.
+2. Copy image metadata for new images from this google sheet ("TEMPLATE" tab):
+https://docs.google.com/spreadsheets/d/1JRdVJezUPZPxlPJhHSE0bJ73aA5Yw8FlBR5ASkNmq6M/edit?pli=1&gid=1067073457#gid=1067073457
+3. Add the new lines to the `src/image_metadata.txt` file in this repo, save, and create a pull request.
+
 
 ## TroubleShooting
 The [Reporting Build SOP](https://github.com/FlyBase/harvdev-docs/blob/master/reporting_build/reporting_build_sop.md#TroubleShooting) discusses various troubleshooting scenarios for dealing with failed scripts and GoCD pipelines.
