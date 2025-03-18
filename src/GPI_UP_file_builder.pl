@@ -8,6 +8,7 @@
 
 use strict;
 use DBI;
+use lib '../perl_modules';
 
 # constant strings
 my $FB = 'FB';
