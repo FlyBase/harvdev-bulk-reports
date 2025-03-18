@@ -51,12 +51,58 @@ $header .= "!date: $DATE \$\n!from: FlyBase\n!saved-by: Helen Attrill hla28\@gen
 
 print OUT $header;
 
-## Part 1. Protein coding genes.
+## Part 1. Genes.
 ################################################################################
 
-## set up some queries to get various bits of info given a feature_id
+# Build a hash of RNA types for some non-coding genes.
+#    This only works on reporting builds where 'promoted_gene_type' is available.
+#    For a production db, ncRNA genes simply have 'ncRNA' gene product.
+my %gene_product_types;
 
-print "Get protein coding genes first.\n";
+# Converting "promoted_gene" featureprop.value to simpler RNA type.
+my %ncrna_gene_class_mapping = (
+    '@SO0001269:SRP_RNA_gene@' => 'SRP_RNA',
+    '@SO0001640:RNase_MRP_RNA_gene@' => 'RNase_MRP_RNA',
+    '@SO0001639:RNase_P_RNA_gene@' => 'RNase_P_RNA',
+    '@SO0002127:lncRNA_gene@' => 'lncRNA',
+    '@SO0002182:antisense_lncRNA_gene@' => 'lncRNA',
+    '@SO0002353:sbRNA_gene@' => 'sbRNA',
+);
+
+# Query for genes having "RNA_gene" promoted gene type.
+my $promoted_ncrna_gene_type_query = $dbh->prepare(
+    sprintf("
+        SELECT DISTINCT f.feature_id, fp.value
+        FROM feature f
+        JOIN organism o ON o.organism_id = f.organism_id
+        JOIN featureprop fp ON fp.feature_id = f.feature_id
+        JOIN cvterm t ON t.cvterm_id = fp.type_id
+        WHERE f.is_obsolete IS FALSE
+          AND f.is_analysis IS FALSE
+          AND f.uniquename ~ '^FBgn[0-9]{7}\$'
+          AND o.abbreviation = 'Dmel'
+          AND t.name = 'promoted_gene_type'
+          AND fp.value ~ 'RNA_gene'
+    ")
+);
+
+# Processing the chado gene type results.
+my $result_counter = 0;
+my $update_gp_type_counter = 0;
+$promoted_ncrna_gene_type_query->execute or die print_log("Can't query for ncRNA gene promoted gene types.");
+while ( my ( $fid, $pgt_value ) = $promoted_ncrna_gene_type_query->fetchrow_array() )
+{
+    if ( $ncrna_gene_class_mapping{$pgt_value} ) {
+        $gene_product_types{$fid} = $ncrna_gene_class_mapping{$pgt_value};
+        $update_gp_type_counter++;
+    }
+    $result_counter++;
+}
+print_log("INFO: Found $result_counter ncRNA promoted_gene_type values for current Dmel genes.");
+print_log("INFO: Updated gene product type for $update_gp_type_counter ncRNA genes.");
+
+## set up some queries to get various bits of info given a feature_id
+print "Get genes first.\n";
 
 # gene fullname
 my $fullnameq = $dbh->prepare(
@@ -74,7 +120,7 @@ my $annidq = $dbh->prepare(
 
 
 ## Main driver query.
-# query for annotated protein-coding genes - results fetched in main loop
+# query for genes - results fetched in main loop
 my $pcgq = $dbh->prepare(
     ("
     SELECT DISTINCT g.feature_id, g.uniquename, tty.name
@@ -175,6 +221,10 @@ while ( my ($fid, $uniquename, $transcript_type) = $pcgq->fetchrow_array()) {
   }
   elsif ( $transcript_type eq 'pre_miRNA') {
     print OUT "\t$cgid\tmiRNA\t$TAXID\t\t$uline\t\n";
+  }
+  elsif ( $gene_product_types{$fid} ) {
+    my $rna_type = $gene_product_types{$fid};
+    print OUT "\t$cgid\t$rna_type\t$TAXID\t\t$uline\t\n";
   }
   else {
     print OUT "\t$cgid\t$transcript_type\t$TAXID\t\t$uline\t\n";
