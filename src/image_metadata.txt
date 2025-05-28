@@ -506,3 +506,5 @@ Scer\GAL4[Gr43a-GAL4]	FBal0290234_3.png	FBrf0231007	Figure S5	open access
 Scer\GAL4[oc.1.6]	FBal0328180_1.png	FBrf0244278	Figure S1C	open access
 Ecol\lexA[GAD.ple.Tag:NLS(SV40-largeT)]	FBal0340314_1.png	FBrf0255192	Figure 5I	open access
 Ecol\lexA[GAD.ple.Tag:NLS(SV40-largeT)]	FBal0340314_2.png	FBrf0235538	Figure 1B	open access
+Ecol\lexA[GMR60D05]	FBal0289861_1.png	FBrf0241592	Figure 1D	open access
+Ecol\lexA[GMR60D05]	FBal0289861_2.png	FBrf0258237	Figure 7A	open access
