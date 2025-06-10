@@ -30,9 +30,7 @@ header_list = [
     'FB_name',
     'FBrf',
     'Clinvar_id',
-    'Clinvar_name',
     'UP_SP_variant_id',
-    'UP_SP_variant_name',
     'FB_synonyms',
     'HumanHealth_id',
     'Allele_id',
@@ -63,7 +61,6 @@ def main():
     id_sorted_fb_chems = [fb_divs[i] for i in sorted(fb_divs.keys())]
     # Export the data to file.
     data_to_export_as_tsv = generic_FB_tsv_dict(report_title, database)
-    print(data_to_export_as_tsv)
     data_to_export_as_tsv['data'] = id_sorted_fb_chems
     tsv_report_dump(data_to_export_as_tsv, output_filename, headers=header_list)
     conn.close()
@@ -101,9 +98,7 @@ def get_fb_divs(db_connection, type_id):
             'FB_name': result[NAME],
             'FBrf': result[FBRF],
             'Clinvar_id': None,
-            'Clinvar_name': None,
             'UP_SP_variant_id': None,
-            'UP_SP_variant_name': None,
             'FB_synonyms': [],
             'HumanHealth_id': [],
             'Allele_id': [],
@@ -179,10 +174,8 @@ def get_external_ids(fb_chem_dict, db_connection, type_id):
     for result in ret_ext_ids:
         if result[DB] == 'ClinVar':
             fb_chem_dict[result[ID]]['Clinvar_id'] = f'{result[DB]}:{result[ACC]}'
-            fb_chem_dict[result[ID]]['Clinvar_name'] = result[NAME]
         elif result[DB] == 'UP_SP_variant':
             fb_chem_dict[result[ID]]['UP_SP_variant_id'] = f'{result[DB]}:{result[ACC]}'
-            fb_chem_dict[result[ID]]['UP_SP_variant_name'] = result[NAME]
     return
 
 
