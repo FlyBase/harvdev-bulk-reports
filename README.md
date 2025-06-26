@@ -65,9 +65,9 @@ mv FUG4_YYYY-MM-DD1/** FUG4_YYYY-MM-DD2
 3. Copy new images from the flash drive to the new directory (GUI is easiest).
 4. Make a new tarball.
 cd /data/harvcur/gal4images/
-tar -cvf FUG4_YYYY-MM-DD.tar.gz FUG4_YYYY-MM-DD
+tar -zcvf FUG4_YYYY-MM-DD.tar.gz FUG4_YYYY-MM-DD
 5. Check the tarball (want to see that the directory holding the images is included).
-tar -tf FUG4_YYYY-MM-DD
+tar -tzf FUG4_YYYY-MM-DD
 6. Copy the tarball to the internal FlyBase FTP site (foriu/gal4images directory).
 
 ## Metadata
