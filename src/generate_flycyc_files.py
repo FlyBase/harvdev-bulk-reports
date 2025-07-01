@@ -286,10 +286,9 @@ class FlyCycGenerator(object):
     def query_go_metacyc(self, session):
         """Get METACYC xrefs related to each GO term."""
         log.info('Getting GO-METACYC associations.')
-        go_cv_list = ['biological_process', 'cellular_component', 'molecular_function']
         filters = (
             Cvterm.is_obsolete == 0,
-            Cv.name.in_((go_cv_list)),
+            Cv.name == 'molecular_function',
             Db.name == 'MetaCyc',
         )
         go_metacyc_results = session.query(Cvterm, Dbxref).\
