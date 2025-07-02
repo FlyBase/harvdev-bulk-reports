@@ -85,6 +85,7 @@ class FlyCycGenerator(object):
         self.gene_go_annos = {}         # Will be FBgn-keyed dict of simple GO annotations dicts.
         self.gene_neg_go_annos = {}     # Will be FBgn-keyed dict of lists GO term IDs from negative GO annotations for each gene.
         self.go_ec_dict = {}            # Will be a GO ID-keyed dict of a list of related EC numbers (no "GO:" prefix).
+        self.go_metacyc_dict = {}       # Will be a GO ID-keyed dict of a list of related METACYC xrefs (no "GO:" prefix).
 
     # This list defines the "major" chr scaffolds for which reports are generated.
     chr_scaffolds_to_report = [
@@ -282,6 +283,28 @@ class FlyCycGenerator(object):
                 self.go_ec_dict[result.cvterm.dbxref.accession] = [result.Dbxref.accession]
         return
 
+    def query_go_metacyc(self, session):
+        """Get METACYC xrefs related to each GO term."""
+        log.info('Getting GO-METACYC associations.')
+        filters = (
+            Cvterm.is_obsolete == 0,
+            Cv.name == 'molecular_function',
+            Db.name == 'MetaCyc',
+        )
+        go_metacyc_results = session.query(Cvterm, Dbxref).\
+            join(Cv, (Cv.cv_id == Cvterm.cv_id)).\
+            join(CvtermDbxref, (CvtermDbxref.cvterm_id == Cvterm.cvterm_id)).\
+            join(Dbxref, (Dbxref.dbxref_id == CvtermDbxref.dbxref_id)).\
+            join(Db, (Db.db_id == Dbxref.db_id)).\
+            filter(*filters).\
+            distinct()
+        for result in go_metacyc_results:
+            try:
+                self.go_metacyc_dict[result.Cvterm.dbxref.accession].append(result.Dbxref.accession)
+            except KeyError:
+                self.go_metacyc_dict[result.Cvterm.dbxref.accession] = [result.Dbxref.accession]
+        return
+
     def query_gene_xrefs(self, session):
         """Get dbxrefs for genes."""
         dbxrefs_to_get = {
@@ -454,7 +477,8 @@ class FlyCycGenerator(object):
                 ],
                 'SYNONYM': [],
                 'GO': [],
-                'EC': []
+                'EC': [],
+                'METACYC': []
             }
             # Add coordinates.
             if result.Featureloc.strand == 1:
@@ -497,6 +521,15 @@ class FlyCycGenerator(object):
                     except KeyError:
                         pass
                 gene_dict['EC'] = set(gene_dict['EC'])
+            # Add METACYC xrefs.
+            if result.Feature.uniquename in self.gene_go_annos.keys():
+                for go_id in [i['go_id'] for i in self.gene_go_annos[result.Feature.uniquename]]:
+                    try:
+                        gene_dict['METACYC'].extend(self.go_metacyc_dict[go_id])
+                    except KeyError:
+                        pass
+                gene_dict['METACYC'] = set(gene_dict['METACYC'])
+            # Append gene info to the appropriate chr.
             self.chr_gene_dict[chr_uniquename].append(gene_dict)
         return
 
@@ -511,6 +544,7 @@ class FlyCycGenerator(object):
         # 2. query_gene_negative_go_annotations()
         self.query_gene_go_annotations(session)
         self.query_go_ec_numbers(session)
+        self.query_go_metacyc(session)
         self.query_gene_xrefs(session)
         self.query_gene_fullnames(session)
         self.query_gene_synonyms(session)
@@ -558,6 +592,7 @@ class FlyCycGenerator(object):
                 'ENDBASE',
                 'GO',
                 'EC',
+                'METACYC',
                 'DBLINK'
             ]
             for gene in self.chr_gene_dict[chr_uniquename]:
