@@ -6,10 +6,10 @@ Author(s):
     Gil dos Santos dossantos@morgan.harvard.edu, Julie Agapite jagapite@morgan.harvard.edu
 
 Usage:
-    report_gene_so_terms.py [-h] [-v VERBOSE] [-c CONFIG]
+    report_gene_so_annotations.py [-h] [-v VERBOSE] [-c CONFIG]
 
 Example:
-    python report_gene_so_terms.py -v -c /path/to/config.cfg
+    python report_gene_so_annotations.py -v -c /path/to/config.cfg
 
 """
 
