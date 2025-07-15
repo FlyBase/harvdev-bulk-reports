@@ -56,7 +56,7 @@ my $dsource = sprintf("dbi:Pg:dbname=%s;",$db);
 $jetzt = scalar localtime;
 print "## FlyBase Insertion Mapping Table\n## Generated: $jetzt\n";
 print "## Using datasource: $dsource\n\n";
-print "##insertion_symbol\tFBti#\tgenomic_location\trange\torientation\testimated_cytogenetic_location\tobserved_cytogenetic_location\tpublications\n";
+print "##insertion_symbol\tFBti#\tgenomic_location\trange\torientation\tpublications\testimated_cytogenetic_location\tobserved_cytogenetic_location\n";
 
 #
 ##
@@ -82,19 +82,19 @@ while (my %ir = %{$iq->fetchrow_hashref}) {
     my $gloc;
     my $orien;
     my $range;
+	my $pub_id_string;
     my $gq =  $dbh2->prepare(sprintf("SELECT DISTINCT featureloc_id, fmin, fmax, strand, is_fmin_partial, is_fmax_partial, g.uniquename as arm from featureloc fl, feature g  where fl.feature_id = %d and fl.srcfeature_id = g.feature_id",$ir{feature_id}));
     $gq->execute or die "WARNING: ERROR: Unable to execute genomic location query\n";
     my $gq_rows = $gq->rows;
     if ($gq_rows > 0) {
-	my $pub_id_string = '';
 	while (my %gr = %{$gq->fetchrow_hashref}) {
 		# Get attribution
-		my $pub_query = $dbh3->prepare(sprintf("SELECT flp.featureloc_id, STRING_AGG(DISTINCT p.uniquename, '|') AS pub_str FROM featureloc_pub flp JOIN pub p ON p.pub_id = flp.pub_id WHERE p.is_obsolete IS FALSE AND p.uniquename != 'unattributed' AND flp.featureloc_id = %d GROUP BY featureloc_id", $gr{featureloc_id}));
+		print "BOB1";
+		my $pub_query = $dbh3->prepare(sprintf("SELECT featureloc_id, uniquename FROM featureloc_pub flp JOIN pub p ON p.pub_id = flp.pub_id WHERE p.is_obsolete IS FALSE AND p.uniquename != 'unattributed' AND flp.featureloc_id = %d GROUP BY featureloc_id", $gr{featureloc_id}));
 	    $pub_query->execute or die "WARNING: ERROR: Unable to execute featureloc_pub query\n";
 		my %pub_results = %{$pub_query->fetchrow_hashref};
-		while (%pub_results) {
-			$pub_id_string = $pub_results{pub_str};
-		}
+		# TO DO
+		print "BOB2";
 		# Process the location data.
 	    if ($gr{fmin} != $gr{fmax}) { $gr{fmin}++; } # Adjust for interbase
 	    $gloc = sprintf("%s:%s..%s",$gr{arm},$gr{fmin},$gr{fmax});
@@ -143,7 +143,7 @@ while (my %ir = %{$iq->fetchrow_hashref}) {
 ## Print OUTPUT...
 ## (insertion_symbol, FBti#, genomic_location, range, orientation, 
 ## estimated_cytogenetic_location, observed_cytogenetic_location)
-    print(sprintf("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",$ir{name},$ir{uniquename},$gloc,$range,$orien,$est_cloc,$cur_cloc,$pub_id_string));
+    print(sprintf("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",$ir{name},$ir{uniquename},$gloc,$range,$orien,$pub_id_string,$est_cloc,$cur_cloc));
 }
 
 $jetzt = scalar localtime;
