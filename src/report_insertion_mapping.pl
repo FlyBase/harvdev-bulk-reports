@@ -90,7 +90,7 @@ while (my %ir = %{$iq->fetchrow_hashref}) {
 	while (my %gr = %{$gq->fetchrow_hashref}) {
 		# Get attribution
 		print "BOB1";
-		my $pub_query = $dbh3->prepare(sprintf("SELECT featureloc_id, uniquename FROM featureloc_pub flp JOIN pub p ON p.pub_id = flp.pub_id WHERE p.is_obsolete IS FALSE AND p.uniquename != 'unattributed' AND flp.featureloc_id = %d GROUP BY featureloc_id", $gr{featureloc_id}));
+		my $pub_query = $dbh3->prepare(sprintf("SELECT featureloc_id, uniquename FROM featureloc_pub flp JOIN pub p ON p.pub_id = flp.pub_id WHERE p.is_obsolete IS FALSE AND p.uniquename != 'unattributed' AND flp.featureloc_id = %d", $gr{featureloc_id}));
 	    $pub_query->execute or die "WARNING: ERROR: Unable to execute featureloc_pub query\n";
 		my %pub_results = %{$pub_query->fetchrow_hashref};
 		# TO DO
