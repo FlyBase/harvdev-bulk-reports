@@ -112,7 +112,7 @@ while (my %ir = %{$iq->fetchrow_hashref}) {
                 $orien = $gr{strand};
             }
             else {
-                $orien = 1;
+                $orien = 0;
             }
             # QC check.
             if ((defined($ir{is_fmin_partial})) || (defined($ir{is_fmax_partial}))) {
