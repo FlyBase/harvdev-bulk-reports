@@ -6,10 +6,10 @@ Author(s):
     Gil dos Santos dossantos@morgan.harvard.edu, Julie Agapite jagapite@morgan.harvard.edu
 
 Usage:
-    report_gene_so_terms.py [-h] [-v VERBOSE] [-c CONFIG]
+    report_gene_so_annotations.py [-h] [-v VERBOSE] [-c CONFIG]
 
 Example:
-    python report_gene_so_terms.py -v -c /path/to/config.cfg
+    python report_gene_so_annotations.py -v -c /path/to/config.cfg
 
 """
 
@@ -27,8 +27,9 @@ header_list = [
     'gene_primary_id',
     'gene_symbol',
     'so_term_name',
-    'so_term_id'
-    ]
+    'so_term_id',
+    'publications'
+]
 
 # Proceed with generic setup.
 set_up_dict = set_up_db_reading(report_label)
@@ -75,7 +76,8 @@ def get_database_info():
         SELECT DISTINCT f.uniquename,
                s.name,
                cvt.name,
-               db.name||':'||dbx.accession
+               db.name||':'||dbx.accession,
+               STRING_AGG(DISTINCT p.uniquename, '|')
         FROM feature f
         JOIN featureloc fl ON fl.feature_id = f.feature_id
         JOIN feature_synonym fs ON fs.feature_id = f.feature_id
@@ -86,6 +88,7 @@ def get_database_info():
         JOIN cv ON cv.cv_id = cvt.cv_id
         JOIN dbxref dbx ON dbx.dbxref_id = cvt.dbxref_id
         JOIN db ON db.db_id = dbx.db_id
+        JOIN pub p ON p.pub_id = fcvt.pub_id AND p.is_obsolete IS FALSE
         WHERE f.is_obsolete = false and
               f.is_analysis = false and
               f.uniquename ~ '^FBgn[0-9]{7}$' and
@@ -94,7 +97,9 @@ def get_database_info():
               cvts.name = 'symbol' and
               cv.name = 'SO' and
               db.name = 'SO' and
-              cvt.name ~ 'gene';"""
+              cvt.name ~ 'gene'
+        GROUP BY f.uniquename, s.name, cvt.name, db.name||':'||dbx.accession
+    ;"""
     ret_so_annotation_info = connect(fb_gene_so_annotation_query, 'no_query', conn)
     log.info('Found {} gene-SO annotations for localized Dmel genes.'.format(len(ret_so_annotation_info)))
 
@@ -115,14 +120,20 @@ def process_database_info(input_data):
     GENE_SYMBOL = 1
     CVTERM_NAME = 2
     CVTERM_ID = 3
+    PUB_ID_STR = 4
     data_list = []
     for result in input_data:
         annotation_dict = {
             'gene_primary_id': result[UNIQUENAME],
             'gene_symbol': result[GENE_SYMBOL].replace('<up>', '[').replace('</up>', ']'),    # For su(w[a]) gene.
             'so_term_name': result[CVTERM_NAME],
-            'so_term_id': result[CVTERM_ID]
+            'so_term_id': result[CVTERM_ID],
+            'publications': None,
         }
+        pubs = result[PUB_ID_STR].split('|')
+        filtered_pubs = [i for i in pubs if i != 'unattributed']
+        if filtered_pubs:
+            annotation_dict['publications'] = '|'.join(filtered_pubs)
         data_list.append(annotation_dict)
     log.info('Done processing gene-SO annotation data into a list of dictionaries.')
 
