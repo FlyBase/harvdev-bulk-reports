@@ -1,15 +1,15 @@
 # !/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Report curated gene-gene relationships.
+"""Report human disease model data.
 
 Author(s):
     Gil dos Santos dossantos@morgan.harvard.edu
 
 Usage:
-    report_curated_gene_relationships.py [-h] [-v VERBOSE] [-c CONFIG]
+    report_hdm.py [-h] [-v VERBOSE] [-c CONFIG]
 
 Example:
-    python report_curated_gene_relationships.py -v -c /path/to/config.cfg
+    python report_hdm.py -v -c /path/to/config.cfg
 
 """
 
@@ -23,6 +23,7 @@ import argparse
 # import psycopg2
 # import re
 # import sys
+from harvdev_utils.char_conversions import clean_free_text
 from harvdev_utils.general_functions import (
     generic_FB_tsv_dict, tsv_report_dump
 )
@@ -34,17 +35,12 @@ from harvdev_utils.psycopg_functions import (
 #     feat_secondary_fbids, orgid_abbr, orgid_genus, indirect_rel_features, rel_features, rel_dmel_features,
 #     featureprops, feat_cvterm_cvtprop    # current_features, feat_id_symbol_sgml
 # )
-# from harvdev_utils.char_conversions import *
 
 # Global variables for the output file. Header order will match list order below.
-report_label = 'gene_relationships'
-report_title = 'FlyBase Gene-Gene/TE Relationships Report'
+report_label = 'human_disease_models'
+report_title = 'FlyBase Human Disease Models Report'
 header_list = [
-    'Subject_FBgn_ID',
-    'Subject_Symbol',
-    'Relationship',
-    'Object_FB_ID',
-    'Object_Symbol',
+
 ]
 
 # Proceed with generic setup.
@@ -81,7 +77,7 @@ def main():
     log.info('Ended main function.')
 
 
-# BELOW: Functions for retrieval and processing of specific data types.
+# BELOW: Functions for retrieval and processing of data from chado.
 def get_database_info():
     """Retrieve a list of gene-gene/TE relationships"""
     global CONN
