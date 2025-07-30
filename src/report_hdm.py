@@ -124,7 +124,8 @@ def get_initial_hdm_info():
             'db_id': row[DB_ID],
             'FB_id': row[UNAME],
             'name': row[NAME],
-            'name_synonyms': [],
+            'name_synonyms_list': [],
+            'name_synonyms': None,
             'sub-datatype': None,
             'category': None,
             'parent_disease_FBhh': [],
@@ -156,6 +157,33 @@ def get_initial_hdm_info():
         counter += 1
     log.info(f'Found {counter} human health disease models in chado.')
     return hdm_dict
+
+
+def get_hdm_synonyms(hdm_dict):
+    """Retrieve human health disease model synonyms."""
+    global CONN
+    log.info('Retrieve human health disease model synonyms.')
+    fb_hdm_syno_query = """
+        SELECT DISTINCT hh.humanhealth_id, s.name
+        FROM humanhealth hh
+        JOIN humanhealth_synonym hhs ON hhs.humanhealth_id = hh.humanhealth_id
+        JOIN synonym s ON s.synonym_id = hhs.synonym_id
+        WHERE hh.is_obsolete IS FALSE
+          AND hh.uniquename ~ '^FBhh[0-9]{7}$'
+          AND s.name != hh.name;
+    """
+    ret_hdm_syno_info = connect(fb_hdm_syno_query, 'no_query', CONN)
+    DB_ID = 0
+    ALIAS = 1
+    counter = 0
+    for row in ret_hdm_syno_info:
+        hdm_dict[row[DB_ID]]['name_synonyms_list'].append(row[ALIAS])
+        counter += 1
+    for hdm in hdm_dict.values():
+        hdm['name_synonyms_list'].sort()
+        hdm['name_synonyms'] = '|'.join(hdm['name_synonyms_list'])
+    log.info(f'Found {counter} human health disease model synonyms in chado.')
+    return
 
 
 def process_database_info(input_data):
