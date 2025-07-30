@@ -97,6 +97,7 @@ def main():
     hdm_dict = get_initial_hdm_info()
     get_hdm_synonyms(hdm_dict)
     get_hdm_subtypes(hdm_dict)
+    get_hdm_categories(hdm_dict)
     data_to_export_as_tsv = generic_FB_tsv_dict(report_title, database)
     data_to_export_as_tsv['data'] = process_database_info(hdm_dict)
     tsv_report_dump(data_to_export_as_tsv, output_filename, headers=header_list)
@@ -128,7 +129,7 @@ def get_initial_hdm_info():
             'name': row[NAME],
             'name_synonyms_list': [],
             'name_synonyms': None,
-            'sub-datatype': 'disease',    # The default.
+            'sub-datatype': 'disease',    # The default. Update the rare exceptions.
             'category': None,
             'parent_disease_FBhh': None,
             'parent_disease_name': None,
@@ -189,9 +190,9 @@ def get_hdm_synonyms(hdm_dict):
 
 
 def get_hdm_subtypes(hdm_dict):
-    """Retrieve human health disease model sub_types."""
+    """Retrieve human health disease model subtypes."""
     global CONN
-    log.info('Retrieve human health disease model sub_types.')
+    log.info('Retrieve human health disease model subtypes.')
     # All HDMs are "disease" subtype at the time of composing this script.
     # So, use a default "disease" value, and only update exceptions when they happen.
     fb_hdm_subtype_query = """
@@ -211,7 +212,31 @@ def get_hdm_subtypes(hdm_dict):
     for row in ret_hdm_subtype_info:
         hdm_dict[row[DB_ID]]['sub-datatype'] = row[SUBTYPE]
         counter += 1
-    log.info(f'Found {counter} human health disease models having a non-"disease" subtype in chado.')
+    log.info(f'Found {counter} non-"disease" subtype annotations for human health disease models in chado.')
+    return
+
+
+def get_hdm_categories(hdm_dict):
+    """Retrieve human health disease model categories."""
+    global CONN
+    log.info('Retrieve human health disease model categories.')
+    fb_hdm__category_query = """
+        SELECT DISTINCT hh.humanhealth_id, hhp.value
+        FROM humanhealth hh
+        JOIN humanhealthprop hhp ON hhp.humanhealth_id = hh.humanhealth_id
+        JOIN cvterm t ON t.cvterm_id = hhp.type_id
+        WHERE hh.is_obsolete IS FALSE
+          AND hh.uniquename ~ '^FBhh[0-9]{7}$'
+          AND t.name = 'category';
+    """
+    ret_hdm_category_info = connect(fb_hdm__category_query, 'no_query', CONN)
+    DB_ID = 0
+    CATEGORY = 1
+    counter = 0
+    for row in ret_hdm_category_info:
+        hdm_dict[row[DB_ID]]['category'] = row[CATEGORY]
+        counter += 1
+    log.info(f'Found {counter} category annotations for human health disease models in chado.')
     return
 
 
