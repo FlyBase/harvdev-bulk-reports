@@ -266,6 +266,7 @@ def get_parent_hdms(hdm_dict):
     counter = 0
     for row in ret_parent_hdm_info:
         parent_tuple = (row[DB_ID], row[PARENT_UNAME], row[PARENT_NAME])
+        log.debug(f'BOB: {parent_tuple}')
         hdm_dict[row[DB_ID]]['parent_disease_list'].append(parent_tuple)
         counter += 1
     for hdm in hdm_dict.values():
