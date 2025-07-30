@@ -98,6 +98,7 @@ def main():
     get_hdm_synonyms(hdm_dict)
     get_hdm_subtypes(hdm_dict)
     get_hdm_categories(hdm_dict)
+    get_parent_hdms(hdm_dict)
     data_to_export_as_tsv = generic_FB_tsv_dict(report_title, database)
     data_to_export_as_tsv['data'] = process_database_info(hdm_dict)
     tsv_report_dump(data_to_export_as_tsv, output_filename, headers=header_list)
@@ -130,9 +131,11 @@ def get_initial_hdm_info():
             'name_synonyms_list': [],
             'name_synonyms': None,
             'sub-datatype': 'disease',    # The default. Update the rare exceptions.
-            'category': 'PLACEHOLDER',
+            'category': None,
+            'parent_disease_list': [],
             'parent_disease_FBhh': None,
             'parent_disease_name': None,
+            # bookmark
             'related_FBhh': None,
             'parent_entity_children_FBhh': None,
             'group_entity_children_FBhh': None,
@@ -220,7 +223,7 @@ def get_hdm_categories(hdm_dict):
     """Retrieve human health disease model categories."""
     global CONN
     log.info('Retrieve human health disease model categories.')
-    fb_hdm__category_query = """
+    fb_hdm_category_query = """
         SELECT DISTINCT hh.humanhealth_id, hhp.value
         FROM humanhealth hh
         JOIN humanhealthprop hhp ON hhp.humanhealth_id = hh.humanhealth_id
@@ -229,13 +232,45 @@ def get_hdm_categories(hdm_dict):
           AND hh.uniquename ~ '^FBhh[0-9]{7}$'
           AND t.name = 'category';
     """
-    ret_hdm_category_info = connect(fb_hdm__category_query, 'no_query', CONN)
+    ret_hdm_category_info = connect(fb_hdm_category_query, 'no_query', CONN)
     DB_ID = 0
     CATEGORY = 1
     counter = 0
     for row in ret_hdm_category_info:
         hdm_dict[row[DB_ID]]['category'] = row[CATEGORY]
         counter += 1
+    log.info(f'Found {counter} category annotations for human health disease models in chado.')
+    return
+
+
+def get_parent_hdms(hdm_dict):
+    """Retrieve parent human health disease models."""
+    global CONN
+    log.info('Retrieve parent human health disease models.')
+    fb_parent_hdm_query = """
+        SELECT DISTINCT s.humanhealth_id, o.uniquename, o.name
+        FROM humanhealth s
+        JOIN humanhealth_relationship hhr ON hhr.subject_id = s.humanhealth_id
+        JOIN humanhealth o ON o.humanhealth_id = hhr.object_id
+        JOIN cvterm t ON t.cvterm_id = hhr.type_id
+        WHERE s.is_obsolete IS FALSE
+          AND s.uniquename ~ '^FBhh[0-9]{7}$'
+          AND o.is_obsolete IS FALSE
+          AND o.uniquename ~ '^FBhh[0-9]{7}$'
+          AND t.name = 'belongs_to';
+    """
+    ret_parent_hdm_info = connect(fb_parent_hdm_query, 'no_query', CONN)
+    DB_ID = 0
+    PARENT_UNAME = 1
+    PARENT_NAME = 2
+    counter = 0
+    for row in ret_parent_hdm_info:
+        parent_tuple = (row[DB_ID], row[PARENT_UNAME], row[PARENT_UNAME])
+        hdm_dict[row[DB_ID]]['parent_disease_list'].append(parent_tuple)
+        counter += 1
+    for hdm in hdm_dict.values():
+        hdm['parent_disease_FBhh'] = '|'.join([i[PARENT_UNAME] for i in hdm['parent_disease_list']])
+        hdm['parent_disease_name'] = '|'.join([i[PARENT_NAME] for i in hdm['parent_disease_list']])
     log.info(f'Found {counter} category annotations for human health disease models in chado.')
     return
 
