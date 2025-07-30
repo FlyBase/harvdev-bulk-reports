@@ -130,7 +130,7 @@ def get_initial_hdm_info():
             'name_synonyms_list': [],
             'name_synonyms': None,
             'sub-datatype': 'disease',    # The default. Update the rare exceptions.
-            'category': None,
+            'category': 'PLACEHOLDER',
             'parent_disease_FBhh': None,
             'parent_disease_name': None,
             'related_FBhh': None,
