@@ -95,6 +95,7 @@ def main():
     """Retrieve, repackage and print out database information."""
     log.info('Started main function.')
     hdm_dict = get_initial_hdm_info()
+    get_hdm_synonyms(hdm_dict)
     data_to_export_as_tsv = generic_FB_tsv_dict(report_title, database)
     data_to_export_as_tsv['data'] = process_database_info(hdm_dict)
     tsv_report_dump(data_to_export_as_tsv, output_filename, headers=header_list)
@@ -128,30 +129,30 @@ def get_initial_hdm_info():
             'name_synonyms': None,
             'sub-datatype': None,
             'category': None,
-            'parent_disease_FBhh': [],
-            'parent_disease_name': [],
-            'related_FBhh': [],
-            'parent_entity_children_FBhh': [],
-            'group_entity_children_FBhh': [],
-            'OMIM_disease_MIM': [],
-            'OMIM_disease_name': [],
-            'OMIM_gene_MIM': [],
-            'OMIM_gene_name': [],
-            'HGNC_gene': [],
-            'HGNC_name': [],
-            'DO_ID': [],
-            'DO_name': [],
-            'external_links': [],
-            'related_specific_diseases': [],
-            'implicated_human_gene': [],
-            'implicated_Dmel_gene': [],
-            'implicated_other_gene': [],
-            'description_overview': [],
-            'description_symptoms': [],
-            'description_genetics': [],
-            'description_cellular': [],
-            'description_molecular': [],
-            'BDSC_link': [],
+            'parent_disease_FBhh': None,
+            'parent_disease_name': None,
+            'related_FBhh': None,
+            'parent_entity_children_FBhh': None,
+            'group_entity_children_FBhh': None,
+            'OMIM_disease_MIM': None,
+            'OMIM_disease_name': None,
+            'OMIM_gene_MIM': None,
+            'OMIM_gene_name': None,
+            'HGNC_gene': None,
+            'HGNC_name': None,
+            'DO_ID': None,
+            'DO_name': None,
+            'external_links': None,
+            'related_specific_diseases': None,
+            'implicated_human_gene': None,
+            'implicated_Dmel_gene': None,
+            'implicated_other_gene': None,
+            'description_overview': None,
+            'description_symptoms': None,
+            'description_genetics': None,
+            'description_cellular': None,
+            'description_molecular': None,
+            'BDSC_link': None,
         }
         hdm_dict[row[DB_ID]] = hdm_result
         counter += 1
