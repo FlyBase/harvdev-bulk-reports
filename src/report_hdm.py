@@ -96,6 +96,7 @@ def main():
     log.info('Started main function.')
     hdm_dict = get_initial_hdm_info()
     get_hdm_synonyms(hdm_dict)
+    get_hdm_subtypes(hdm_dict)
     data_to_export_as_tsv = generic_FB_tsv_dict(report_title, database)
     data_to_export_as_tsv['data'] = process_database_info(hdm_dict)
     tsv_report_dump(data_to_export_as_tsv, output_filename, headers=header_list)
@@ -127,7 +128,7 @@ def get_initial_hdm_info():
             'name': row[NAME],
             'name_synonyms_list': [],
             'name_synonyms': None,
-            'sub-datatype': None,
+            'sub-datatype': 'disease',    # The default.
             'category': None,
             'parent_disease_FBhh': None,
             'parent_disease_name': None,
@@ -184,6 +185,33 @@ def get_hdm_synonyms(hdm_dict):
         hdm['name_synonyms_list'].sort()
         hdm['name_synonyms'] = '|'.join(hdm['name_synonyms_list'])
     log.info(f'Found {counter} human health disease model synonyms in chado.')
+    return
+
+
+def get_hdm_subtypes(hdm_dict):
+    """Retrieve human health disease model sub_types."""
+    global CONN
+    log.info('Retrieve human health disease model sub_types.')
+    # All HDMs are "disease" subtype at the time of composing this script.
+    # So, use a default "disease" value, and only update exceptions when they happen.
+    fb_hdm_subtype_query = """
+        SELECT DISTINCT hh.humanhealth_id, hhp.value
+        FROM humanhealth hh
+        JOIN humanhealthprop hhp ON hhp.humanhealth_id = hh.humanhealth_id
+        JOIN cvterm t ON t.cvterm_id = hhp.type_id
+        WHERE hh.is_obsolete IS FALSE
+          AND hh.uniquename ~ '^FBhh[0-9]{7}$'
+          AND t.name = 'sub_datatype'
+          AND hhp.value != 'disease';
+    """
+    ret_hdm_subtype_info = connect(fb_hdm_subtype_query, 'no_query', CONN)
+    DB_ID = 0
+    SUBTYPE = 1
+    counter = 0
+    for row in ret_hdm_subtype_info:
+        hdm_dict[row[DB_ID]]['sub-datatype'] = row[SUBTYPE]
+        counter += 1
+    log.info(f'Found {counter} human health disease models having a non-"disease" subtype in chado.')
     return
 
 
