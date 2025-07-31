@@ -105,6 +105,7 @@ def main():
     get_hdm_omim_xrefs(hdm_dict)
     hdm_relevant_gene_dict = build_hdm_gene_dict()
     get_hdm_genes(hdm_dict, hdm_relevant_gene_dict)
+    get_hdm_do_terms(hdm_dict)
 
     data_to_export_as_tsv = generic_FB_tsv_dict(report_title, database)
     data_to_export_as_tsv['data'] = process_database_info(hdm_dict)
@@ -158,6 +159,7 @@ def get_initial_hdm_info():
             'HGNC_gene_xrefs': [],
             'HGNC_gene_ID': None,
             'HGNC_gene_name': None,
+            'DO_cvterms': [],
             'DO_ID': None,
             'DO_name': None,
             'external_links': None,
@@ -531,6 +533,41 @@ def get_hdm_genes(hdm_dict, hdm_relevant_gene_dict):
         if hdm['HGNC_gene_xrefs']:
             hdm['HGNC_gene_ID'] = '|'.join([f'HGNC:{i[ACC]}' for i in hdm['HGNC_gene_xrefs']])
             hdm['HGNC_gene_name'] = ' | '.join([i[GENE_NAME] for i in hdm['HGNC_gene_xrefs']])
+    return
+
+
+def get_hdm_do_terms(hdm_dict):
+    """Retrieve human disease model DO terms."""
+    global CONN
+    log.info('Retrieve human disease model DO terms.')
+    fb_hdm_doid_query = """
+        SELECT DISTINCT hh.humanhealth_id, 'DOID:'||dbx.accession, cvt.name
+        FROM humanhealth hh
+        JOIN humanhealth_cvterm hhcvt ON hhcvt.humanhealth_id = hh.humanhealth_id
+        JOIN cvterm cvt ON cvt.cvterm_id = hhcvt.cvterm_id
+        JOIN cv ON cv.cv_id = cvt.cv_id
+        JOIN dbxref dbx ON dbx.dbxref_id = cvt.dbxref_id
+        JOIN db ON db.db_id = dbx.db_id
+        WHERE hh.is_obsolete IS FALSE
+          AND cvt.is_obsolete = 0
+          AND cv.name = 'disease_ontology'
+          AND db.name = 'DOID'
+        ORDER BY cvt.name;
+    """
+    ret_hdm_doid_info = connect(fb_hdm_doid_query, 'no_query', CONN)
+    DB_ID = 0
+    DOID = 1
+    CVTERM = 2
+    counter = 0
+    for row in ret_hdm_doid_info:
+        doid_tuple = (row[DB_ID], row[DOID], row[CVTERM])
+        hdm_dict[row[DB_ID]]['DO_cvterms'].append(doid_tuple)
+        counter += 1
+    for hdm in hdm_dict:
+        if hdm['DO_cvterms']:
+            hdm['DO_ID'] = '|'.join([i[DOID] for i in hdm['DO_cvterms']])
+            hdm['DO_name'] = '|'.join([i[CVTERM] for i in hdm['DO_cvterms']])
+    log.info(f'Found {counter} human disease model DOID annotations in chado.')
     return
 
 
