@@ -519,10 +519,12 @@ def get_hdm_genes(hdm_dict, hdm_relevant_gene_dict):
                 hdm['OMIM_gene_xrefs'].append(human_gene['omim_xref'])
             if human_gene['hgnc_xref']:
                 hdm['HGNC_gene_xrefs'].append(human_gene['hgnc_xref'])
-        hdm['OMIM_gene_ID'] = '|'.join([f'MIM:{i[ACC]}' for i in hdm['OMIM_gene_xrefs']])
-        hdm['OMIM_gene_name'] = ' | '.join([i[GENE_NAME] for i in hdm['OMIM_gene_xrefs']])
-        hdm['HGNC_gene_ID'] = '|'.join([f'HGNC:{i[ACC]}' for i in hdm['HGNC_gene_xrefs']])
-        hdm['HGNC_gene_name'] = ' | '.join([i[GENE_NAME] for i in hdm['HGNC_gene_xrefs']])
+        if hdm['OMIM_gene_xrefs']:
+            hdm['OMIM_gene_ID'] = '|'.join([f'MIM:{i[ACC]}' for i in hdm['OMIM_gene_xrefs']])
+            hdm['OMIM_gene_name'] = ' | '.join([i[GENE_NAME] for i in hdm['OMIM_gene_xrefs']])
+        if hdm['HGNC_gene_xrefs']:
+            hdm['HGNC_gene_ID'] = '|'.join([f'HGNC:{i[ACC]}' for i in hdm['HGNC_gene_xrefs']])
+            hdm['HGNC_gene_name'] = ' | '.join([i[GENE_NAME] for i in hdm['HGNC_gene_xrefs']])
     return
 
 
