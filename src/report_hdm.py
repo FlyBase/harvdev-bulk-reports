@@ -510,6 +510,8 @@ def get_hdm_genes(hdm_dict, hdm_relevant_gene_dict):
         hdm_dict[row[HDM_DB_ID]]['implicated_human_gene_feature_ids'].append(row[GENE_DB_ID])
         counter += 1
     log.info(f'Found {counter} HDM-human gene associations in chado.')
+    ACC = 1
+    GENE_NAME = 2
     for hdm in hdm_dict.values():
         for feature_id in hdm['implicated_human_gene_feature_ids']:
             human_gene = hdm_relevant_gene_dict[feature_id]
@@ -517,10 +519,10 @@ def get_hdm_genes(hdm_dict, hdm_relevant_gene_dict):
                 hdm['OMIM_gene_xrefs'].append(human_gene['omim_xref'])
             if human_gene['hgnc_xref']:
                 hdm['HGNC_gene_xrefs'].append(human_gene['hgnc_xref'])
-        hdm['OMIM_gene_ID'] = '|'.join([f'MIM:{i[1]}' for i in hdm['OMIM_gene_xrefs']])
-        hdm['OMIM_gene_name'] = ' | '.join([i[2] for i in hdm['OMIM_gene_xrefs']])
-        hdm['HGNC_gene_ID'] = '|'.join([f'HGNC:{i[1]}' for i in hdm['HGNC_gene_xrefs']])
-        hdm['HGNC_gene_name'] = ' | '.join([i[2] for i in hdm['HGNC_gene_xrefs']])
+        hdm['OMIM_gene_ID'] = '|'.join([f'MIM:{i[ACC]}' for i in hdm['OMIM_gene_xrefs']])
+        hdm['OMIM_gene_name'] = ' | '.join([i[GENE_NAME] for i in hdm['OMIM_gene_xrefs']])
+        hdm['HGNC_gene_ID'] = '|'.join([f'HGNC:{i[ACC]}' for i in hdm['HGNC_gene_xrefs']])
+        hdm['HGNC_gene_name'] = ' | '.join([i[GENE_NAME] for i in hdm['HGNC_gene_xrefs']])
     return
 
 
