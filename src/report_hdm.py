@@ -47,9 +47,10 @@ header_list = [
     'category',
     'parent_disease_FBhh',
     'parent_disease_name',
-    'related_FBhh',
-    'parent_entity_children_FBhh',
-    'group_entity_children_FBhh',
+    'related_disease_FBhh',
+    'related_disease_name',
+    'child_disease_FBhh',
+    'child_disease_name',
     'OMIM_disease_MIM',
     'OMIM_disease_name',
     'OMIM_gene_MIM',
@@ -100,6 +101,7 @@ def main():
     get_hdm_categories(hdm_dict)
     get_parent_hdms(hdm_dict)
     get_related_hdms(hdm_dict)
+    get_child_hdms(hdm_dict)
     data_to_export_as_tsv = generic_FB_tsv_dict(report_title, database)
     data_to_export_as_tsv['data'] = process_database_info(hdm_dict)
     tsv_report_dump(data_to_export_as_tsv, output_filename, headers=header_list)
@@ -136,9 +138,12 @@ def get_initial_hdm_info():
             'parent_disease_list': [],
             'parent_disease_FBhh': None,
             'parent_disease_name': None,
-            'related_FBhh': None,    # BOB BOOKMARK: CONTINUE HERE.
-            'parent_entity_children_FBhh': None,
-            'group_entity_children_FBhh': None,
+            'related_disease_list': [],
+            'related_disease_FBhh': None,
+            'related_disease_name': None,
+            'child_disease_list': [],
+            'child_disease_FBhh': None,
+            'child_disease_name': None,
             'OMIM_disease_MIM': None,
             'OMIM_disease_name': None,
             'OMIM_gene_MIM': None,
@@ -250,15 +255,11 @@ def get_parent_hdms(hdm_dict):
     fb_parent_hdm_query = """
         SELECT DISTINCT s.humanhealth_id, o.uniquename, o.name
         FROM humanhealth s
-        JOIN humanhealthprop hhp ON hhp.humanhealth_id = s.humanhealth_id
-        JOIN cvterm cvthhp ON cvthhp.cvterm_id = hhp.type_id
         JOIN humanhealth_relationship hhr ON hhr.subject_id = s.humanhealth_id
         JOIN humanhealth o ON o.humanhealth_id = hhr.object_id
         JOIN cvterm cvthhr ON cvthhr.cvterm_id = hhr.type_id
         WHERE s.is_obsolete IS FALSE
           AND s.uniquename ~ '^FBhh[0-9]{7}$'
-          AND cvthhp.name = 'category'
-          AND hhp.value = 'sub-entity'
           AND o.is_obsolete IS FALSE
           AND o.uniquename ~ '^FBhh[0-9]{7}$'
           AND cvthhr.name = 'belongs_to';
@@ -275,45 +276,72 @@ def get_parent_hdms(hdm_dict):
     for hdm in hdm_dict.values():
         hdm['parent_disease_FBhh'] = '|'.join([i[PARENT_UNAME] for i in hdm['parent_disease_list']])
         hdm['parent_disease_name'] = '|'.join([i[PARENT_NAME] for i in hdm['parent_disease_list']])
-    log.info(f'Found {counter} category annotations for human health disease models in chado.')
+    log.info(f'Found {counter} parent human health disease models in chado.')
     return
 
 
 def get_related_hdms(hdm_dict):
     """Retrieve related human health disease models."""
     global CONN
-    # log.info('Retrieve related human health disease models.')
-    # fb_parent_hdm_query = """
-    #     SELECT DISTINCT s.humanhealth_id, o.uniquename, o.name
-    #     FROM humanhealth s
-    #     JOIN humanhealthprop hhp ON hhp.humanhealth_id = s.humanhealth_id
-    #     JOIN cvterm cvthhp ON cvthhp.cvterm_id = hhp.type_id
-    #     JOIN humanhealth_relationship hhr ON hhr.subject_id = s.humanhealth_id
-    #     JOIN humanhealth o ON o.humanhealth_id = hhr.object_id
-    #     JOIN cvterm cvthhr ON cvthhr.cvterm_id = hhr.type_id
-    #     WHERE s.is_obsolete IS FALSE
-    #       AND s.uniquename ~ '^FBhh[0-9]{7}$'
-    #       AND cvthhp.name = 'category'
-    #       AND hhp.value = 'sub-entity'
-    #       AND o.is_obsolete IS FALSE
-    #       AND o.uniquename ~ '^FBhh[0-9]{7}$'
-    #       AND cvthhr.name = 'belongs_to';
-    # """
-    # ret_parent_hdm_info = connect(fb_parent_hdm_query, 'no_query', CONN)
-    # DB_ID = 0
-    # PARENT_UNAME = 1
-    # PARENT_NAME = 2
-    # counter = 0
-    # for row in ret_parent_hdm_info:
-    #     parent_tuple = (row[DB_ID], row[PARENT_UNAME], row[PARENT_NAME])
-    #     hdm_dict[row[DB_ID]]['parent_disease_list'].append(parent_tuple)
-    #     counter += 1
-    # for hdm in hdm_dict.values():
-    #     hdm['parent_disease_FBhh'] = '|'.join([i[PARENT_UNAME] for i in hdm['parent_disease_list']])
-    #     hdm['parent_disease_name'] = '|'.join([i[PARENT_NAME] for i in hdm['parent_disease_list']])
-    # log.info(f'Found {counter} category annotations for human health disease models in chado.')
+    log.info('Retrieve related human health disease models.')
+    fb_related_hdm_query = """
+        SELECT DISTINCT s.humanhealth_id, o.uniquename, o.name
+        FROM humanhealth s
+        JOIN humanhealth_relationship hhr ON hhr.subject_id = s.humanhealth_id
+        JOIN humanhealth o ON o.humanhealth_id = hhr.object_id
+        JOIN cvterm cvthhr ON cvthhr.cvterm_id = hhr.type_id
+        WHERE s.is_obsolete IS FALSE
+          AND s.uniquename ~ '^FBhh[0-9]{7}$'
+          AND o.is_obsolete IS FALSE
+          AND o.uniquename ~ '^FBhh[0-9]{7}$'
+          AND cvthhr.name = 'associated_with';
+    """
+    ret_related_hdm_info = connect(fb_related_hdm_query, 'no_query', CONN)
+    DB_ID = 0
+    REL_UNAME = 1
+    REL_NAME = 2
+    counter = 0
+    for row in ret_related_hdm_info:
+        rel_tuple = (row[DB_ID], row[REL_UNAME], row[REL_NAME])
+        hdm_dict[row[DB_ID]]['related_disease_list'].append(rel_tuple)
+        counter += 1
+    for hdm in hdm_dict.values():
+        hdm['related_disease_FBhh'] = '|'.join([i[REL_UNAME] for i in hdm['related_disease_list']])
+        hdm['related_disease_name'] = '|'.join([i[REL_NAME] for i in hdm['related_disease_list']])
+    log.info(f'Found {counter} related human health disease models in chado.')
     return
 
+
+def get_child_hdms(hdm_dict):
+    """Retrieve child human health disease models."""
+    global CONN
+    log.info('Retrieve child human health disease models.')
+    fb_child_hdm_query = """
+        SELECT DISTINCT o.humanhealth_id, s.uniquename, s.name
+        FROM humanhealth s
+        JOIN humanhealth_relationship hhr ON hhr.subject_id = s.humanhealth_id
+        JOIN humanhealth o ON o.humanhealth_id = hhr.object_id
+        JOIN cvterm cvthhr ON cvthhr.cvterm_id = hhr.type_id
+        WHERE s.is_obsolete IS FALSE
+          AND s.uniquename ~ '^FBhh[0-9]{7}$'
+          AND o.is_obsolete IS FALSE
+          AND o.uniquename ~ '^FBhh[0-9]{7}$'
+          AND cvthhr.name = 'belongs_to';
+    """
+    ret_child_hdm_info = connect(fb_child_hdm_query, 'no_query', CONN)
+    DB_ID = 0
+    CHILD_UNAME = 1
+    CHILD_NAME = 2
+    counter = 0
+    for row in ret_child_hdm_info:
+        child_tuple = (row[DB_ID], row[CHILD_UNAME], row[CHILD_NAME])
+        hdm_dict[row[DB_ID]]['child_disease_list'].append(child_tuple)
+        counter += 1
+    for hdm in hdm_dict.values():
+        hdm['child_disease_FBhh'] = '|'.join([i[CHILD_UNAME] for i in hdm['child_disease_list']])
+        hdm['child_disease_name'] = '|'.join([i[CHILD_NAME] for i in hdm['child_disease_list']])
+    log.info(f'Found {counter} child human health disease models in chado.')
+    return
 
 def process_database_info(input_data):
     """Convert the HDM dict to a list of data elements."""
