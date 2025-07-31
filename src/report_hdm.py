@@ -51,12 +51,12 @@ header_list = [
     'related_disease_name',
     'child_disease_FBhh',
     'child_disease_name',
-    'OMIM_disease_MIM',
+    'OMIM_disease_ID',
     'OMIM_disease_name',
-    'OMIM_gene_MIM',
+    'OMIM_gene_ID',
     'OMIM_gene_name',
-    'HGNC_gene',
-    'HGNC_name',
+    'HGNC_gene_ID',
+    'HGNC_gene_name',
     'DO_ID',
     'DO_name',
     'external_links',
@@ -102,6 +102,10 @@ def main():
     get_parent_hdms(hdm_dict)
     get_related_hdms(hdm_dict)
     get_child_hdms(hdm_dict)
+    get_hdm_omim_xrefs(hdm_dict)
+    hdm_relevant_gene_dict = build_hdm_gene_dict()
+    get_hdm_genes(hdm_dict, hdm_relevant_gene_dict)
+
     data_to_export_as_tsv = generic_FB_tsv_dict(report_title, database)
     data_to_export_as_tsv['data'] = process_database_info(hdm_dict)
     tsv_report_dump(data_to_export_as_tsv, output_filename, headers=header_list)
@@ -144,12 +148,16 @@ def get_initial_hdm_info():
             'child_disease_list': [],
             'child_disease_FBhh': None,
             'child_disease_name': None,
-            'OMIM_disease_MIM': None,
+            'OMIM_disease_xrefs': [],
+            'OMIM_disease_ID': None,
             'OMIM_disease_name': None,
-            'OMIM_gene_MIM': None,
+            'implicated_human_gene_feature_ids': [],
+            'OMIM_gene_xrefs': [],
+            'OMIM_gene_ID': None,
             'OMIM_gene_name': None,
-            'HGNC_gene': None,
-            'HGNC_name': None,
+            'HGNC_gene_xrefs': [],
+            'HGNC_gene_ID': None,
+            'HGNC_gene_name': None,
             'DO_ID': None,
             'DO_name': None,
             'external_links': None,
@@ -358,6 +366,181 @@ def get_child_hdms(hdm_dict):
         hdm['child_disease_name'] = '|'.join([i[CHILD_NAME] for i in hdm['child_disease_list']])
     log.info(f'Found {counter} child human health disease models in chado.')
     return
+
+
+def get_hdm_omim_xrefs(hdm_dict):
+    """Retrieve human disease model OMIM PHENOTYPE xrefs."""
+    global CONN
+    log.info('Retrieve human disease model OMIM PHENOTYPE xrefs.')
+    fb_hdm_omim_pheno_query = """
+        SELECT DISTINCT hh.humanhealth_id, dbx.accession, dbx.description
+        FROM humanhealth hh
+        JOIN humanhealth_dbxref hhdbx ON hhdbx.humanhealth_id = hh.humanhealth_id
+        JOIN dbxref dbx ON dbx.dbxref_id = hhdbx.dbxref_id
+        JOIN db ON db.db_id = dbx.db_id
+        WHERE hh.is_obsolete IS FALSE
+          AND hhdbx.is_current IS TRUE
+          AND db.name = 'OMIM_PHENOTYPE';
+    """
+    ret_hdm_omim_pheno_info = connect(fb_hdm_omim_pheno_query, 'no_query', CONN)
+    DB_ID = 0
+    DBX_ACC = 1
+    DBX_DESC = 2
+    counter = 0
+    for row in ret_hdm_omim_pheno_info:
+        omim_pheno_tuple = (row[DB_ID], row[DBX_ACC], row[DBX_DESC])
+        hdm_dict[row[DB_ID]]['OMIM_disease_xrefs'].append(omim_pheno_tuple)
+        counter += 1
+    log.info(f'Found {counter} human disease model OMIM PHENOTYPE xrefs in chado.')
+    uniq_counter = 0
+    for hdm in hdm_dict.values():
+        if len(hdm['OMIM_disease_xrefs']) == 1:
+            uniq_tuple = hdm['OMIM_disease_xrefs'][0]
+            hdm['OMIM_disease_ID'] = f'MIM:{uniq_tuple[DBX_ACC]}'
+            hdm['OMIM_disease_name'] = uniq_tuple[DBX_DESC]
+            uniq_counter += 1
+    log.info(f'Found {uniq_counter} human disease models having a single OMIM PHENOTYPE xref in chado.')
+    return
+
+
+def build_hdm_gene_dict():
+    """Create a lookup of HDM-relevant genes."""
+    global CONN
+    log.info('Create a lookup of HDM-relevant genes.')
+    # 1. Build initial gene list.
+    fb_hdm_relevant_gene_query = """
+        SELECT DISTINCT f.feature_id, f.uniquename, f.name, o.abbreviation
+        FROM feature f
+        JOIN organism o ON o.organism_id = f.organism_id
+        JOIN humanhealth_feature hhf ON hhf.feature_id = f.feature_id
+        WHERE f.is_obsolete IS FALSE
+          AND f.uniquename ~ '^FBgn[0-9]{7}$';
+    """
+    ret_hdm_relevant_genes = connect(fb_hdm_relevant_gene_query, 'no_query', CONN)
+    DB_ID = 0
+    UNAME = 1
+    NAME = 2
+    ORG_ABBR = 3
+    counter = 0
+    hdm_relevant_gene_dict = {}
+    for row in ret_hdm_relevant_genes:
+        gene_dict = {
+            'feature_id': row[DB_ID],
+            'uniquename': row[UNAME],
+            'name': row[NAME],
+            'org_abbr': row[ORG_ABBR],
+            'omim_xref': None,
+            'hgnc_xref': None,
+        }
+        hdm_relevant_gene_dict[row[DB_ID]] = gene_dict
+        counter += 1
+    log.info(f'Found {counter} HDM-relevant genes in chado.')
+    # 2. Fold in OMIM xrefs.
+    fb_gene_omim_xref_query = """
+        SELECT DISTINCT f.feature_id, dbx.accession, dbx.description
+        FROM feature f
+        JOIN feature_dbxref fdbx ON fdbx.feature_id = f.feature_id
+        JOIN dbxref dbx ON dbx.dbxref_ID = fdbx.dbxref_id
+        JOIN db ON db.db_id = dbx.db_id
+        WHERE f.is_obsolete IS FALSE
+          AND f.uniquename ~ '^FBgn[0-9]{7}$'
+          AND fdbx.is_current IS TRUE
+          AND db.name = 'OMIM_GENE';
+    """
+    ret_omim_gene_xrefs = connect(fb_gene_omim_xref_query, 'no_query', CONN)
+    DB_ID = 0
+    ACC = 1
+    DESC = 2
+    omim_counter = 0
+    for row in ret_omim_gene_xrefs:
+        if row[DB_ID] in hdm_relevant_gene_dict.keys():
+            omim_xref_tuple = (row[DB_ID], row[ACC], row[DESC])
+            hdm_relevant_gene_dict[row[DB_ID]]['omim_xref'] = omim_xref_tuple
+            omim_counter += 1
+    log.info(f'Added {omim_counter} OMIM_GENE xrefs from chado.')
+    # 3. Fold in HGNC xrefs.
+    fb_gene_hgnc_xref_query = """
+        SELECT DISTINCT f.feature_id, dbx.accession, dbx.description
+        FROM feature f
+        JOIN feature_dbxref fdbx ON fdbx.feature_id = f.feature_id
+        JOIN dbxref dbx ON dbx.dbxref_ID = fdbx.dbxref_id
+        JOIN db ON db.db_id = dbx.db_id
+        WHERE f.is_obsolete IS FALSE
+          AND f.uniquename ~ '^FBgn[0-9]{7}$'
+          AND fdbx.is_current IS TRUE
+          AND db.name = 'HGNC';
+    """
+    ret_hgnc_gene_xrefs = connect(fb_gene_hgnc_xref_query, 'no_query', CONN)
+    DB_ID = 0
+    ACC = 1
+    DESC = 2
+    hgnc_counter = 0
+    for row in ret_hgnc_gene_xrefs:
+        if row[DB_ID] in hdm_relevant_gene_dict.keys():
+            hgnc_xref_tuple = (row[DB_ID], row[ACC], row[DESC])
+            hdm_relevant_gene_dict[row[DB_ID]]['hgnc_xref'] = hgnc_xref_tuple
+            hgnc_counter += 1
+    log.info(f'Added {hgnc_counter} hgnc_GENE xrefs from chado.')
+    return hdm_relevant_gene_dict
+
+
+def get_hdm_genes(hdm_dict, hdm_relevant_gene_dict):
+    """Retrieve human disease model genes."""
+    global CONN
+    log.info('Retrieve human disease model genes.')
+    fb_hdm_gene_query = """
+        SELECT DISTINCT hh.humanhealth_id, f.feature_id
+        FROM humanhealth hh
+        JOIN humanhealth_feature hhf ON hhf.humanhealth_id = hh.humanhealth_id
+        JOIN humanhealth_featureprop hhfp ON hhfp.humanhealth_feature_id = hhf.humanhealth_feature_id
+        JOIN cvterm cvt ON cvt.cvterm_id = hhfp.type_id
+        JOIN feature f ON f.feature_id = hhf.feature_id
+        JOIN organism o ON o.organism_id = f.organism_id
+        WHERE hh.is_obsolete IS FALSE
+          AND f.is_obsolete IS FALSE
+          AND f.uniquename ~ '^FBgn[0-9]{7}$'
+          AND cvt.name = 'human_gene_implicated'
+          AND o.abbreviation = 'Hsap';
+    """
+    ret_hdm_gene_info = connect(fb_hdm_gene_query, 'no_query', CONN)
+    HDM_DB_ID = 0
+    GENE_DB_ID = 1
+    counter = 0
+    for row in ret_hdm_gene_info:
+        hdm_dict[row[HDM_DB_ID]]['implicated_human_gene_feature_ids'].append(row[GENE_DB_ID])
+        counter += 1
+    log.info(f'Found {counter} HDM-human gene associations in chado.')
+    for hdm in hdm_dict.values():
+        for feature_id in hdm['implicated_human_gene_feature_ids']:
+            human_gene = hdm_relevant_gene_dict[feature_id]
+            if human_gene['omim_xref']:
+                hdm['OMIM_gene_xrefs'].append(human_gene['omim_xref'])
+            if human_gene['hgnc_xref']:
+                hdm['HGNC_gene_xrefs'].append(human_gene['hgnc_xref'])
+        hdm['OMIM_gene_ID'] = '|'.join([f'MIM:{i[1]}' for i in hdm['OMIM_gene_xrefs']])
+        hdm['OMIM_gene_name'] = ' | '.join([i[2] for i in hdm['OMIM_gene_xrefs']])
+        hdm['HGNC_gene_ID'] = '|'.join([f'HGNC:{i[1]}' for i in hdm['HGNC_gene_xrefs']])
+        hdm['HGNC_gene_name'] = ' | '.join([i[2] for i in hdm['HGNC_gene_xrefs']])
+    return
+
+
+def get_template(hdm_dict):
+    """Retrieve BOB."""
+    global CONN
+    log.info('Retrieve BOB.')
+    fb_hdm_bob_query = """
+        SELECT DISTINCT hh.humanhealth_id, bob;
+    """
+    ret_hdm_bob_info = connect(fb_hdm_bob_query, 'no_query', CONN)
+    DB_ID = 0
+    BOB = 1
+    counter = 0
+    for row in ret_hdm_bob_info:
+        hdm_dict[row[DB_ID]]['billy'].append(BOB)
+        counter += 1
+    log.info(f'Found {counter} bob disease models in chado.')
+    return
+
 
 def process_database_info(input_data):
     """Convert the HDM dict to a list of data elements."""
