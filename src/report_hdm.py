@@ -104,7 +104,7 @@ def main():
     get_child_hdms(hdm_dict)
     get_hdm_omim_xrefs(hdm_dict)
     hdm_relevant_gene_dict = build_hdm_gene_dict()
-    get_hdm_genes(hdm_dict, hdm_relevant_gene_dict)
+    # get_hdm_genes(hdm_dict, hdm_relevant_gene_dict)
 
     data_to_export_as_tsv = generic_FB_tsv_dict(report_title, database)
     data_to_export_as_tsv['data'] = process_database_info(hdm_dict)
@@ -455,6 +455,7 @@ def build_hdm_gene_dict():
     for row in ret_omim_gene_xrefs:
         if row[DB_ID] in hdm_relevant_gene_dict.keys():
             omim_xref_tuple = (row[DB_ID], row[ACC], row[DESC])
+            log.debug(f'BOB OMIM: {omim_xref_tuple}')
             hdm_relevant_gene_dict[row[DB_ID]]['omim_xref'] = omim_xref_tuple
             omim_counter += 1
     log.info(f'Added {omim_counter} OMIM_GENE xrefs from chado.')
@@ -478,6 +479,7 @@ def build_hdm_gene_dict():
     for row in ret_hgnc_gene_xrefs:
         if row[DB_ID] in hdm_relevant_gene_dict.keys():
             hgnc_xref_tuple = (row[DB_ID], row[ACC], row[DESC])
+            log.debug(f'BOB HGNC: {hgnc_xref_tuple}')
             hdm_relevant_gene_dict[row[DB_ID]]['hgnc_xref'] = hgnc_xref_tuple
             hgnc_counter += 1
     log.info(f'Added {hgnc_counter} hgnc_GENE xrefs from chado.')
