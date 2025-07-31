@@ -563,11 +563,11 @@ def get_hdm_do_terms(hdm_dict):
         doid_tuple = (row[DB_ID], row[DOID], row[CVTERM])
         hdm_dict[row[DB_ID]]['DO_cvterms'].append(doid_tuple)
         counter += 1
+    log.info(f'Found {counter} human disease model DOID annotations in chado.')
     for hdm in hdm_dict.values():
         if hdm['DO_cvterms']:
             hdm['DO_ID'] = '|'.join([i[DOID] for i in hdm['DO_cvterms']])
             hdm['DO_name'] = '|'.join([i[CVTERM] for i in hdm['DO_cvterms']])
-    log.info(f'Found {counter} human disease model DOID annotations in chado.')
     return
 
 
