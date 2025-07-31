@@ -262,7 +262,8 @@ def get_parent_hdms(hdm_dict):
           AND s.uniquename ~ '^FBhh[0-9]{7}$'
           AND o.is_obsolete IS FALSE
           AND o.uniquename ~ '^FBhh[0-9]{7}$'
-          AND cvthhr.name = 'belongs_to';
+          AND cvthhr.name = 'belongs_to'
+        ORDER BY o.name;
     """
     ret_parent_hdm_info = connect(fb_parent_hdm_query, 'no_query', CONN)
     DB_ID = 0
@@ -285,7 +286,7 @@ def get_related_hdms(hdm_dict):
     global CONN
     log.info('Retrieve related human health disease models.')
     fb_related_hdm_query = """
-        SELECT DISTINCT s.humanhealth_id, o.uniquename, o.name
+        SELECT DISTINCT s.humanhealth_id, s.uniquename, s.name, o.humanhealth_id, o.uniquename, o.name
         FROM humanhealth s
         JOIN humanhealth_relationship hhr ON hhr.subject_id = s.humanhealth_id
         JOIN humanhealth o ON o.humanhealth_id = hhr.object_id
@@ -297,17 +298,31 @@ def get_related_hdms(hdm_dict):
           AND cvthhr.name = 'associated_with';
     """
     ret_related_hdm_info = connect(fb_related_hdm_query, 'no_query', CONN)
-    DB_ID = 0
-    REL_UNAME = 1
-    REL_NAME = 2
+    SBJ_ID = 0
+    SBJ_UNAME = 1
+    SBJ_NAME = 2
+    OBJ_ID = 3
+    OBJ_UNAME = 4
+    OBJ_NAME = 5
     counter = 0
     for row in ret_related_hdm_info:
-        rel_tuple = (row[DB_ID], row[REL_UNAME], row[REL_NAME])
-        hdm_dict[row[DB_ID]]['related_disease_list'].append(rel_tuple)
         counter += 1
+        sbj_tuple = (row[SBJ_ID], row[SBJ_UNAME], row[SBJ_NAME])
+        obj_tuple = (row[OBJ_ID], row[OBJ_UNAME], row[OBJ_NAME])
+        hdm_dict[row[SBJ_ID]]['related_disease_list'].append(obj_tuple)
+        hdm_dict[row[OBJ_ID]]['related_disease_list'].append(sbj_tuple)
+    REL_UNAME = 1
+    REL_NAME = 2
     for hdm in hdm_dict.values():
-        hdm['related_disease_FBhh'] = '|'.join([i[REL_UNAME] for i in hdm['related_disease_list']])
-        hdm['related_disease_name'] = '|'.join([i[REL_NAME] for i in hdm['related_disease_list']])
+        rel_hdm_dict = {}
+        sorted_rel_hdms = []
+        for rel_tuple in hdm['related_disease_list']:
+            rel_hdm_dict[rel_tuple[REL_NAME]] = rel_tuple
+        sorted_rel_hdm_names = sorted(list(rel_hdm_dict.keys()))
+        for rel_hdm_name in sorted_rel_hdm_names:
+            sorted_rel_hdms.append(rel_hdm_dict[rel_hdm_name])
+        hdm['related_disease_FBhh'] = '|'.join([i[REL_UNAME] for i in sorted_rel_hdms])
+        hdm['related_disease_name'] = '|'.join([i[REL_NAME] for i in sorted_rel_hdms])
     log.info(f'Found {counter} related human health disease models in chado.')
     return
 
@@ -326,7 +341,8 @@ def get_child_hdms(hdm_dict):
           AND s.uniquename ~ '^FBhh[0-9]{7}$'
           AND o.is_obsolete IS FALSE
           AND o.uniquename ~ '^FBhh[0-9]{7}$'
-          AND cvthhr.name = 'belongs_to';
+          AND cvthhr.name = 'belongs_to'
+        ORDER BY s.name;
     """
     ret_child_hdm_info = connect(fb_child_hdm_query, 'no_query', CONN)
     DB_ID = 0
