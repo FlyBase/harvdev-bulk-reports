@@ -480,7 +480,7 @@ def get_hdm_omim_table_prop(hdm_dict):
     log.info('Retrieve human disease model derived OMIM series table.')
     fb_hdm_omim_series_query = """
         SELECT DISTINCT hh.humanhealth_id, hhp.value
-        FROM humanhealth
+        FROM humanhealth hh
         JOIN humanhealthprop hhp ON hhp.humanhealth_id = hhp.humanhealth_id
         JOIN cvterm cvt ON cvt.cvterm_id = hhp.type_id
         WHERE hh.is_obsolete IS FALSE
