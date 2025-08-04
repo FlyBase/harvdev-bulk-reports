@@ -490,7 +490,7 @@ def get_hdm_omim_table_prop(hdm_dict):
     DB_ID = 0
     TABLE_TEXT = 1
     counter = 0
-    table_rgx = r'^\[(.*?)\]\(https://omim.org/entry/[0-9]{1,8}\) +\['
+    table_rgx = r'^\[(.*?)\]'
     for row in ret_hdm_omim_pheno_table_info:
         omim_table_lines = row[TABLE_TEXT].split('\n')
         omim_disease_symbols = []
