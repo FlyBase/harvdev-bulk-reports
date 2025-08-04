@@ -492,13 +492,14 @@ def get_hdm_omim_table_prop(hdm_dict):
     counter = 0
     table_rgx = r'^\[(.*?)\]\(https://omim.org/entry/[0-9]{1,8}\) +\['
     for row in ret_hdm_omim_pheno_table_info:
-        log.debug(f'BOB1: Have this prop: {row}')
         omim_table_lines = row[TABLE_TEXT].split('\n')
         omim_disease_symbols = []
         for line in omim_table_lines:
-            log.debug(f'BOB2: Have this table line : {line}')
+            log.debug(f'BOB1: Have this table line : {line}')
             try:
-                omim_disease_symbols.append(re.match(table_rgx, line).group(1))
+                omim_disease_symbol = re.match(table_rgx, line).group(1)
+                omim_disease_symbols.append(omim_disease_symbol)
+                log.debug(f'BOB2: Have this OMIM dis symbol: {omim_disease_symbol}')
             except AttributeError:
                 pass
         omim_disease_symbols.sort()
