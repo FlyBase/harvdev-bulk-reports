@@ -102,7 +102,8 @@ def main():
     get_parent_hdms(hdm_dict)
     get_related_hdms(hdm_dict)
     get_child_hdms(hdm_dict)
-    get_hdm_omim_xrefs(hdm_dict)
+    get_hdm_omim_pheno_series(hdm_dict)
+    get_hdm_omim_pheno_xrefs(hdm_dict)
     hdm_relevant_gene_dict = build_hdm_gene_dict()
     get_hdm_genes(hdm_dict, hdm_relevant_gene_dict)
     get_hdm_do_terms(hdm_dict)
@@ -150,6 +151,7 @@ def get_initial_hdm_info():
             'child_disease_list': [],
             'child_disease_FBhh': None,
             'child_disease_name': None,
+            'OMIM_pheno_series': [],
             'OMIM_disease_xrefs': [],
             'OMIM_disease_ID': None,
             'OMIM_disease_name': None,
@@ -372,7 +374,34 @@ def get_child_hdms(hdm_dict):
     return
 
 
-def get_hdm_omim_xrefs(hdm_dict):
+def get_hdm_omim_pheno_series(hdm_dict):
+    """Retrieve human disease model OMIM SERIES xrefs."""
+    global CONN
+    log.info('Retrieve human disease model OMIM SERIES xrefs.')
+    fb_hdm_omim_series_query = """
+        SELECT DISTINCT hh.humanhealth_id, dbx.accession, dbx.description
+        FROM humanhealth hh
+        JOIN humanhealth_dbxref hhdbx ON hhdbx.humanhealth_id = hh.humanhealth_id
+        JOIN dbxref dbx ON dbx.dbxref_id = hhdbx.dbxref_id
+        JOIN db ON db.db_id = dbx.db_id
+        WHERE hh.is_obsolete IS FALSE
+          AND hhdbx.is_current IS TRUE
+          AND db.name = 'OMIM_series';
+    """
+    ret_hdm_omim_series_info = connect(fb_hdm_omim_series_query, 'no_query', CONN)
+    DB_ID = 0
+    DBX_ACC = 1
+    DBX_DESC = 2
+    counter = 0
+    for row in ret_hdm_omim_series_info:
+        omim_series_tuple = (row[DB_ID], row[DBX_ACC], row[DBX_DESC])
+        hdm_dict[row[DB_ID]]['OMIM_pheno_series'].append(omim_series_tuple)
+        counter += 1
+    log.info(f'Found {counter} human disease model OMIM SERIES xrefs in chado.')
+    return
+
+
+def get_hdm_omim_pheno_xrefs(hdm_dict):
     """Retrieve human disease model OMIM PHENOTYPE xrefs."""
     global CONN
     log.info('Retrieve human disease model OMIM PHENOTYPE xrefs.')
@@ -398,11 +427,15 @@ def get_hdm_omim_xrefs(hdm_dict):
     log.info(f'Found {counter} human disease model OMIM PHENOTYPE xrefs in chado.')
     uniq_counter = 0
     for hdm in hdm_dict.values():
-        if len(hdm['OMIM_disease_xrefs']) == 1:
+        if hdm['OMIM_pheno_series']:
+            continue
+        elif len(hdm['OMIM_disease_xrefs']) == 1:
             uniq_tuple = hdm['OMIM_disease_xrefs'][0]
             hdm['OMIM_disease_ID'] = f'MIM:{uniq_tuple[DBX_ACC]}'
             hdm['OMIM_disease_name'] = uniq_tuple[DBX_DESC]
             uniq_counter += 1
+        elif len(hdm['OMIM_disease_xrefs']) > 1:
+            log.debug(f'BOB: {hdm["FB_id"]} has no OMIM-series, but has more than one OMIM_PHENOTYPE xref.')
     log.info(f'Found {uniq_counter} human disease models having a single OMIM PHENOTYPE xref in chado.')
     return
 
@@ -585,7 +618,7 @@ def get_external_links(hdm_dict):
         JOIN db ON db.db_id = dbx.db_id
         WHERE hh.is_obsolete IS FALSE
           AND hhdbx.is_current IS TRUE
-          AND db.name NOT IN ('OMIM_GENE', 'OMIM_PHENOTYPE', 'FlyBase', 'HGNC')
+          AND db.name NOT IN ('OMIM_GENE', 'OMIM_PHENOTYPE', 'OMIM_series', 'FlyBase', 'HGNC')
         ORDER BY db.urlprefix||dbx.accession;
     """
     ret_hdm_xref_info = connect(fb_hdm_xref_query, 'no_query', CONN)
