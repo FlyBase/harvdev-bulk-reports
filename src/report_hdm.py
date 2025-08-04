@@ -481,7 +481,7 @@ def get_hdm_omim_table_prop(hdm_dict):
     fb_hdm_omim_series_query = """
         SELECT DISTINCT hh.humanhealth_id, hhp.value
         FROM humanhealth hh
-        JOIN humanhealthprop hhp ON hhp.humanhealth_id = hhp.humanhealth_id
+        JOIN humanhealthprop hhp ON hh.humanhealth_id = hhp.humanhealth_id
         JOIN cvterm cvt ON cvt.cvterm_id = hhp.type_id
         WHERE hh.is_obsolete IS FALSE
           AND cvt.name = 'derived_disease_tbl';
@@ -490,11 +490,13 @@ def get_hdm_omim_table_prop(hdm_dict):
     DB_ID = 0
     TABLE_TEXT = 1
     counter = 0
-    table_rgx = r'^\[(.+)]\(https://omim.org/entry/[0-9]{1,8}\) +\['
+    table_rgx = r'^\[(.+)\]\(https://omim.org/entry/[0-9]{1,8}\) +\['
     for row in ret_hdm_omim_pheno_table_info:
+        log.debug(f'BOB1: Have this prop: {row}')
         omim_table_lines = row[TABLE_TEXT].split('\n')
         omim_disease_symbols = []
         for line in omim_table_lines:
+            log.debug(f'BOB2: Have this table line : {line}')
             try:
                 omim_disease_symbols.append(re.match(table_rgx, line).group(1))
             except AttributeError:
