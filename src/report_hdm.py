@@ -426,17 +426,18 @@ def get_hdm_omim_pheno_xrefs(hdm_dict):
         counter += 1
     log.info(f'Found {counter} human disease model OMIM PHENOTYPE xrefs in chado.')
     uniq_counter = 0
+    series_counter = 0
     for hdm in hdm_dict.values():
-        if hdm['OMIM_pheno_series']:
-            continue
-        elif len(hdm['OMIM_disease_xrefs']) == 1:
+        if len(hdm['OMIM_disease_xrefs']) == 1:
             uniq_tuple = hdm['OMIM_disease_xrefs'][0]
             hdm['OMIM_disease_ID'] = f'MIM:{uniq_tuple[DBX_ACC]}'
             hdm['OMIM_disease_name'] = uniq_tuple[DBX_DESC]
             uniq_counter += 1
         elif len(hdm['OMIM_disease_xrefs']) > 1:
-            log.debug(f'BOB: {hdm["FB_id"]} has no OMIM-series, but has more than one OMIM_PHENOTYPE xref.')
+            hdm['related_specific_diseases'] = '|'.join([i[DBX_DESC] for i in hdm['OMIM_disease_xrefs']])
+            series_counter += 1
     log.info(f'Found {uniq_counter} human disease models having a single OMIM PHENOTYPE xref in chado.')
+    log.info(f'Found {series_counter} human disease models having a many OMIM PHENOTYPE xref in chado.')
     return
 
 
