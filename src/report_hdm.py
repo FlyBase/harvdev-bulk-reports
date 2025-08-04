@@ -106,6 +106,7 @@ def main():
     hdm_relevant_gene_dict = build_hdm_gene_dict()
     get_hdm_genes(hdm_dict, hdm_relevant_gene_dict)
     get_hdm_do_terms(hdm_dict)
+    get_external_links(hdm_dict)
 
     data_to_export_as_tsv = generic_FB_tsv_dict(report_title, database)
     data_to_export_as_tsv['data'] = process_database_info(hdm_dict)
@@ -162,6 +163,7 @@ def get_initial_hdm_info():
             'DO_cvterms': [],
             'DO_ID': None,
             'DO_name': None,
+            'xref_urls': [],
             'external_links': None,
             'related_specific_diseases': None,
             'implicated_human_gene': None,
@@ -568,6 +570,34 @@ def get_hdm_do_terms(hdm_dict):
         if hdm['DO_cvterms']:
             hdm['DO_ID'] = '|'.join([i[DOID] for i in hdm['DO_cvterms']])
             hdm['DO_name'] = '|'.join([i[CVTERM] for i in hdm['DO_cvterms']])
+    return
+
+
+def get_external_links(hdm_dict):
+    """Retrieve HDM xrefs."""
+    global CONN
+    log.info('Retrieve HDM xrefs.')
+    fb_hdm_xref_query = """
+        SELECT DISTINCT hh.humanhealth_id, db.urlprefix||dbx.accession
+        FROM humanhealth hh
+        JOIN humanhealth_dbxref hhdbx ON hhdbx.humanhealth_id = hh.humanhealth_id
+        JOIN dbxref dbx ON dbx.dbxref_id = hhdbx.dbxref_id
+        JOIN db ON db.db_id = dbx.db_id
+        WHERE hh.is_obsolete IS FALSE
+          AND hhdbx.is_current IS TRUE
+          AND db.name NOT IN ('OMIM_GENE', 'OMIM_PHENOTYPE', 'FlyBase', 'HGNC')
+        ORDER BY db.urlprefix||dbx.accession;
+    """
+    ret_hdm_xref_info = connect(fb_hdm_xref_query, 'no_query', CONN)
+    DB_ID = 0
+    URL = 1
+    counter = 0
+    for row in ret_hdm_xref_info:
+        hdm_dict[row[DB_ID]]['xref_urls'].append(row[URL])
+        counter += 1
+    log.info(f'Found {counter} HDM xrefs in chado.')
+    for hdm in hdm_dict.values():
+        hdm['external_links'] = '|'.join(hdm['xref_urls'])
     return
 
 
