@@ -110,7 +110,8 @@ def main():
     get_hdm_genes(hdm_dict, hdm_relevant_gene_dict)
     get_hdm_do_terms(hdm_dict)
     get_external_links(hdm_dict)
-
+    # placeholder
+    get_hdm_omim_bdsc_links(hdm_dict)
     data_to_export_as_tsv = generic_FB_tsv_dict(report_title, database)
     data_to_export_as_tsv['data'] = process_database_info(hdm_dict)
     tsv_report_dump(data_to_export_as_tsv, output_filename, headers=header_list)
@@ -179,6 +180,7 @@ def get_initial_hdm_info():
             'description_genetics': None,
             'description_cellular': None,
             'description_molecular': None,
+            'bdsc_links': [],
             'BDSC_link': None,
         }
         hdm_dict[row[DB_ID]] = hdm_result
@@ -495,11 +497,9 @@ def get_hdm_omim_table_prop(hdm_dict):
         omim_table_lines = row[TABLE_TEXT].split('\n')
         omim_disease_symbols = []
         for line in omim_table_lines:
-            log.debug(f'BOB1: Have this table line : {line}')
             try:
                 omim_disease_symbol = re.match(table_rgx, line).group(1)
                 omim_disease_symbols.append(omim_disease_symbol)
-                log.debug(f'BOB2: Have this OMIM dis symbol: {omim_disease_symbol}')
             except AttributeError:
                 pass
         omim_disease_symbols.sort()
@@ -687,7 +687,7 @@ def get_external_links(hdm_dict):
         JOIN db ON db.db_id = dbx.db_id
         WHERE hh.is_obsolete IS FALSE
           AND hhdbx.is_current IS TRUE
-          AND db.name NOT IN ('OMIM_GENE', 'OMIM_PHENOTYPE', 'OMIM_series', 'FlyBase', 'HGNC')
+          AND db.name NOT IN ('OMIM_GENE', 'OMIM_PHENOTYPE', 'OMIM_series', 'FlyBase', 'HGNC', 'BDSC_HD')
         ORDER BY db.urlprefix||dbx.accession;
     """
     ret_hdm_xref_info = connect(fb_hdm_xref_query, 'no_query', CONN)
@@ -700,6 +700,36 @@ def get_external_links(hdm_dict):
     log.info(f'Found {counter} HDM xrefs in chado.')
     for hdm in hdm_dict.values():
         hdm['external_links'] = '|'.join(hdm['xref_urls'])
+    return
+
+
+def get_hdm_omim_bdsc_links(hdm_dict):
+    """Retrieve human disease model BDSC links."""
+    global CONN
+    log.info('Retrieve human disease model BDSC links.')
+    fb_hdm_bdsc_link_query = """
+        SELECT DISTINCT hh.humanhealth_id, db.urlprefix||dbx.description
+        FROM humanhealth hh
+        JOIN humanhealth_dbxref hhdbx ON hhdbx.humanhealth_id = hh.humanhealth_id
+        JOIN humanhealth_dbxrefprop hhdbxp ON hhdbxp.humanhealth_dbxref_id = hhdbx.humanhealth_dbxref_id
+        JOIN cvterm cvt ON cvt.cvterm_id = hhdbxp.type_id
+        JOIN dbxref dbx ON dbx.dbxref_id = hhdbx.dbxref_id
+        JOIN db ON db.db_id = dbx.db_id
+        WHERE hh.is_obsolete IS FALSE
+          AND hhdbx.is_current IS TRUE
+          AND db.name = 'BDSC_HD'
+          AND cvt.name = 'data_link_bdsc';
+    """
+    ret_hdm_bdsc_link_info = connect(fb_hdm_bdsc_link_query, 'no_query', CONN)
+    DB_ID = 0
+    URL = 1
+    counter = 0
+    for row in ret_hdm_bdsc_link_info:
+        hdm_dict[row[DB_ID]]['bdsc_links'].append(row[URL])
+        counter += 1
+    log.info(f'Found {counter} HDM BDSC HD links in chado.')
+    for hdm in hdm_dict.values():
+        hdm['BDSC_link'] = '|'.join(hdm['bdsc_links'])
     return
 
 
