@@ -110,7 +110,12 @@ def main():
     get_hdm_genes(hdm_dict, hdm_relevant_gene_dict)
     get_hdm_do_terms(hdm_dict)
     get_external_links(hdm_dict)
-    # placeholder
+    # get_implicated_human_gene(hdm_dict)
+    # get_implicated_human_gene(hdm_dict)
+    # get_implicated_human_gene(hdm_dict)
+    # get_implicated_human_gene(hdm_dict)
+    # get_implicated_human_gene(hdm_dict)
+    # get_implicated_human_gene(hdm_dict)
     get_hdm_omim_bdsc_links(hdm_dict)
     data_to_export_as_tsv = generic_FB_tsv_dict(report_title, database)
     data_to_export_as_tsv['data'] = process_database_info(hdm_dict)
@@ -158,7 +163,7 @@ def get_initial_hdm_info():
             'OMIM_disease_xrefs': [],
             'OMIM_disease_ID': None,
             'OMIM_disease_name': None,
-            'implicated_human_gene_feature_ids': [],
+            'implicated_gene_feature_ids': [],
             'OMIM_gene_xrefs': [],
             'OMIM_gene_ID': None,
             'OMIM_gene_name': None,
@@ -175,11 +180,11 @@ def get_initial_hdm_info():
             'implicated_human_gene': None,
             'implicated_Dmel_gene': None,
             'implicated_other_gene': None,
-            'description_overview': None,
-            'description_symptoms': None,
-            'description_genetics': None,
-            'description_cellular': None,
-            'description_molecular': None,
+            'description_overview': [],
+            'description_symptoms': [],
+            'description_genetics': [],
+            'description_cellular': [],
+            'description_molecular': [],
             'bdsc_links': [],
             'BDSC_link': None,
         }
@@ -610,33 +615,46 @@ def get_hdm_genes(hdm_dict, hdm_relevant_gene_dict):
         JOIN organism o ON o.organism_id = f.organism_id
         WHERE hh.is_obsolete IS FALSE
           AND f.is_obsolete IS FALSE
-          AND f.uniquename ~ '^FBgn[0-9]{7}$'
-          AND cvt.name = 'human_gene_implicated'
-          AND o.abbreviation = 'Hsap';
+          AND f.uniquename ~ '^FBgn[0-9]{7}$';
     """
     ret_hdm_gene_info = connect(fb_hdm_gene_query, 'no_query', CONN)
     HDM_DB_ID = 0
     GENE_DB_ID = 1
     counter = 0
     for row in ret_hdm_gene_info:
-        hdm_dict[row[HDM_DB_ID]]['implicated_human_gene_feature_ids'].append(row[GENE_DB_ID])
+        hdm_dict[row[HDM_DB_ID]]['implicated_gene_feature_ids'].append(row[GENE_DB_ID])
         counter += 1
     log.info(f'Found {counter} HDM-human gene associations in chado.')
     ACC = 1
     GENE_NAME = 2
     for hdm in hdm_dict.values():
-        for feature_id in hdm['implicated_human_gene_feature_ids']:
-            human_gene = hdm_relevant_gene_dict[feature_id]
-            if human_gene['omim_xref']:
-                hdm['OMIM_gene_xrefs'].append(human_gene['omim_xref'])
-            if human_gene['hgnc_xref']:
-                hdm['HGNC_gene_xrefs'].append(human_gene['hgnc_xref'])
+        gene_by_org_dict = {
+            'Hsap': [],
+            'Dmel': [],
+            'other': [],
+        }
+        # Sort genes by organism, and gather xrefs.
+        for feature_id in hdm['implicated_gene_feature_ids']:
+            gene = hdm_relevant_gene_dict[feature_id]
+            try:
+                gene_by_org_dict[gene['org_abbr']].append(gene)
+            except KeyError:
+                gene_by_org_dict['other'].append(gene)
+            if gene['org_abbr'] == 'Hsap' and gene['omim_xref']:
+                hdm['OMIM_gene_xrefs'].append(gene['omim_xref'])
+            if gene['org_abbr'] == 'Hsap' and gene['hgnc_xref']:
+                hdm['HGNC_gene_xrefs'].append(gene['hgnc_xref'])
+        # Format OMIM and HGNC xrefs.
         if hdm['OMIM_gene_xrefs']:
             hdm['OMIM_gene_ID'] = '|'.join([f'MIM:{i[ACC]}' for i in hdm['OMIM_gene_xrefs']])
             hdm['OMIM_gene_name'] = ' | '.join([i[GENE_NAME] for i in hdm['OMIM_gene_xrefs']])
         if hdm['HGNC_gene_xrefs']:
             hdm['HGNC_gene_ID'] = '|'.join([f'HGNC:{i[ACC]}' for i in hdm['HGNC_gene_xrefs']])
             hdm['HGNC_gene_name'] = ' | '.join([i[GENE_NAME] for i in hdm['HGNC_gene_xrefs']])
+        # Format implicated genes by organism.
+        hdm['implicated_human_gene'] = '|'.join([f'{i["uniquename"]} ; {i["name"]}' for i in gene_by_org_dict['Hsap']])
+        hdm['implicated_Dmel_gene'] = '|'.join([f'{i["uniquename"]} ; {i["name"]}' for i in gene_by_org_dict['Dmel']])
+        hdm['implicated_other_gene'] = '|'.join([f'{i["uniquename"]} ; {i["name"]}' for i in gene_by_org_dict['other']])
     return
 
 
@@ -703,6 +721,40 @@ def get_external_links(hdm_dict):
     return
 
 
+def get_hdm_props(hdm_dict):
+    """Retrieve human health disease model props (various types)."""
+    global CONN
+    log.info('Retrieve human health disease model props (various types).')
+    hhprops = {
+        'description_overview': 'dros_model_overview',
+        'description_symptoms': 'phenotype_description',
+        'description_genetics': 'genetics_description',
+        'description_cellular': 'cellular_description',
+        'description_molecular': 'molecular_description',
+    }
+    for slot, prop_type in hhprops.items():
+        fb_hdm_prop_query = f"""
+            SELECT DISTINCT hh.humanhealth_id, hhp.value
+            FROM humanhealth hh
+            JOIN humanhealthprop hhp ON hhp.humanhealth_id = hh.humanhealth_id
+            JOIN cvterm t ON t.cvterm_id = hhp.type_id
+            WHERE hh.is_obsolete IS FALSE
+              AND hh.uniquename ~ '^FBhh[0-9]{7}$'
+              AND t.name = '{prop_type}';
+        """
+        ret_hdm_prop_info = connect(fb_hdm_prop_query, 'no_query', CONN)
+        DB_ID = 0
+        PROP_VALUE = 1
+        counter = 0
+        for row in ret_hdm_prop_info:
+            hdm_dict[row[DB_ID]][slot].append(row[PROP_VALUE])
+            counter += 1
+        log.info(f'Found {counter} {slot} annotations for human health disease models in chado.')
+        for hdm in hdm_dict.values():
+            hdm[slot] = '|'.join(hdm[slot])
+    return
+
+
 def get_hdm_omim_bdsc_links(hdm_dict):
     """Retrieve human disease model BDSC links."""
     global CONN
@@ -730,24 +782,6 @@ def get_hdm_omim_bdsc_links(hdm_dict):
     log.info(f'Found {counter} HDM BDSC HD links in chado.')
     for hdm in hdm_dict.values():
         hdm['BDSC_link'] = '|'.join(hdm['bdsc_links'])
-    return
-
-
-def get_template(hdm_dict):
-    """Retrieve BOB."""
-    global CONN
-    log.info('Retrieve BOB.')
-    fb_hdm_bob_query = """
-        SELECT DISTINCT hh.humanhealth_id, bob;
-    """
-    ret_hdm_bob_info = connect(fb_hdm_bob_query, 'no_query', CONN)
-    DB_ID = 0
-    BOB = 1
-    counter = 0
-    for row in ret_hdm_bob_info:
-        hdm_dict[row[DB_ID]]['billy'].append(BOB)
-        counter += 1
-    log.info(f'Found {counter} bob disease models in chado.')
     return
 
 
