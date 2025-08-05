@@ -652,9 +652,16 @@ def get_hdm_genes(hdm_dict, hdm_relevant_gene_dict):
             hdm['HGNC_gene_ID'] = '|'.join([f'HGNC:{i[ACC]}' for i in hdm['HGNC_gene_xrefs']])
             hdm['HGNC_gene_name'] = ' | '.join([i[GENE_NAME] for i in hdm['HGNC_gene_xrefs']])
         # Format implicated genes by organism.
-        hdm['implicated_human_gene'] = '|'.join([f'{i["uniquename"]} ; {i["name"]}' for i in gene_by_org_dict['Hsap']])
-        hdm['implicated_Dmel_gene'] = '|'.join([f'{i["uniquename"]} ; {i["name"]}' for i in gene_by_org_dict['Dmel']])
-        hdm['implicated_other_gene'] = '|'.join([f'{i["uniquename"]} ; {i["name"]}' for i in gene_by_org_dict['other']])
+        slots_by_org = {
+            'Hsap': 'implicated_human_gene',
+            'Dmel': 'implicated_Dmel_gene',
+            'other': 'implicated_other_gene',
+        }
+        for org_abbr, slot in slots_by_org.items():
+            if gene_by_org_dict[org_abbr]:
+                hdm[slot] = '|'.join([f'{i["uniquename"]} ; {i["name"]}' for i in gene_by_org_dict[org_abbr]])
+            else:
+                hdm[slot] = None
     return
 
 
@@ -750,8 +757,13 @@ def get_hdm_props(hdm_dict):
             hdm_dict[row[DB_ID]][slot].append(row[PROP_VALUE])
             counter += 1
         log.info(f'Found {counter} {slot} annotations for human health disease models in chado.')
-        for hdm in hdm_dict.values():
-            hdm[slot] = '|'.join(hdm[slot])
+    for hdm in hdm_dict.values():
+        for slot in hhprops.keys():
+            if hdm[slot]:
+                hdm[slot].sort()
+                hdm[slot] = '|'.join(hdm[slot])
+            else:
+                hdm[slot] = None
     return
 
 
