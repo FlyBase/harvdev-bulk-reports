@@ -741,10 +741,11 @@ def get_hdm_props(hdm_dict):
             JOIN humanhealthprop hhp ON hhp.humanhealth_id = hh.humanhealth_id
             JOIN cvterm t ON t.cvterm_id = hhp.type_id
             WHERE hh.is_obsolete IS FALSE
-              AND hh.uniquename ~ '^FBhh[0-9]{7}$'
               AND t.name = '{prop_type}';
         """
+        log.debug(f'Use this query:\n{fb_hdm_prop_query}\n')
         ret_hdm_prop_info = connect(fb_hdm_prop_query, 'no_query', CONN)
+        log.info(f'Found {len(ret_hdm_prop_info)} {slot} rows.')
         DB_ID = 0
         PROP_VALUE = 1
         counter = 0
