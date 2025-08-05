@@ -110,12 +110,7 @@ def main():
     get_hdm_genes(hdm_dict, hdm_relevant_gene_dict)
     get_hdm_do_terms(hdm_dict)
     get_external_links(hdm_dict)
-    # get_implicated_human_gene(hdm_dict)
-    # get_implicated_human_gene(hdm_dict)
-    # get_implicated_human_gene(hdm_dict)
-    # get_implicated_human_gene(hdm_dict)
-    # get_implicated_human_gene(hdm_dict)
-    # get_implicated_human_gene(hdm_dict)
+    get_hdm_props(hdm_dict)
     get_hdm_omim_bdsc_links(hdm_dict)
     data_to_export_as_tsv = generic_FB_tsv_dict(report_title, database)
     data_to_export_as_tsv['data'] = process_database_info(hdm_dict)
@@ -659,7 +654,7 @@ def get_hdm_genes(hdm_dict, hdm_relevant_gene_dict):
         }
         for org_abbr, slot in slots_by_org.items():
             if gene_by_org_dict[org_abbr]:
-                hdm[slot] = '|'.join([f'{i["uniquename"]} ; {i["name"]}' for i in gene_by_org_dict[org_abbr]])
+                hdm[slot] = ' | '.join([f'{i["uniquename"]} ; {i["name"]}' for i in gene_by_org_dict[org_abbr]])
             else:
                 hdm[slot] = None
     return
