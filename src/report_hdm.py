@@ -14,32 +14,18 @@ Example:
 """
 
 import argparse
-# import configparser
-# import csv
-# import datetime
-# import logging
-# import os
-# import pickle
-# import psycopg2
 import re
-# import sys
-# from harvdev_utils.char_conversions import clean_free_text
 from harvdev_utils.general_functions import (
     generic_FB_tsv_dict, tsv_report_dump
 )
 from harvdev_utils.psycopg_functions import (
-    set_up_db_reading, connect    # other useful functions: add_unique_info, add_list_info, add_unique_dict_info
+    set_up_db_reading, connect
 )
-# from harvdev_utils.psycopg_functions.sql_queries import (
-#     current_feat_symbol_sgmls, current_feat_fullname_sgmls, feat_symbol_synonyms, feat_fullname_synonyms,
-#     feat_secondary_fbids, orgid_abbr, orgid_genus, indirect_rel_features, rel_features, rel_dmel_features,
-#     featureprops, feat_cvterm_cvtprop    # current_features, feat_id_symbol_sgml
-# )
 
 # Global variables for the output file. Header order will match list order below.
-report_label = 'human_disease_models'
-report_title = 'FlyBase Human Disease Models Report'
-header_list = [
+REPORT_LABEL = 'human_disease_models'
+REPORT_TITLE = 'FlyBase Human Disease Models Report'
+HEADER_LIST = [
     'FB_id',
     'name',
     'name_synonyms',
@@ -73,12 +59,9 @@ header_list = [
 ]
 
 # Proceed with generic setup.
-set_up_dict = set_up_db_reading(report_label)
-assembly = set_up_dict['assembly']
-database = set_up_dict['database']
-database_release = set_up_dict['database_release']
-output_dir = set_up_dict['output_dir']
-output_filename = set_up_dict['output_filename']
+set_up_dict = set_up_db_reading(REPORT_LABEL)
+DATABASE = set_up_dict['database']
+OUTPUT_FILENAME = set_up_dict['output_filename']
 log = set_up_dict['log']
 CONN = set_up_dict['conn']
 
@@ -112,9 +95,9 @@ def main():
     get_external_links(hdm_dict)
     get_hdm_props(hdm_dict)
     get_hdm_omim_bdsc_links(hdm_dict)
-    data_to_export_as_tsv = generic_FB_tsv_dict(report_title, database)
+    data_to_export_as_tsv = generic_FB_tsv_dict(REPORT_TITLE, DATABASE)
     data_to_export_as_tsv['data'] = process_database_info(hdm_dict)
-    tsv_report_dump(data_to_export_as_tsv, output_filename, headers=header_list)
+    tsv_report_dump(data_to_export_as_tsv, OUTPUT_FILENAME, headers=HEADER_LIST)
     CONN.close()
     log.info('Ended main function.')
 
@@ -743,9 +726,7 @@ def get_hdm_props(hdm_dict):
             WHERE hh.is_obsolete IS FALSE
               AND t.name = '{prop_type}';
         """
-        log.debug(f'Use this query:\n{fb_hdm_prop_query}\n')
         ret_hdm_prop_info = connect(fb_hdm_prop_query, 'no_query', CONN)
-        log.info(f'Found {len(ret_hdm_prop_info)} {slot} rows.')
         DB_ID = 0
         PROP_VALUE = 1
         counter = 0
