@@ -15,6 +15,7 @@ Example:
 
 import argparse
 import re
+from harvdev_utils.char_conversions import clean_free_text
 from harvdev_utils.general_functions import (
     generic_FB_tsv_dict, tsv_report_dump
 )
@@ -731,7 +732,8 @@ def get_hdm_props(hdm_dict):
         PROP_VALUE = 1
         counter = 0
         for row in ret_hdm_prop_info:
-            hdm_dict[row[DB_ID]][slot].append(row[PROP_VALUE])
+            cleaned_text = clean_free_text(row[PROP_VALUE])
+            hdm_dict[row[DB_ID]][slot].append(cleaned_text)
             counter += 1
         log.info(f'Found {counter} {slot} annotations for human health disease models in chado.')
     for hdm in hdm_dict.values():
