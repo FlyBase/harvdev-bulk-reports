@@ -69,8 +69,8 @@ def get_gene_annotation_comments():
         JOIN organism o ON o.organism_id = f.organism_id
         JOIN featureprop fp1 ON fp1.feature_id = f.feature_id
         JOIN cvterm c1 ON c1.cvterm_id = fp1.type_id
-        JOIN featureprop fp2 ON fp2.feature_id = f.feature_id
-        JOIN cvterm c2 ON c2.cvterm_id = fp2.type_id
+        LEFT OUTER JOIN featureprop fp2 ON fp2.feature_id = f.feature_id
+        LEFT OUTER JOIN cvterm c2 ON c2.cvterm_id = fp2.type_id
         WHERE f.is_obsolete IS FALSE
           AND f.uniquename ~ '^FBgn[0-9]{7}$'
           AND o.abbreviation = 'Dmel'
@@ -86,11 +86,15 @@ def get_gene_annotation_comments():
     gene_comment_list = []
     counter = 0
     for row in ret_gene_comment_info:
+        if row[COMMENT]:
+            cleaned_comment = clean_free_text(row[COMMENT])
+        else:
+            cleaned_comment = ''
         result = {
             'FB_id': row[UNAME],
             'Symbol': row[NAME],
             'Annotation_Status': row[STATUS],
-            'Annotation_Comment': clean_free_text(row[COMMENT]),
+            'Annotation_Comment': cleaned_comment,
         }
         gene_comment_list.append(result)
         counter += 1
