@@ -52,10 +52,10 @@ def main():
     """Retrieve, repackage and print out database information."""
     log.info('Started main function.')
     split_system_dict = get_initial_split_system_info()
+    get_component_info(split_system_dict)
+    #######################################
     get_split_system_synonyms(split_system_dict)
     get_split_system_references(split_system_dict)
-
-    #######################################
     data_to_export_as_tsv = generic_FB_tsv_dict(REPORT_TITLE, DATABASE)
     data_to_export_as_tsv['data'] = process_database_info(split_system_dict)
     tsv_report_dump(data_to_export_as_tsv, OUTPUT_FILENAME, headers=HEADER_LIST)
@@ -67,7 +67,6 @@ def main():
 def get_initial_split_system_info():
     """Retrieve split system combinations."""
     global CONN
-
     log.info('Retrieve split system combinations.')
     fb_ss_query = """
         SELECT DISTINCT f.feature_id, f.uniquename, f.name
@@ -95,6 +94,33 @@ def get_initial_split_system_info():
         counter += 1
     log.info(f'Found {counter} split system combinations in chado.')
     return split_system_dict
+
+
+def get_component_info(split_system_dict):
+    """Retrieve split system combination components."""
+    global CONN
+    log.info('Retrieve split system combination components.')
+    fb_ss_component_query = """
+        SELECT DISTINCT s.feature_id, o.uniquename||' ; '||o.name
+        FROM feature s
+        JOIN feature_relationship fr ON fr.subject_id = s.feature_id
+        JOIN feature o ON o.feature_id = fr.object_id
+        JOIN cvterm c ON c.cvterm_id = fr.type_id
+        WHERE s.is_obsolete IS FALSE
+          AND s.uniquename ~ '^FBco[0-9]{7}$'
+          AND o.is_obsolete IS FALSE
+          AND o.uniquename ~ '^FBal[0-9]{7}$'
+          AND c.name = 'partially_produced_by';
+    """
+    ret_ss_component_info = connect(fb_ss_component_query, 'no_query', CONN)
+    DB_ID = 0
+    COMPONENT = 1
+    counter = 0
+    for row in ret_ss_component_info:
+        split_system_dict[row[DB_ID]]['Component_Alleles'].append(row[COMPONENT])
+        counter += 1
+    log.info(f'Found {counter} split system combination components in chado.')
+    return
 
 
 def get_split_system_synonyms(split_system_dict):
