@@ -70,7 +70,8 @@ def get_dmel_genes():
         SELECT DISTINCT f.feature_id, f.uniquename, f.name
         FROM feature f
         WHERE f.is_obsolete IS FALSE
-          AND f.uniquename ~ '^FBgn[0-9]{7}$';
+          AND f.uniquename ~ '^FBgn[0-9]{7}$'
+        ORDER BY f.uniquename;
     """
     ret_dmel_gene_info = connect(fb_dmel_gene_query, 'no_query', CONN)
     DB_ID = 0
