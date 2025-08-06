@@ -142,7 +142,7 @@ def get_stock_info(split_system_dict):
     counter = 0
     for row in ret_ss_stock_info:
         stock_prop = row[STOCK_PROP].split('\n')
-        stock_prop = [i.replace('@', '') for i in stock_prop]
+        stock_prop = [i.split('\t')[1].replace('@', '') for i in stock_prop]
         log.debug(f'BOB: {stock_prop}')
         split_system_dict[row[DB_ID]]['Stocks'].extend(stock_prop)
         counter += len(stock_prop)
