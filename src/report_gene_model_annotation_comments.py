@@ -87,7 +87,7 @@ def get_gene_annotation_comments():
         if row[COMMENT]:
             try:
                 cleaned_comment = clean_free_text(row[COMMENT])
-            except ValueError as e:
+            except KeyError as e:
                 cleaned_comment = row[COMMENT]
                 log.error(f'For {row[UNAME]}, could not clean "{row[COMMENT]}": {e}')
         else:
