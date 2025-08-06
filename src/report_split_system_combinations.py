@@ -53,7 +53,7 @@ def main():
     log.info('Started main function.')
     split_system_dict = get_initial_split_system_info()
     get_component_info(split_system_dict)
-    #######################################
+    get_stock_info(split_system_dict)
     get_split_system_synonyms(split_system_dict)
     get_split_system_references(split_system_dict)
     data_to_export_as_tsv = generic_FB_tsv_dict(REPORT_TITLE, DATABASE)
@@ -101,7 +101,7 @@ def get_component_info(split_system_dict):
     global CONN
     log.info('Retrieve split system combination components.')
     fb_ss_component_query = """
-        SELECT DISTINCT s.feature_id, o.uniquename||' ; '||o.name
+        SELECT DISTINCT s.feature_id, o.uniquename||';'||o.name
         FROM feature s
         JOIN feature_relationship fr ON fr.subject_id = s.feature_id
         JOIN feature o ON o.feature_id = fr.object_id
@@ -120,6 +120,32 @@ def get_component_info(split_system_dict):
         split_system_dict[row[DB_ID]]['Component_Alleles'].append(row[COMPONENT])
         counter += 1
     log.info(f'Found {counter} split system combination components in chado.')
+    return
+
+
+def get_stock_info(split_system_dict):
+    """Retrieve split system combination stocks."""
+    global CONN
+    log.info('Retrieve split system combination stocks.')
+    fb_ss_stock_query = """
+        SELECT DISTINCT s.feature_id, fp.value
+        FROM feature f
+        JOIN featureprop fp ON fp.feature_id = f.feature_id
+        JOIN cvterm c ON c.cvterm_id = fp.type_id
+        WHERE f.is_obsolete IS FALSE
+          AND f.uniquename ~ '^FBco[0-9]{7}$'
+          AND c.name ~ '^derived_stock_';
+    """
+    ret_ss_stock_info = connect(fb_ss_stock_query, 'no_query', CONN)
+    DB_ID = 0
+    STOCK_PROP = 1
+    counter = 0
+    for row in ret_ss_stock_info:
+        stock_prop = row[STOCK_PROP].split('\n')
+        stock_prop = [i.replace('@', '') for i in stock_prop]
+        split_system_dict[row[DB_ID]]['Stocks'].extend(stock_prop)
+        counter += len(stock_prop)
+    log.info(f'Found {counter} split system combination stocks in chado.')
     return
 
 
