@@ -14,8 +14,6 @@ Example:
 """
 
 import argparse
-import re
-from harvdev_utils.char_conversions import clean_free_text
 from harvdev_utils.general_functions import (
     generic_FB_tsv_dict, tsv_report_dump
 )
@@ -154,14 +152,14 @@ def process_database_info(input_data):
     data_list = []
     counter = 0
     for i in input_data.values():
-        for value in i.values():
+        for key, value in i.items():
             if type(value) is list:
                 if not value:
-                    value = ''
+                    i[key] = ''
                 else:
                     value = list(set(value))
                     value.sort()
-                    value = '|'.join(value)
+                    i[key] = '|'.join(value)
         data_list.append(i)
         counter += 1
     log.info(f'Sending {counter} split system combination entries to the export file.')
