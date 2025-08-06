@@ -68,11 +68,9 @@ CONN = set_up_dict['conn']
 
 # Process more input parameters (-c and -v handled by set_up_db_reading() function above).
 parser = argparse.ArgumentParser(description='inputs')
-parser.add_argument('-i', '--input_filename', help='Input TSV file.', required=False)
 # Use parse_known_args(), not parse_args(), to handle args specific to this script (outside of set_up_db_reading()).
 args, extra_args = parser.parse_known_args()
 log.info('Parsing args specific to this script; ignoring these: {}'.format(extra_args))
-input_filename = args.input_filename
 
 
 # Basic process of the script.
