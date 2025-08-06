@@ -140,9 +140,9 @@ def get_split_system_references(split_system_dict):
     PUB_ID = 1
     counter = 0
     for row in ret_ss_pub_info:
-        split_system_dict[row[DB_ID]]['References'] = row[PUB_ID]
+        split_system_dict[row[DB_ID]]['References'].append(row[PUB_ID])
         counter += 1
-    log.info(f'Found {counter} split system combinations in chado.')
+    log.info(f'Found {counter} split system combination references in chado.')
     return
 
 
