@@ -128,7 +128,7 @@ def get_stock_info(split_system_dict):
     global CONN
     log.info('Retrieve split system combination stocks.')
     fb_ss_stock_query = """
-        SELECT DISTINCT s.feature_id, fp.value
+        SELECT DISTINCT f.feature_id, fp.value
         FROM feature f
         JOIN featureprop fp ON fp.feature_id = f.feature_id
         JOIN cvterm c ON c.cvterm_id = fp.type_id
