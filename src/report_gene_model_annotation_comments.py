@@ -14,6 +14,7 @@ Example:
 """
 
 import argparse
+from harvdev_utils.char_conversions import clean_free_text
 from harvdev_utils.general_functions import (
     generic_FB_tsv_dict, tsv_report_dump
 )
@@ -89,7 +90,7 @@ def get_gene_annotation_comments():
             'FB_id': row[UNAME],
             'Symbol': row[NAME],
             'Annotation_Status': row[STATUS],
-            'Annotation_Comment': row[COMMENT],
+            'Annotation_Comment': clean_free_text(row[COMMENT]),
         }
         gene_comment_list.append(result)
         counter += 1
