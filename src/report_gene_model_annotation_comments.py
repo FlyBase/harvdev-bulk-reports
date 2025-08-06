@@ -68,14 +68,12 @@ def get_gene_annotation_comments():
         FROM feature f
         JOIN organism o ON o.organism_id = f.organism_id
         JOIN featureprop fp1 ON fp1.feature_id = f.feature_id
-        JOIN cvterm c1 ON c1.cvterm_id = fp1.type_id
+        JOIN cvterm c1 ON c1.cvterm_id = fp1.type_id AND c1.name = 'derived_gene_model_status'
         LEFT OUTER JOIN featureprop fp2 ON fp2.feature_id = f.feature_id
-        LEFT OUTER JOIN cvterm c2 ON c2.cvterm_id = fp2.type_id
+        LEFT OUTER JOIN cvterm c2 ON c2.cvterm_id = fp2.type_id AND c2.name = 'comment'
         WHERE f.is_obsolete IS FALSE
           AND f.uniquename ~ '^FBgn[0-9]{7}$'
           AND o.abbreviation = 'Dmel'
-          AND c1.name = 'derived_gene_model_status'
-          AND c2.name = 'comment'
         ORDER BY f.uniquename, fp2.value;
     """
     ret_gene_comment_info = connect(fb_gene_comment_query, 'no_query', CONN)
