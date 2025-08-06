@@ -115,7 +115,7 @@ def get_ranked_pubs(gene_dict):
     SCORE = 2
     counter = 0
     for row in ret_gene_pub_info:
-        score = int(row[SCORE])
+        score = float(row[SCORE])
         ranked_pub = (score, row[PUB_ID])
         gene_dict[row[GENE_ID]]['All_References'].append(ranked_pub)
         counter += 1
