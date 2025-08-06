@@ -85,7 +85,11 @@ def get_gene_annotation_comments():
     counter = 0
     for row in ret_gene_comment_info:
         if row[COMMENT]:
-            cleaned_comment = clean_free_text(row[COMMENT])
+            try:
+                cleaned_comment = clean_free_text(row[COMMENT])
+            except ValueError as e:
+                cleaned_comment = row[COMMENT]
+                log.error(f'For {row[UNAME]}, could not clean "{row[COMMENT]}": {e}')
         else:
             cleaned_comment = ''
         result = {
