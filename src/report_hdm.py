@@ -455,11 +455,12 @@ def get_hdm_omim_table_xrefs(hdm_dict):
         hdm_dict[row[DB_ID]]['OMIM_pheno_table_xrefs'].append(omim_pheno_tuple)
         counter += 1
     log.info(f'Found {counter} human disease model OMIM table xrefs in chado.')
-    for hdm in hdm_dict.values():
-        if hdm['OMIM_pheno_table_xrefs']:
-            mim_ids = [f'MIM:{i[DBX_ACC]}' for i in hdm['OMIM_pheno_table_xrefs']]
-            mim_ids.sort()
-            hdm['related_specific_diseases'] = '|'.join(mim_ids)
+    # This returns all MIM IDs, not just those that have a related gene.
+    # for hdm in hdm_dict.values():
+    #     if hdm['OMIM_pheno_table_xrefs']:
+    #         mim_ids = [f'MIM:{i[DBX_ACC]}' for i in hdm['OMIM_pheno_table_xrefs']]
+    #         mim_ids.sort()
+    #         hdm['related_specific_diseases'] = '|'.join(mim_ids)
     return
 
 
@@ -478,28 +479,28 @@ def get_hdm_omim_table_prop(hdm_dict):
     """
     ret_hdm_omim_pheno_table_info = connect(fb_hdm_omim_series_query, 'no_query', CONN)
     DB_ID = 0
-    UNAME = 1
-    NAME = 2
+    # UNAME = 1
+    # NAME = 2
     TABLE_TEXT = 3
     counter = 0
-    # [FASPS1](https://omim.org/entry/604348) [PER2](https://omim.org/entry/603426)
-    table_rgx = r'^\[(.*?)\]\(https://omim.org/entry/(\d+)\)\s*\[(.*?)\]\(https://omim.org/entry/(\d+)\)'
+    # Example: "[FASPS1](https://omim.org/entry/604348) [PER2](https://omim.org/entry/603426) ..."
+    table_line_rgx = r'^\[(.*?)\]\(https://omim.org/entry/(\d+)\)\s*\[(.*?)\]\(https://omim.org/entry/(\d+)\)'
     for row in ret_hdm_omim_pheno_table_info:
-        log.debug(f'Processing row: {row[DB_ID]}, {row[UNAME]}, {row[NAME]}')
+        # log.debug(f'Processing row: {row[DB_ID]}, {row[UNAME]}, {row[NAME]}')
         omim_table_lines = row[TABLE_TEXT].split('\n')
-        omim_disease_symbols = []
+        omim_disease_ids = []
         for line in omim_table_lines:
-            log.debug(f'Processing line: {line}')
+            # log.debug(f'Processing line: {line}')
             try:
-                omim_disease_symbol = re.match(table_rgx, line).group(1)
-                omim_disease_id = f'MIM:{re.match(table_rgx, line).group(2)}'
-                log.debug(f'Found OMIM disease symbol: {omim_disease_symbol}, ID: {omim_disease_id}')
-                omim_disease_symbols.append(omim_disease_symbol)
+                # omim_disease_symbol = re.match(table_rgx, line).group(1)
+                omim_disease_id = f'MIM:{re.match(table_line_rgx, line).group(2)}'
+                # log.debug(f'Found OMIM disease symbol: {omim_disease_symbol}, ID: {omim_disease_id}')
+                omim_disease_ids.append(omim_disease_id)
             except AttributeError:
                 log.debug(f'No match for line: {line}')
                 pass
-        omim_disease_symbols.sort()
-        # hdm_dict[row[DB_ID]]['related_specific_diseases'] = '|'.join(omim_disease_symbols)
+        omim_disease_ids.sort()
+        hdm_dict[row[DB_ID]]['related_specific_diseases'] = '|'.join(omim_disease_ids)
         counter += 1
     log.info(f'Found {counter} human disease model derived OMIM series tables chado.')
     return
