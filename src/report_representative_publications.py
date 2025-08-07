@@ -53,7 +53,8 @@ def main():
     """Retrieve, repackage and print out database information."""
     log.info('Started main function.')
     gene_dict = get_dmel_genes()
-    get_ranked_pubs(gene_dict)
+    pmid_dict = get_pmids()
+    get_ranked_pubs(gene_dict, pmid_dict)
     data_to_export_as_tsv = generic_FB_tsv_dict(REPORT_TITLE, DATABASE)
     data_to_export_as_tsv['data'] = process_database_info(gene_dict)
     tsv_report_dump(data_to_export_as_tsv, OUTPUT_FILENAME, headers=HEADER_LIST)
@@ -93,7 +94,31 @@ def get_dmel_genes():
     return gene_dict
 
 
-def get_ranked_pubs(gene_dict):
+def get_pmids():
+    """Retrieve PubMed IDs."""
+    global CONN
+    log.info('Retrieve PubMed IDs.')
+    fb_pmid_query = """
+        SELECT DISTINCT p.uniquename, 'PMID:'||dbx.accession
+        FROM pub p
+        JOIN pub_dbxref pdbx ON pdbx.pub_id = p.pub_id
+        JOIN dbxref dbx ON dbx.dbxref_id = pdbx.dbxref_id
+        JOIN db d ON d.db_id = dbx.db_id AND d.name = 'pubmed'
+        WHERE p.is_obsolete IS FALSE
+          AND p.uniquename ~ '^FBrf[0-9]{7}$'
+          AND pdbx.is_current IS TRUE;
+    """
+    ret_pmid_info = connect(fb_pmid_query, 'no_query', CONN)
+    FBRF_ID = 0
+    PMID = 1
+    pmid_dict = {}
+    for row in ret_pmid_info:
+        pmid_dict[row[FBRF_ID]] = row[PMID]
+    log.info(f'Found {len(pmid_dict)} PubMed IDs in chado.')
+    return pmid_dict
+
+
+def get_ranked_pubs(gene_dict, pmid_dict):
     """Retrieve per gene ranked pub scores."""
     global CONN
     log.info('Retrieve per gene ranked pub scores.')
@@ -117,7 +142,11 @@ def get_ranked_pubs(gene_dict):
     counter = 0
     for row in ret_gene_pub_info:
         score = float(row[SCORE])
-        ranked_pub = (score, row[PUB_ID])
+        if row[PUB_ID] in pmid_dict.keys():
+            pub_id = f'{row[PUB_ID]}|{pmid_dict[row[PUB_ID]]}'
+        else:
+            pub_id = f'{row[PUB_ID]}|-'
+        ranked_pub = (score, pub_id)
         gene_dict[row[GENE_ID]]['All_References'].append(ranked_pub)
         counter += 1
     log.info(f'Found {counter} gene-pub scores in chado.')
