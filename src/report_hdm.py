@@ -499,6 +499,7 @@ def get_hdm_omim_table_prop(hdm_dict):
             except AttributeError:
                 log.debug(f'No match for line: {line}')
                 pass
+        omim_disease_ids = list(set(omim_disease_ids))
         omim_disease_ids.sort()
         hdm_dict[row[DB_ID]]['related_specific_diseases'] = '|'.join(omim_disease_ids)
         counter += 1
