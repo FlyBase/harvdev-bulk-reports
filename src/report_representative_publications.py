@@ -73,6 +73,7 @@ def get_dmel_genes():
         JOIN organism o ON o.organism_id = f.organism_id
         WHERE f.is_obsolete IS FALSE
           AND f.uniquename ~ '^FBgn[0-9]{7}$'
+          AND NOT f.name LIKE '%::%'
           AND o.abbreviation = 'Dmel'
         ORDER BY f.uniquename;
     """
@@ -134,6 +135,7 @@ def get_ranked_pubs(gene_dict, pmid_dict):
         JOIN cvterm cvt ON cvt.cvterm_id = fpp.type_id
         WHERE f.is_obsolete IS FALSE
           AND f.uniquename ~ '^FBgn[0-9]{7}$'
+          AND NOT f.name LIKE '%::%'
           AND o.abbreviation = 'Dmel'
           AND p.is_obsolete IS FALSE
           AND p.uniquename ~ '^FBrf[0-9]{7}$'
