@@ -87,7 +87,6 @@ def main():
     get_hdm_omim_pheno_series(hdm_dict)
     get_hdm_omim_pheno_xrefs(hdm_dict)
     get_hdm_omim_table_xrefs(hdm_dict)
-    get_hdm_omim_table_prop(hdm_dict)
     hdm_relevant_gene_dict = build_hdm_gene_dict()
     get_hdm_genes(hdm_dict, hdm_relevant_gene_dict)
     get_hdm_do_terms(hdm_dict)
@@ -423,7 +422,7 @@ def get_hdm_omim_pheno_xrefs(hdm_dict):
             hdm['OMIM_disease_name'] = uniq_tuple[DBX_DESC]
             uniq_counter += 1
         elif len(hdm['OMIM_disease_xrefs']) > 1:
-            log.debug(f'{hdm["FB_id"]} has MANY "hh2c" OMIM_PHENOTYPE xrefs')
+            log.warning(f'{hdm["FB_id"]} has MANY "hh2c" OMIM_PHENOTYPE xrefs')
     log.info(f'Found {uniq_counter} human disease models having a single OMIM PHENOTYPE xref in chado.')
     return
 
@@ -455,9 +454,15 @@ def get_hdm_omim_table_xrefs(hdm_dict):
         hdm_dict[row[DB_ID]]['OMIM_pheno_table_xrefs'].append(omim_pheno_tuple)
         counter += 1
     log.info(f'Found {counter} human disease model OMIM table xrefs in chado.')
+    for hdm in hdm_dict.values():
+        if hdm['OMIM_pheno_table_xrefs']:
+            mim_ids = [f'MIM:{i[DBX_ACC]}' for i in hdm['OMIM_pheno_table_xrefs']]
+            mim_ids.sort()
+            hdm['related_specific_diseases'] = '|'.join(mim_ids)
     return
 
 
+# Alternative, unused method for getting related_specific_diseases.
 def get_hdm_omim_table_prop(hdm_dict):
     """Retrieve human disease model derived OMIM series table."""
     global CONN
@@ -636,7 +641,7 @@ def get_hdm_genes(hdm_dict, hdm_relevant_gene_dict):
         }
         for org_abbr, slot in slots_by_org.items():
             if gene_by_org_dict[org_abbr]:
-                hdm[slot] = ' | '.join([f'{i["uniquename"]} ; {i["name"]}' for i in gene_by_org_dict[org_abbr]])
+                hdm[slot] = ' | '.join([f'{i["uniquename"]};{i["name"]}' for i in gene_by_org_dict[org_abbr]])
             else:
                 hdm[slot] = None
     return
