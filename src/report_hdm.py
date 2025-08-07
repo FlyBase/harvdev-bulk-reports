@@ -87,6 +87,7 @@ def main():
     get_hdm_omim_pheno_series(hdm_dict)
     get_hdm_omim_pheno_xrefs(hdm_dict)
     get_hdm_omim_table_xrefs(hdm_dict)
+    get_hdm_omim_table_prop(hdm_dict)    # BOB
     hdm_relevant_gene_dict = build_hdm_gene_dict()
     get_hdm_genes(hdm_dict, hdm_relevant_gene_dict)
     get_hdm_do_terms(hdm_dict)
@@ -468,7 +469,7 @@ def get_hdm_omim_table_prop(hdm_dict):
     global CONN
     log.info('Retrieve human disease model derived OMIM series table.')
     fb_hdm_omim_series_query = """
-        SELECT DISTINCT hh.humanhealth_id, hhp.value
+        SELECT DISTINCT hh.humanhealth_id, hh.uniquename, hh.name, hhp.value
         FROM humanhealth hh
         JOIN humanhealthprop hhp ON hh.humanhealth_id = hhp.humanhealth_id
         JOIN cvterm cvt ON cvt.cvterm_id = hhp.type_id
@@ -477,20 +478,28 @@ def get_hdm_omim_table_prop(hdm_dict):
     """
     ret_hdm_omim_pheno_table_info = connect(fb_hdm_omim_series_query, 'no_query', CONN)
     DB_ID = 0
-    TABLE_TEXT = 1
+    UNAME = 1
+    NAME = 2
+    TABLE_TEXT = 3
     counter = 0
-    table_rgx = r'^\[(.*?)\]'
+    # [FASPS1](https://omim.org/entry/604348) [PER2](https://omim.org/entry/603426)
+    table_rgx = r'^\[(.*?)\]\(https://omim.org/entry/(\d+))\s*\[(.*?)\]\(https://omim.org/entry/(\d+)\)'
     for row in ret_hdm_omim_pheno_table_info:
+        log.debug(f'Processing row: {row[DB_ID]}, {row[UNAME]}, {row[NAME]}')
         omim_table_lines = row[TABLE_TEXT].split('\n')
         omim_disease_symbols = []
         for line in omim_table_lines:
+            log.debug(f'Processing line: {line}')
             try:
                 omim_disease_symbol = re.match(table_rgx, line).group(1)
+                omim_disease_id = f'MIM:{re.match(table_rgx, line).group(2)}'
+                log.debug(f'Found OMIM disease symbol: {omim_disease_symbol}, ID: {omim_disease_id}')
                 omim_disease_symbols.append(omim_disease_symbol)
             except AttributeError:
+                log.debug(f'No match for line: {line}')
                 pass
         omim_disease_symbols.sort()
-        hdm_dict[row[DB_ID]]['related_specific_diseases'] = '|'.join(omim_disease_symbols)
+        # hdm_dict[row[DB_ID]]['related_specific_diseases'] = '|'.join(omim_disease_symbols)
         counter += 1
     log.info(f'Found {counter} human disease model derived OMIM series tables chado.')
     return
