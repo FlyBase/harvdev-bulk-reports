@@ -22,8 +22,8 @@ from harvdev_utils.psycopg_functions import (
 )
 
 # Global variables for the output file. Header order will match list order below.
-REPORT_LABEL = 'interpro_domains'
-REPORT_TITLE = 'FlyBase InterPro Domains Report'
+REPORT_LABEL = 'gene_interpro_domains'
+REPORT_TITLE = 'FlyBase Gene InterPro Domains Report'
 HEADER_LIST = [
     'FBgn_ID',
     'FBgn_Symbol',
