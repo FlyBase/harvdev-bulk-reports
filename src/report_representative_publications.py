@@ -170,7 +170,7 @@ def process_database_info(input_data):
         if not gene['References']:
             gene['References'] = ''
         else:
-            gene['References'] = '|'.join(gene['References'])
+            gene['References'] = ','.join(gene['References'])
         data_list.append(gene)
         counter += 1
     log.info(f'Sending {counter} genes with representative pubs to the export file.')
