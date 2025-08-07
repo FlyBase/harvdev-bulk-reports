@@ -483,7 +483,7 @@ def get_hdm_omim_table_prop(hdm_dict):
     TABLE_TEXT = 3
     counter = 0
     # [FASPS1](https://omim.org/entry/604348) [PER2](https://omim.org/entry/603426)
-    table_rgx = r'^\[(.*?)\]\(https://omim.org/entry/(\d+))\s*\[(.*?)\]\(https://omim.org/entry/(\d+)\)'
+    table_rgx = r'^\[(.*?)\]\(https://omim.org/entry/(\d+)\)\s*\[(.*?)\]\(https://omim.org/entry/(\d+)\)'
     for row in ret_hdm_omim_pheno_table_info:
         log.debug(f'Processing row: {row[DB_ID]}, {row[UNAME]}, {row[NAME]}')
         omim_table_lines = row[TABLE_TEXT].split('\n')
