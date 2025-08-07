@@ -70,8 +70,10 @@ def get_dmel_genes():
     fb_dmel_gene_query = """
         SELECT DISTINCT f.feature_id, f.uniquename, f.name
         FROM feature f
+        JOIN organism o ON o.organism_id = f.organism_id
         WHERE f.is_obsolete IS FALSE
           AND f.uniquename ~ '^FBgn[0-9]{7}$'
+          AND o.abbreviation = 'Dmel'
         ORDER BY f.uniquename;
     """
     ret_dmel_gene_info = connect(fb_dmel_gene_query, 'no_query', CONN)
@@ -125,12 +127,14 @@ def get_ranked_pubs(gene_dict, pmid_dict):
     fb_ranked_pub_query = """
         SELECT DISTINCT f.feature_id, p.uniquename, fpp.value
         FROM feature f
+        JOIN organism o ON o.organism_id = f.organism_id
         JOIN feature_pub fp ON fp.feature_id = f.feature_id
         JOIN pub p ON p.pub_id = fp.pub_id
         JOIN feature_pubprop fpp ON fpp.feature_pub_id = fp.feature_pub_id
         JOIN cvterm cvt ON cvt.cvterm_id = fpp.type_id
         WHERE f.is_obsolete IS FALSE
           AND f.uniquename ~ '^FBgn[0-9]{7}$'
+          AND o.abbreviation = 'Dmel'
           AND p.is_obsolete IS FALSE
           AND p.uniquename ~ '^FBrf[0-9]{7}$'
           AND cvt.name = 'computed_gene_pub_score';
@@ -147,7 +151,10 @@ def get_ranked_pubs(gene_dict, pmid_dict):
         else:
             pub_id = f'{row[PUB_ID]}|-'
         ranked_pub = (score, pub_id)
-        gene_dict[row[GENE_ID]]['All_References'].append(ranked_pub)
+        try:
+            gene_dict[row[GENE_ID]]['All_References'].append(ranked_pub)
+        except KeyError:
+            log.warning(f'Gene ID {row[GENE_ID]} not found in gene_dict.')
         counter += 1
     log.info(f'Found {counter} gene-pub scores in chado.')
     return
