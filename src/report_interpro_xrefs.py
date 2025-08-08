@@ -1,15 +1,15 @@
 # !/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Report InterPro domains.
+"""Report InterPro xrefs.
 
 Author(s):
     Gil dos Santos dossantos@morgan.harvard.edu
 
 Usage:
-    report_interpro_domains.py [-h] [-v VERBOSE] [-c CONFIG]
+    report_interpro_xrefs.py [-h] [-v VERBOSE] [-c CONFIG]
 
 Example:
-    python report_interpro_domains.py -v -c /path/to/config.cfg
+    python report_interpro_xrefs.py -v -c /path/to/config.cfg
 
 """
 
@@ -22,12 +22,12 @@ from harvdev_utils.psycopg_functions import (
 )
 
 # Global variables for the output file. Header order will match list order below.
-REPORT_LABEL = 'gene_interpro_domains'
-REPORT_TITLE = 'FlyBase Gene InterPro Domains Report'
+REPORT_LABEL = 'gene_interpro_xrefs'
+REPORT_TITLE = 'FlyBase Gene InterPro Signatures Report'
 HEADER_LIST = [
     'FBgn_ID',
     'FBgn_Symbol',
-    'InterPro_Domain',
+    'InterPro_Signature',
 ]
 
 # Proceed with generic setup.
@@ -85,7 +85,7 @@ def get_interpro_info():
         gene_interpro_result = {
             'FBgn_ID': row[GENE_UNAME],
             'FBgn_Symbol': row[GENE_NAME],
-            'InterPro_Domain': f'{row[ACC]}|{row[DESC]}',
+            'InterPro_Signature': f'{row[ACC]}|{row[DESC]}',
         }
         gene_interpro_list.append(gene_interpro_result)
     log.info(f'Found {len(ret_gene_interpro_info)} gene-InterPro xrefs in chado.')
