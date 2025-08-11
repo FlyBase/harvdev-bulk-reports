@@ -75,7 +75,7 @@ def main():    # noqa E501
     notes.append('For other non-D. melanogaster genes, please see FlyBase\'s "automated_gene_summaries.tsv.gz" file.')
     data_to_export_as_tsv['metaData']['note'] = notes
     data_to_export_as_tsv['data'] = summary_handler.export_data()
-    tsv_report_dump(data_to_export_as_tsv, output_filename, print_footer=False, headers=header_list)
+    tsv_report_dump(data_to_export_as_tsv, output_filename, headers=header_list)
 
     log.info('Ended main function.\n')
 
