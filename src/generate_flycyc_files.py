@@ -395,14 +395,19 @@ class FlyCycGenerator(object):
         for result in uniprot_results:
             # Skip genes with trans-splicing.
             if result.gene.name in ['lola', 'mod(mdg4)']:
-                log.debug(f'BOB: Skip trans-spliced gene {result.gene.name}')
+                log.debug(f'Skip trans-spliced gene {result.gene.name}')
                 continue
             gene_id = result.gene.uniquename
             transcript_id = result.transcript.uniquename
             uniprot_xref = result.Dbxref.accession
-            # Skip coding genes like CG30059 (FBgn0260475) which have no GCRP IDs.
+            # For genes like CG30059 (FBgn0260475) which have no GCRP IDs, just assign the transcript at hand.
             if gene_id not in self.gene_gcrp_xrefs.keys():
-                log.warning(f'Coding gene {result.gene.name} ({gene_id}) has UniProt ID {result.Dbxref.accession}, but is not in the GCRP set.')
+                # Handle the one exception where a GCRP-less gene has many CDSs.
+                if result.gene.name == 'CG17450' and uniprot_xref == 'Q8I044':
+                    continue
+                # Otherwise, just create the FBgn-FBtr association.
+                self.gene_gcrp_trpts[gene_id] = transcript_id
+                gcrp_counter += 1
             else:
                 gcrp_xref = self.gene_gcrp_xrefs[gene_id]
                 if uniprot_xref == gcrp_xref:
