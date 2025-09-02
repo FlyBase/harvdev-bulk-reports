@@ -406,7 +406,7 @@ class FlyCycGenerator(object):
             rel_type.name == 'partof',
             part_type.name == 'exon',
         )
-        exon_locs = session.query(transcript).\
+        exon_locs = session.query(transcript, transcript_part).\
             select_from(transcript).\
             join(Organism, (Organism.organism_id == transcript.organism_id)).\
             join(FeatureRelationship, (FeatureRelationship.object_id == transcript.feature_id)).\
