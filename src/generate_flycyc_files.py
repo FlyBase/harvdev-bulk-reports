@@ -585,8 +585,8 @@ class FlyCycGenerator(object):
         counter = 0
         for result in gene_results:
             counter += 1
-            if counter % 1000 == 0:
-                log.debug('Processing gene number {}'.format(counter))
+            # if counter % 1000 == 0:
+            #     log.debug('Processing gene number {}'.format(counter))
             # Filter for genes on major chr scaffolds.
             try:
                 chr_uniquename = self.chr_id_dict[result.Featureloc.srcfeature_id]
