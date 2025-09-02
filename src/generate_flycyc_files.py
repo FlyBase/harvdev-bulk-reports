@@ -393,14 +393,19 @@ class FlyCycGenerator(object):
         counter = 0
         gcrp_counter = 0
         for result in uniprot_results:
-            # Skip genes with trans-splicing.
-            if result.gene.name in ['lola', 'mod(mdg4)']:
-                log.debug(f'Skip trans-spliced gene {result.gene.name}')
-                continue
+            counter += 1
             gene_id = result.gene.uniquename
+            gene_name = result.gene.name
             transcript_id = result.transcript.uniquename
             uniprot_xref = result.Dbxref.accession
-            # For genes like CG30059 (FBgn0260475) which have no GCRP IDs, just assign the transcript at hand.
+            # Skip genes with trans-splicing.
+            if gene_name in ['lola', 'mod(mdg4)']:
+                log.debug(f'Skip trans-spliced gene {result.gene.name}')
+                continue
+            # Skip genes that have already been handled.
+            if gene_id in self.gene_gcrp_trpts.keys():
+                continue
+            # Handle GCRP-less genes (e.g., CG30059).
             if gene_id not in self.gene_gcrp_xrefs.keys():
                 # Handle the one exception where a GCRP-less gene has many CDSs.
                 if result.gene.name == 'CG17450' and uniprot_xref == 'Q8I044':
@@ -408,14 +413,15 @@ class FlyCycGenerator(object):
                 # Otherwise, just create the FBgn-FBtr association.
                 self.gene_gcrp_trpts[gene_id] = transcript_id
                 gcrp_counter += 1
+            # At this point, if the UniProt ID matches the gene GCRP ID, associate the gene and transcript.
             else:
                 gcrp_xref = self.gene_gcrp_xrefs[gene_id]
                 if uniprot_xref == gcrp_xref:
                     self.gene_gcrp_trpts[gene_id] = transcript_id
                     gcrp_counter += 1
-            counter += 1
         log.info(f'Found {counter} UniProt xrefs for FBgn-FBtr-FBpp sets.')
         log.info(f'Made {gcrp_counter} FBgn-FBtr associations via shared UniProt/GCRP xrefs.')
+        log.info(f'Have {len(self.gene_gcrp_trpts.keys())} gene-transcript associations via shared UniProt/GCRP xrefs.')
         return
 
     def query_transcript_cds_locations(self, session):
