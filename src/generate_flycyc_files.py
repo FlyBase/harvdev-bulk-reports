@@ -416,6 +416,7 @@ class FlyCycGenerator(object):
             join(part_type, (part_type.cvterm_id == transcript_part.type_id)).\
             join(Featureloc, (Featureloc.feature_id == transcript_part.feature_id)).\
             join(chr, (chr.feature_id == Featureloc.srcfeature_id)).\
+            join(chr_type, (chr_type.cvterm_id == chr.type_id)).\
             filter(*filters).\
             distinct()
         counter = 0
