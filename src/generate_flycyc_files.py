@@ -419,6 +419,7 @@ class FlyCycGenerator(object):
         for exon_loc in exon_locs:
             counter += 1
         log.info(f'Found {counter} exon results.')
+        exit()
         return
 
     def query_gene_fullnames(self, session):
