@@ -421,6 +421,7 @@ class FlyCycGenerator(object):
             distinct()
         counter = 0
         for exon_loc in exon_locs:
+            log.debug(f'BOB: chr is of this type: {exon_loc.Featureloc.srcfeature.type.name}')
             counter += 1
         log.info(f'Found {counter} exon results.')
         exit()
