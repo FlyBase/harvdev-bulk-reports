@@ -341,7 +341,7 @@ class FlyCycGenerator(object):
 
     def query_transcript_exon_locations(self, session):
         """Get gene exon locations."""
-        log.info('Get gene exon locations.')
+        log.info('Getting gene exon locations.')
         transcript_uniquename_regex = r'^FBtr[0-9]{7}$'
         transcript = aliased(Feature, name='transcript')
         transcript_part = aliased(Feature, name='transcript_part')
