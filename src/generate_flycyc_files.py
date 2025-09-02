@@ -394,16 +394,16 @@ class FlyCycGenerator(object):
         gcrp_counter = 0
         for result in uniprot_results:
             gene_id = result.gene.uniquename
+            transcript_id = result.transcript.uniquename
+            uniprot_xref = result.Dbxref.accession
             # Catch coding genes like CG30059 (FBgn0260475) which have no GCRP IDs.
             if gene_id not in self.gene_gcrp_xrefs.keys():
                 log.warning(f'Coding gene {result.gene.name} ({gene_id}) has UniProt ID, but is not in the GCRP set.')
-                continue
-            transcript_id = result.transcript.uniquename
-            uniprot_xref = result.Dbxref.accession
-            gcrp_xref = self.gene_gcrp_xrefs[gene_id]
-            if uniprot_xref == gcrp_xref:
-                self.gene_gcrp_trpts[gene_id] = transcript_id
-                gcrp_counter += 1
+            else:
+                gcrp_xref = self.gene_gcrp_xrefs[gene_id]
+                if uniprot_xref == gcrp_xref:
+                    self.gene_gcrp_trpts[gene_id] = transcript_id
+                    gcrp_counter += 1
             counter += 1
         log.info(f'Found {counter} UniProt xrefs for FBgn-FBtr-FBpp sets.')
         log.info(f'Made {gcrp_counter} FBgn-FBtr associations via shared UniProt/GCRP xrefs.')
