@@ -403,6 +403,7 @@ class FlyCycGenerator(object):
             transcript.uniquename.op('~')(transcript_uniquename_regex),
             Organism.abbreviation == 'Dmel',
             transcript_part.is_obsolete.is_(False),
+            chr.is_obsolete.is_(False),
             rel_type.name == 'partof',
             part_type.name == 'exon',
         )
@@ -413,6 +414,8 @@ class FlyCycGenerator(object):
             join(rel_type, (rel_type.cvterm_id == FeatureRelationship.type_id)).\
             join(transcript_part, (transcript_part.feature_id == FeatureRelationship.subject_id)).\
             join(part_type, (part_type.cvterm_id == transcript_part.type_id)).\
+            join(Featureloc, (Featureloc.feature_id == transcript_part.feature_id)).\
+            join(chr, (chr.feature_id == Featureloc.srcfeature_id)).\
             filter(*filters).\
             distinct()
         counter = 0
