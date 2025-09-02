@@ -361,7 +361,7 @@ class FlyCycGenerator(object):
         fr_tg = aliased(FeatureRelationship, name='fr_tg')
         fr_pt = aliased(FeatureRelationship, name='fr_pt')
         tg_rel_type = aliased(Cvterm, name='tg_rel_type')
-        pt_rel_type = aliased(Cvterm, name='tg_rel_type')
+        pt_rel_type = aliased(Cvterm, name='pt_rel_type')
         uniprot_db_list = ['UniProt/Swiss-Prot', 'UniProt/TrEMBL']
         filters = (
             gene.is_obsolete.is_(False),
