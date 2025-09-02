@@ -391,12 +391,18 @@ class FlyCycGenerator(object):
             filter(*filters).\
             distinct()
         counter = 0
+        gcrp_counter = 0
         for result in uniprot_results:
+            gene_id = result.gene.uniquename
+            transcript_id = result.transcript.uniquename
+            uniprot_xref = result.Dbxref.accession
+            gcrp_xref = self.gene_gcrp_xrefs[gene_id]
+            if uniprot_xref == gcrp_xref:
+                self.gene_gcrp_trpts[gene_id] = transcript_id
+                gcrp_counter += 1
             counter += 1
-        # Build up this FBgn-FBtr dict using FBpp-GCRP xrefs.
-        # self.gene_gcrp_trpts = {}    # Will be FBgn-ID keyed FBtr IDs if GCRP in common.
-        # For each result, look up the gene-GCRP in self.gene_gcrp_xrefs. If it matches, make the FBgn-FBtr connection.
         log.info(f'Found {counter} UniProt xrefs for FBgn-FBtr-FBpp sets.')
+        log.info(f'Made {gcrp_counter} FBgn-FBtr associations via shared UniProt/GCRP xrefs.')
         return
 
     def query_transcript_cds_locations(self, session):
