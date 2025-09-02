@@ -339,7 +339,7 @@ class FlyCycGenerator(object):
                 self.gene_xref_dict[result.Feature.uniquename] = [xref_name]
         return
 
-    def query_transcript_exon_locations_bad(self, session):
+    def query_transcript_exon_locations(self, session):
         """Get gene exon locations."""
         log.info('Getting gene exon locations.')
         transcript_uniquename_regex = r'^FBtr[0-9]{7}$'
@@ -357,7 +357,7 @@ class FlyCycGenerator(object):
             chr.is_obsolete.is_(False),
             rel_type.name == 'partof',
             part_type.name == 'exon',
-            chr_type == 'golden_path',
+            chr_type.name == 'golden_path',
         )
         exon_locs = session.query(transcript, Featureloc).\
             select_from(transcript).\
@@ -386,45 +386,6 @@ class FlyCycGenerator(object):
                 self.trpt_exon_locs[exon_loc.transcript.uniquename] = [exon_string]
             counter += 1
         log.info(f'Found {counter} exons for {len(self.trpt_exon_locs.keys())} current Dmel transcripts.')
-        return
-
-    def query_transcript_exon_locations(self, session):
-        """Get gene exon locations."""
-        log.info('Getting gene exon locations.')
-        transcript_uniquename_regex = r'^FBtr[0-9]{7}$'
-        transcript = aliased(Feature, name='transcript')
-        transcript_part = aliased(Feature, name='transcript_part')
-        chr = aliased(Feature, name='chr')
-        rel_type = aliased(Cvterm, name='rel_type')
-        part_type = aliased(Cvterm, name='part_type')
-        chr_type = aliased(Cvterm, name='chr_type')
-        filters = (
-            transcript.is_obsolete.is_(False),
-            transcript.uniquename.op('~')(transcript_uniquename_regex),
-            Organism.abbreviation == 'Dmel',
-            transcript_part.is_obsolete.is_(False),
-            chr.is_obsolete.is_(False),
-            rel_type.name == 'partof',
-            part_type.name == 'exon',
-        )
-        exon_locs = session.query(transcript, transcript_part, Featureloc).\
-            select_from(transcript).\
-            join(Organism, (Organism.organism_id == transcript.organism_id)).\
-            join(FeatureRelationship, (FeatureRelationship.object_id == transcript.feature_id)).\
-            join(rel_type, (rel_type.cvterm_id == FeatureRelationship.type_id)).\
-            join(transcript_part, (transcript_part.feature_id == FeatureRelationship.subject_id)).\
-            join(part_type, (part_type.cvterm_id == transcript_part.type_id)).\
-            join(Featureloc, (Featureloc.feature_id == transcript_part.feature_id)).\
-            join(chr, (chr.feature_id == Featureloc.srcfeature_id)).\
-            join(chr_type, (chr_type.cvterm_id == chr.type_id)).\
-            filter(*filters).\
-            distinct()
-        counter = 0
-        for exon_loc in exon_locs:
-            log.debug(f'BOB: chr is of this type: {exon_loc.Featureloc.srcfeature.type.name}')
-            counter += 1
-        log.info(f'Found {counter} exon results.')
-        exit()
         return
 
     def query_gene_fullnames(self, session):
