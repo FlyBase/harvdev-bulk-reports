@@ -394,6 +394,10 @@ class FlyCycGenerator(object):
         gcrp_counter = 0
         for result in uniprot_results:
             gene_id = result.gene.uniquename
+            # Catch coding genes like CG30059 (FBgn0260475) which have no GCRP IDs.
+            if gene_id not in self.gene_gcrp_xrefs.keys():
+                log.warning(f'Coding gene {result.gene.name} ({gene_id}) has UniProt ID, but is not in the GCRP set.')
+                continue
             transcript_id = result.transcript.uniquename
             uniprot_xref = result.Dbxref.accession
             gcrp_xref = self.gene_gcrp_xrefs[gene_id]
@@ -597,6 +601,9 @@ class FlyCycGenerator(object):
             else:
                 gene_dict['STARTBASE'] = str(result.Featureloc.fmax)
                 gene_dict['ENDBASE'] = str(result.Featureloc.fmin + 1)
+            if result.Feature.uniquename in self.gene_gcrp_trpts.keys():
+                gcrp_trpt_id = self.gene_gcrp_trpts[result.Feature.uniquename]
+                gene_dict['CODING-SEGMENT'].extend(self.trpt_cds_locs[gcrp_trpt_id])
             # Add product_type. Filter out if there is no transcript: e.g., mt:ori FBgn0013687).
             try:
                 gene_dict['PRODUCT-TYPE'] = self.gene_product_type[result.Feature.uniquename]
