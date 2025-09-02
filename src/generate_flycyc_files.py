@@ -393,20 +393,32 @@ class FlyCycGenerator(object):
         log.info('Getting gene exon locations.')
         transcript_uniquename_regex = r'^FBtr[0-9]{7}$'
         transcript = aliased(Feature, name='transcript')
+        transcript_part = aliased(Feature, name='transcript_part')
+        chr = aliased(Feature, name='chr')
+        rel_type = aliased(Cvterm, name='rel_type')
+        part_type = aliased(Cvterm, name='part_type')
+        chr_type = aliased(Cvterm, name='chr_type')
         filters = (
             transcript.is_obsolete.is_(False),
             transcript.uniquename.op('~')(transcript_uniquename_regex),
             Organism.abbreviation == 'Dmel',
+            transcript_part.is_obsolete.is_(False),
+            rel_type.name == 'partof',
+            part_type.name == 'exon',
         )
         exon_locs = session.query(transcript).\
             select_from(transcript).\
             join(Organism, (Organism.organism_id == transcript.organism_id)).\
+            join(FeatureRelationship, (FeatureRelationship.object_id == transcript.feature_id)).\
+            join(rel_type, (rel_type.cvterm_id == FeatureRelationship.type_id)).\
+            join(transcript_part, (transcript_part.feature_id == FeatureRelationship.subject_id)).\
+            join(part_type, (part_type.cvterm_id == transcript_part.type_id)).\
             filter(*filters).\
             distinct()
         counter = 0
         for exon_loc in exon_locs:
             counter += 1
-        log.info(f'Found {counter} results.')
+        log.info(f'Found {counter} exon results.')
         return
 
     def query_gene_fullnames(self, session):
@@ -608,6 +620,7 @@ class FlyCycGenerator(object):
     def query_chado(self, session):
         """Wrapper query method."""
         # There are some dependencies on the order of these methods.
+        self.query_transcript_exon_locations(session)
         self.query_chr(session)
         self.generate_fbrf_pubmed_dict(session)
         self.query_gene_negative_go_annotations(session)
@@ -618,7 +631,6 @@ class FlyCycGenerator(object):
         self.query_go_ec_numbers(session)
         self.query_go_metacyc(session)
         self.query_gene_xrefs(session)
-        self.query_transcript_exon_locations(session)
         self.query_gene_fullnames(session)
         self.query_gene_synonyms(session)
         self.query_gene_products(session)
