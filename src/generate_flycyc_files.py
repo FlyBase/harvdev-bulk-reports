@@ -79,6 +79,7 @@ class FlyCycGenerator(object):
         self.chr_gene_dict = {}         # Will be a chr-uniquename-keyed list of gene dicts.
         self.fbrf_to_pmid = {}          # Will be an FBrf-to-PubMed ID dict.
         self.gene_product_type = {}     # Will be an FBgn-keyed dict of product type (e.g., "P", "TRNA", etc.)
+        self.trpt_exon_locs = {}        # Will be FBtr-keyed dict of exon location lists.
         self.gene_xref_dict = {}        # Will be FBgn-keyed dict of dbxref lists for each gene.
         self.gene_fullname_dict = {}    # Will be FBgn-keyed dict of gene fullname.
         self.gene_synonym_dict = {}     # Will be FBgn-keyed dict of non-current synonym lists for each gene.
@@ -338,6 +339,55 @@ class FlyCycGenerator(object):
                 self.gene_xref_dict[result.Feature.uniquename] = [xref_name]
         return
 
+    def query_transcript_exon_locations(self, session):
+        """Get gene exon locations."""
+        log.info('Get gene exon locations.')
+        transcript_uniquename_regex = r'^FBtr[0-9]{7}$'
+        transcript = aliased(Feature, name='transcript')
+        transcript_part = aliased(Feature, name='transcript_part')
+        chr = aliased(Feature, name='chr')
+        rel_type = aliased(Cvterm, name='rel_type')
+        part_type = aliased(Cvterm, name='part_type')
+        chr_type = aliased(Cvterm, name='chr_type')
+        filters = (
+            transcript.is_obsolete.is_(False),
+            transcript.uniquename.op('~')(transcript_uniquename_regex),
+            Organism.abbreviation == 'Dmel',
+            transcript_part.is_obsolete.is_(False),
+            chr.is_obsolete.is_(False),
+            rel_type.name == 'partof',
+            part_type.name == 'exon',
+            chr_type == 'golden_path',
+        )
+        exon_locs = session.query(transcript, Featureloc).\
+            select_from(transcript).\
+            join(Organism, (Organism.organism_id == transcript.organism_id)).\
+            join(FeatureRelationship, (FeatureRelationship.object_id == transcript.feature_id)).\
+            join(rel_type, (rel_type.cvterm_id == FeatureRelationship.type_id)).\
+            join(transcript_part, (transcript_part.feature_id == FeatureRelationship.subject_id)).\
+            join(part_type, (part_type.cvterm_id == transcript_part.type_id)).\
+            join(Featureloc, (Featureloc.feature_id == transcript_part.feature_id)).\
+            join(chr, (chr.feature_id == Featureloc.srcfeature_id)).\
+            join(chr_type, (chr_type.cvterm_id == chr.type_id)).\
+            filter(*filters).\
+            distinct()
+        counter = 0
+        for exon_loc in exon_locs:
+            trpt_name = f'{exon_loc.transcript.name} ({exon_loc.transcript.uniquename})'
+            if exon_loc.Featureloc.strand == -1:
+                exon_string = f'{exon_loc.Featureloc.fmax}--{exon_loc.Featureloc.fmin + 1}'
+                log.debug(f'BOB MINUS: {trpt_name} exon at {exon_string}')
+            else:
+                exon_string = f'{exon_loc.Featureloc.fmin + 1}--{exon_loc.Featureloc.fmax}'
+                log.debug(f'BOB PLUS: {trpt_name} exon at {exon_string}')
+            try:
+                self.trpt_exon_locs[exon_loc.transcript.uniquename].append(exon_string)
+            except KeyError:
+                self.trpt_exon_locs[exon_loc.transcript.uniquename] = [exon_string]
+            counter += 1
+        log.info(f'Found {counter} exons for {len(self.trpt_exon_locs.keys())} current Dmel transcripts.')
+        return
+
     def query_gene_fullnames(self, session):
         """Get gene current full names."""
         log.info('Getting gene full names.')
@@ -475,6 +525,7 @@ class FlyCycGenerator(object):
                     'FlyBase:{}'.format(result.Feature.uniquename),
                     'Alliance:FB:{}'.format(result.Feature.uniquename)
                 ],
+                'CODING-SEGMENT': [],
                 'SYNONYM': [],
                 'GO': [],
                 'EC': [],
@@ -546,6 +597,7 @@ class FlyCycGenerator(object):
         self.query_go_ec_numbers(session)
         self.query_go_metacyc(session)
         self.query_gene_xrefs(session)
+        self.query_transcript_exon_locations(session)
         self.query_gene_fullnames(session)
         self.query_gene_synonyms(session)
         self.query_gene_products(session)
@@ -590,6 +642,7 @@ class FlyCycGenerator(object):
                 'PRODUCT-TYPE',
                 'STARTBASE',
                 'ENDBASE',
+                'CODING-SEGMENT',
                 'GO',
                 'EC',
                 'METACYC',
