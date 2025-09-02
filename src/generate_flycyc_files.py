@@ -339,7 +339,7 @@ class FlyCycGenerator(object):
                 self.gene_xref_dict[result.Feature.uniquename] = [xref_name]
         return
 
-    def query_transcript_exon_locations(self, session):
+    def query_transcript_exon_locations_bad(self, session):
         """Get gene exon locations."""
         log.info('Getting gene exon locations.')
         transcript_uniquename_regex = r'^FBtr[0-9]{7}$'
@@ -386,6 +386,27 @@ class FlyCycGenerator(object):
                 self.trpt_exon_locs[exon_loc.transcript.uniquename] = [exon_string]
             counter += 1
         log.info(f'Found {counter} exons for {len(self.trpt_exon_locs.keys())} current Dmel transcripts.')
+        return
+
+    def query_transcript_exon_locations(self, session):
+        """Get gene exon locations."""
+        log.info('Getting gene exon locations.')
+        transcript_uniquename_regex = r'^FBtr[0-9]{7}$'
+        transcript = aliased(Feature, name='transcript')
+        filters = (
+            transcript.is_obsolete.is_(False),
+            transcript.uniquename.op('~')(transcript_uniquename_regex),
+            Organism.abbreviation == 'Dmel',
+        )
+        exon_locs = session.query(transcript).\
+            select_from(transcript).\
+            join(Organism, (Organism.organism_id == transcript.organism_id)).\
+            filter(*filters).\
+            distinct()
+        counter = 0
+        for exon_loc in exon_locs:
+            counter += 1
+        log.info(f'Found {counter} results.')
         return
 
     def query_gene_fullnames(self, session):
