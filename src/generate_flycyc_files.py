@@ -345,7 +345,7 @@ class FlyCycGenerator(object):
                 self.gene_xref_dict[result.Feature.uniquename].append(xref_name)
             except KeyError:
                 self.gene_xref_dict[result.Feature.uniquename] = [xref_name]
-            if result.DB.name == 'UniProt/GCRP':
+            if result.Db.name == 'UniProt/GCRP':
                 self.gene_gcrp_xrefs[result.Feature.uniquename] = result.Dbxref.accession
                 gcrp_counter += 1
         log.info(f'Found {xref_counter} gene xrefs.')
