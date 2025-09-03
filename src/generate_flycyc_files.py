@@ -79,6 +79,9 @@ class FlyCycGenerator(object):
         self.chr_gene_dict = {}         # Will be a chr-uniquename-keyed list of gene dicts.
         self.fbrf_to_pmid = {}          # Will be an FBrf-to-PubMed ID dict.
         self.gene_product_type = {}     # Will be an FBgn-keyed dict of product type (e.g., "P", "TRNA", etc.)
+        self.gene_gcrp_xrefs = {}       # Will be FBgn-keyed dict of UniProt/GCRP accessions (one-to-one).
+        self.gene_gcrp_trpts = {}       # Will be FBgn-keyed dict of GCRP-matching FBtr transcripts IDs (one-to-one).
+        self.trpt_cds_locs = {}         # Will be FBtr-keyed dict of CDS segment location lists.
         self.gene_xref_dict = {}        # Will be FBgn-keyed dict of dbxref lists for each gene.
         self.gene_fullname_dict = {}    # Will be FBgn-keyed dict of gene fullname.
         self.gene_synonym_dict = {}     # Will be FBgn-keyed dict of non-current synonym lists for each gene.
@@ -101,6 +104,12 @@ class FlyCycGenerator(object):
         'Unmapped_Scaffold_8_D1580_D1567'
     ]
     # chr_scaffolds_to_report = ['mitochondrion_genome', 'rDNA']    # For faster testing, limit to sample chr test set.
+
+    regex = {
+        'gene': r'^FBgn[0-9]{7}$',
+        'transcript': r'^FBtr[0-9]{7}$',
+        'polypeptide': r'^FBpp[0-9]{7}$',
+    }
 
     def query_chr(self, session):
         """Get Dmel chr sequences."""
@@ -143,11 +152,10 @@ class FlyCycGenerator(object):
     def query_gene_negative_go_annotations(self, session):
         """Get negative GO annotations for genes."""
         log.info('Getting negative GO annotations for genes.')
-        gene_uniquename_regex = r'^FBgn[0-9]{7}$'
         go_cv_list = ['biological_process', 'cellular_component', 'molecular_function']
         filters = (
             Feature.is_obsolete.is_(False),
-            Feature.uniquename.op('~')(gene_uniquename_regex),
+            Feature.uniquename.op('~')(self.regex['gene']),
             Organism.abbreviation == 'Dmel',
             Cvterm.is_obsolete == 0,
             FeatureCvterm.is_not.is_(True),
@@ -200,13 +208,12 @@ class FlyCycGenerator(object):
             'inferred from high throughput mutant phenotype': 'HMP'
         }
         # Now get the GO annotations.
-        gene_uniquename_regex = r'^FBgn[0-9]{7}$'
         go_cv_list = ['biological_process', 'cellular_component', 'molecular_function']
         cvterm = aliased(Cvterm, name='cvterm')
         qualifier_type = aliased(Cvterm, name='qualifier_type')
         filters = (
             Feature.is_obsolete.is_(False),
-            Feature.uniquename.op('~')(gene_uniquename_regex),
+            Feature.uniquename.op('~')(self.regex['gene']),
             Organism.abbreviation == 'Dmel',
             FeatureCvterm.is_not.is_(False),
             cvterm.is_obsolete == 0,
@@ -313,10 +320,9 @@ class FlyCycGenerator(object):
             'RNAcentral': 'RNAcentral'
         }
         log.info('Getting gene dbxrefs for these databases: {}'.format(dbxrefs_to_get.keys()))
-        gene_uniquename_regex = r'^FBgn[0-9]{7}$'
         filters = (
             Feature.is_obsolete.is_(False),
-            Feature.uniquename.op('~')(gene_uniquename_regex),
+            Feature.uniquename.op('~')(self.regex['gene']),
             Cvterm.name == 'gene',
             Organism.abbreviation == 'Dmel',
             FeatureDbxref.is_current.is_(True),
@@ -330,12 +336,154 @@ class FlyCycGenerator(object):
             join(Db, (Db.db_id == Dbxref.db_id)).\
             filter(*filters).\
             distinct()
+        xref_counter = 0
+        gcrp_counter = 0
         for result in dbxref_results:
             xref_name = '{}:{}'.format(dbxrefs_to_get[result.Db.name], result.Dbxref.accession)
+            xref_counter += 1
             try:
                 self.gene_xref_dict[result.Feature.uniquename].append(xref_name)
             except KeyError:
                 self.gene_xref_dict[result.Feature.uniquename] = [xref_name]
+            if result.Db.name == 'UniProt/GCRP':
+                self.gene_gcrp_xrefs[result.Feature.uniquename] = result.Dbxref.accession
+                gcrp_counter += 1
+        log.info(f'Found {xref_counter} gene xrefs.')
+        log.info(f'Found {gcrp_counter} UniProt GCRP xrefs.')
+        return
+
+    def query_gene_gcrp_transcripts(self, session):
+        """Get gene GCRP-transcript correspondence."""
+        log.info('Getting gene GCRP-transcript correspondence.')
+        gene = aliased(Feature, name='gene')
+        transcript = aliased(Feature, name='transcript')
+        polypeptide = aliased(Feature, name='polypeptide')
+        fr_tg = aliased(FeatureRelationship, name='fr_tg')
+        fr_pt = aliased(FeatureRelationship, name='fr_pt')
+        tg_rel_type = aliased(Cvterm, name='tg_rel_type')
+        pt_rel_type = aliased(Cvterm, name='pt_rel_type')
+        uniprot_db_list = ['UniProt/Swiss-Prot', 'UniProt/TrEMBL']
+        filters = (
+            gene.is_obsolete.is_(False),
+            gene.uniquename.op('~')(self.regex['gene']),
+            transcript.is_obsolete.is_(False),
+            transcript.uniquename.op('~')(self.regex['transcript']),
+            polypeptide.is_obsolete.is_(False),
+            polypeptide.uniquename.op('~')(self.regex['polypeptide']),
+            Organism.abbreviation == 'Dmel',
+            tg_rel_type.name == 'partof',
+            pt_rel_type.name == 'producedby',
+            FeatureDbxref.is_current.is_(True),
+            Db.name.in_((uniprot_db_list)),
+        )
+        uniprot_results = session.query(gene, transcript, polypeptide, Dbxref).\
+            select_from(gene).\
+            join(Organism, (Organism.organism_id == gene.organism_id)).\
+            join(fr_tg, (fr_tg.object_id == gene.feature_id)).\
+            join(transcript, (transcript.feature_id == fr_tg.subject_id)).\
+            join(tg_rel_type, (tg_rel_type.cvterm_id == fr_tg.type_id)).\
+            join(fr_pt, (fr_pt.object_id == transcript.feature_id)).\
+            join(polypeptide, (polypeptide.feature_id == fr_pt.subject_id)).\
+            join(pt_rel_type, (pt_rel_type.cvterm_id == fr_pt.type_id)).\
+            join(FeatureDbxref, (FeatureDbxref.feature_id == polypeptide.feature_id)).\
+            join(Dbxref, (Dbxref.dbxref_id == FeatureDbxref.dbxref_id)).\
+            join(Db, (Db.db_id == Dbxref.db_id)).\
+            filter(*filters).\
+            distinct()
+        counter = 0
+        gcrp_counter = 0
+        trans_spliced_genes = ['lola', 'mod(mdg4)']
+        non_gcrp_multi_isoform_genes = ['CG17450']
+        for result in uniprot_results:
+            counter += 1
+            gene_id = result.gene.uniquename
+            gene_name = result.gene.name
+            transcript_id = result.transcript.uniquename
+            uniprot_xref = result.Dbxref.accession
+            # Skip genes with trans-splicing.
+            if gene_name in trans_spliced_genes:
+                log.debug(f'Skip trans-spliced gene {result.gene.name}')
+                continue
+            # Skip non-GCRP genes with many isoforms.
+            if gene_name in non_gcrp_multi_isoform_genes:
+                log.debug(f'Skip non-GCRP multi-isoform gene {result.gene.name}')
+                continue
+            # Skip genes that have already been handled.
+            if gene_id in self.gene_gcrp_trpts.keys():
+                continue
+            # Handle GCRP-less genes (e.g., CG30059) by just creating a gene-transcript association.
+            if gene_id not in self.gene_gcrp_xrefs.keys():
+                self.gene_gcrp_trpts[gene_id] = transcript_id
+                gcrp_counter += 1
+            # At this point, make the gene-transcript association only if the UniProt ID matches the gene GCRP ID.
+            else:
+                gcrp_xref = self.gene_gcrp_xrefs[gene_id]
+                if uniprot_xref == gcrp_xref:
+                    self.gene_gcrp_trpts[gene_id] = transcript_id
+                    gcrp_counter += 1
+        log.info(f'Found {counter} UniProt xrefs for FBgn-FBtr-FBpp sets.')
+        log.info(f'Made {gcrp_counter} FBgn-FBtr associations via shared UniProt/GCRP xrefs.')
+        log.info(f'Have {len(self.gene_gcrp_trpts.keys())} gene-transcript associations via shared UniProt/GCRP xrefs.')
+        return
+
+    def query_transcript_cds_locations(self, session):
+        """Get transcript CDS segments locations."""
+        log.info('Getting transcript CDS segments locations.')
+        transcript = aliased(Feature, name='transcript')
+        transcript_part = aliased(Feature, name='transcript_part')
+        chr = aliased(Feature, name='chr')
+        rel_type = aliased(Cvterm, name='rel_type')
+        part_type = aliased(Cvterm, name='part_type')
+        chr_type = aliased(Cvterm, name='chr_type')
+        filters = (
+            transcript.is_obsolete.is_(False),
+            transcript.uniquename.op('~')(self.regex['transcript']),
+            Organism.abbreviation == 'Dmel',
+            transcript_part.is_obsolete.is_(False),
+            chr.is_obsolete.is_(False),
+            rel_type.name == 'partof',
+            part_type.name == 'CDS',
+            chr_type.name == 'golden_path',
+        )
+        cds_segment_locs = session.query(transcript, Featureloc).\
+            select_from(transcript).\
+            join(Organism, (Organism.organism_id == transcript.organism_id)).\
+            join(FeatureRelationship, (FeatureRelationship.object_id == transcript.feature_id)).\
+            join(rel_type, (rel_type.cvterm_id == FeatureRelationship.type_id)).\
+            join(transcript_part, (transcript_part.feature_id == FeatureRelationship.subject_id)).\
+            join(part_type, (part_type.cvterm_id == transcript_part.type_id)).\
+            join(Featureloc, (Featureloc.feature_id == transcript_part.feature_id)).\
+            join(chr, (chr.feature_id == Featureloc.srcfeature_id)).\
+            join(chr_type, (chr_type.cvterm_id == chr.type_id)).\
+            filter(*filters).\
+            distinct()
+        counter = 0
+        for cds_segment_loc in cds_segment_locs:
+            if cds_segment_loc.Featureloc.strand == -1:
+                loc_string = f'{cds_segment_loc.Featureloc.fmax}-{cds_segment_loc.Featureloc.fmin + 1}'
+            else:
+                loc_string = f'{cds_segment_loc.Featureloc.fmin + 1}-{cds_segment_loc.Featureloc.fmax}'
+            # trpt_name = f'{cds_segment_loc.transcript.name} ({cds_segment_loc.transcript.uniquename})'
+            # log.debug(f'Found {trpt_name} CDS segment at {loc_string}')
+            try:
+                self.trpt_cds_locs[cds_segment_loc.transcript.uniquename].append(loc_string)
+            except KeyError:
+                self.trpt_cds_locs[cds_segment_loc.transcript.uniquename] = [loc_string]
+            counter += 1
+        log.info(f'Found {counter} CDS segments for {len(self.trpt_cds_locs.keys())} current Dmel transcripts.')
+        # Sort the CDS segments.
+        START = 0
+        STOP = 1
+        for cds_segment_list in self.trpt_cds_locs.values():
+            sample_segment = cds_segment_list[0]
+            start = int(sample_segment.split('-')[START])
+            stop = int(sample_segment.split('-')[STOP])
+            # If the sample segment is on the plus strand, standard sorting.
+            if start < stop:
+                cds_segment_list.sort()
+            # Otherwise, the list of CDS segments are on the minus strant, so reverse sort.
+            else:
+                cds_segment_list.sort(reverse=True)
         return
 
     def query_gene_fullnames(self, session):
@@ -343,10 +491,9 @@ class FlyCycGenerator(object):
         log.info('Getting gene full names.')
         feature_type = aliased(Cvterm, name='feature_type')
         synonym_type = aliased(Cvterm, name='synonym_type')
-        gene_uniquename_regex = r'^FBgn[0-9]{7}$'
         filters = (
             Feature.is_obsolete.is_(False),
-            Feature.uniquename.op('~')(gene_uniquename_regex),
+            Feature.uniquename.op('~')(self.regex['gene']),
             feature_type.name == 'gene',
             Organism.abbreviation == 'Dmel',
             FeatureSynonym.is_current.is_(True),
@@ -367,10 +514,9 @@ class FlyCycGenerator(object):
     def query_gene_synonyms(self, session):
         """Get gene synonyms."""
         log.info('Getting gene synonyms.')
-        gene_uniquename_regex = r'^FBgn[0-9]{7}$'
         filters = (
             Feature.is_obsolete.is_(False),
-            Feature.uniquename.op('~')(gene_uniquename_regex),
+            Feature.uniquename.op('~')(self.regex['gene']),
             Cvterm.name == 'gene',
             Organism.abbreviation == 'Dmel',
             FeatureSynonym.is_current.is_(False)
@@ -407,14 +553,12 @@ class FlyCycGenerator(object):
         transcript_feature = aliased(Feature, name='transcript_feature')
         gene_type = aliased(Cvterm, name='gene_type')
         transcript_type = aliased(Cvterm, name='transcript_type')
-        gene_uniquename_regex = r'^FBgn[0-9]{7}$'
-        transcript_uniquename_regex = r'FBtr[0-9]{7}$'
         filters = (
             gene_feature.is_obsolete.is_(False),
-            gene_feature.uniquename.op('~')(gene_uniquename_regex),
+            gene_feature.uniquename.op('~')(self.regex['gene']),
             gene_type.name == 'gene',
             transcript_feature.is_obsolete.is_(False),
-            transcript_feature.uniquename.op('~')(transcript_uniquename_regex),
+            transcript_feature.uniquename.op('~')(self.regex['transcript']),
             Organism.abbreviation == 'Dmel'
         )
         gene_product_results = session.query(gene_feature, transcript_type).\
@@ -436,10 +580,9 @@ class FlyCycGenerator(object):
         # First create chr-keyed dict of genes.
         for chr_uniquename in self.chr_scaffolds_to_report:
             self.chr_gene_dict[chr_uniquename] = []
-        gene_uniquename_regex = r'^FBgn[0-9]{7}$'
         filters = (
             Feature.is_obsolete.is_(False),
-            Feature.uniquename.op('~')(gene_uniquename_regex),
+            Feature.uniquename.op('~')(self.regex['gene']),
             Cvterm.name == 'gene',
             Organism.abbreviation == 'Dmel'
         )
@@ -457,8 +600,8 @@ class FlyCycGenerator(object):
         counter = 0
         for result in gene_results:
             counter += 1
-            if counter % 1000 == 0:
-                log.debug('Processing gene number {}'.format(counter))
+            # if counter % 1000 == 0:
+            #     log.debug('Processing gene number {}'.format(counter))
             # Filter for genes on major chr scaffolds.
             try:
                 chr_uniquename = self.chr_id_dict[result.Featureloc.srcfeature_id]
@@ -475,6 +618,7 @@ class FlyCycGenerator(object):
                     'FlyBase:{}'.format(result.Feature.uniquename),
                     'Alliance:FB:{}'.format(result.Feature.uniquename)
                 ],
+                'CODING-SEGMENT': [],
                 'SYNONYM': [],
                 'GO': [],
                 'EC': [],
@@ -487,6 +631,9 @@ class FlyCycGenerator(object):
             else:
                 gene_dict['STARTBASE'] = str(result.Featureloc.fmax)
                 gene_dict['ENDBASE'] = str(result.Featureloc.fmin + 1)
+            if result.Feature.uniquename in self.gene_gcrp_trpts.keys():
+                gcrp_trpt_id = self.gene_gcrp_trpts[result.Feature.uniquename]
+                gene_dict['CODING-SEGMENT'].extend(self.trpt_cds_locs[gcrp_trpt_id])
             # Add product_type. Filter out if there is no transcript: e.g., mt:ori FBgn0013687).
             try:
                 gene_dict['PRODUCT-TYPE'] = self.gene_product_type[result.Feature.uniquename]
@@ -546,6 +693,8 @@ class FlyCycGenerator(object):
         self.query_go_ec_numbers(session)
         self.query_go_metacyc(session)
         self.query_gene_xrefs(session)
+        self.query_gene_gcrp_transcripts(session)
+        self.query_transcript_cds_locations(session)
         self.query_gene_fullnames(session)
         self.query_gene_synonyms(session)
         self.query_gene_products(session)
@@ -590,6 +739,7 @@ class FlyCycGenerator(object):
                 'PRODUCT-TYPE',
                 'STARTBASE',
                 'ENDBASE',
+                'CODING-SEGMENT',
                 'GO',
                 'EC',
                 'METACYC',
