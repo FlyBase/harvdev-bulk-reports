@@ -392,6 +392,8 @@ class FlyCycGenerator(object):
             distinct()
         counter = 0
         gcrp_counter = 0
+        trans_spliced_genes = ['lola', 'mod(mdg4)']
+        non_gcrp_multi_isoform_genes = ['CG17450']
         for result in uniprot_results:
             counter += 1
             gene_id = result.gene.uniquename
@@ -399,21 +401,21 @@ class FlyCycGenerator(object):
             transcript_id = result.transcript.uniquename
             uniprot_xref = result.Dbxref.accession
             # Skip genes with trans-splicing.
-            if gene_name in ['lola', 'mod(mdg4)']:
+            if gene_name in trans_spliced_genes:
                 log.debug(f'Skip trans-spliced gene {result.gene.name}')
+                continue
+            # Skip non-GCRP genes with many isoforms.
+            if gene_name in non_gcrp_multi_isoform_genes:
+                log.debug(f'Skip non-GCRP multi-isoform gene {result.gene.name}')
                 continue
             # Skip genes that have already been handled.
             if gene_id in self.gene_gcrp_trpts.keys():
                 continue
-            # Handle GCRP-less genes (e.g., CG30059).
+            # Handle GCRP-less genes (e.g., CG30059) by just creating a gene-transcript association.
             if gene_id not in self.gene_gcrp_xrefs.keys():
-                # Handle the one exception where a GCRP-less gene has many CDSs.
-                if result.gene.name == 'CG17450' and uniprot_xref == 'Q8I044':
-                    continue
-                # Otherwise, just create the FBgn-FBtr association.
                 self.gene_gcrp_trpts[gene_id] = transcript_id
                 gcrp_counter += 1
-            # At this point, if the UniProt ID matches the gene GCRP ID, associate the gene and transcript.
+            # At this point, make the gene-transcript association only if the UniProt ID matches the gene GCRP ID.
             else:
                 gcrp_xref = self.gene_gcrp_xrefs[gene_id]
                 if uniprot_xref == gcrp_xref:
@@ -469,6 +471,17 @@ class FlyCycGenerator(object):
                 self.trpt_cds_locs[cds_segment_loc.transcript.uniquename] = [loc_string]
             counter += 1
         log.info(f'Found {counter} CDS segments for {len(self.trpt_cds_locs.keys())} current Dmel transcripts.')
+        # Sort the CDS segments.
+        START = 0
+        STOP = 1
+        for cds_segment_list in self.trpt_cds_locs.values():
+            sample_segment = cds_segment_list[0]
+            # If the sample segment is on the plus strand, standard sorting.
+            if sample_segment[START] < sample_segment[STOP]:
+                cds_segment_list.sort()
+            # Otherwise, the list of CDS segments are on the minus strant, so reverse sort.
+            else:
+                cds_segment_list.sort(reverse=True)
         return
 
     def query_gene_fullnames(self, session):
