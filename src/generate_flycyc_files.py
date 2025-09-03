@@ -624,22 +624,25 @@ class FlyCycGenerator(object):
                 'EC': [],
                 'METACYC': []
             }
-            # Add coordinates.
+            # Add product_type. Filter out if there is no transcript: e.g., mt:ori FBgn0013687).
+            try:
+                gene_dict['PRODUCT-TYPE'] = self.gene_product_type[result.Feature.uniquename]
+            except KeyError:
+                log.warning(f'Skipping gene lacking transcript: {result.Feature.name} ({result.Feature.uniquename})')
+                continue
+            # Add gene span coordinates.
             if result.Featureloc.strand == 1:
                 gene_dict['STARTBASE'] = str(result.Featureloc.fmin + 1)
                 gene_dict['ENDBASE'] = str(result.Featureloc.fmax)
             else:
                 gene_dict['STARTBASE'] = str(result.Featureloc.fmax)
                 gene_dict['ENDBASE'] = str(result.Featureloc.fmin + 1)
+            # Add CDS segments.
             if result.Feature.uniquename in self.gene_gcrp_trpts.keys():
                 gcrp_trpt_id = self.gene_gcrp_trpts[result.Feature.uniquename]
                 gene_dict['CODING-SEGMENT'].extend(self.trpt_cds_locs[gcrp_trpt_id])
-            # Add product_type. Filter out if there is no transcript: e.g., mt:ori FBgn0013687).
-            try:
-                gene_dict['PRODUCT-TYPE'] = self.gene_product_type[result.Feature.uniquename]
-            except KeyError:
-                log.warning('Skipping gene lacking transcript: {} ({})'.format(result.Feature.name, result.Feature.uniquename))
-                continue
+            elif gene_dict['PRODUCT-TYPE'] == 'P':
+                log.warning(f'Coding gene has GCRP xref but no GCRP-associated transcript: {result.Feature.name} ({result.Feature.uniquename})')
             # Add fullname.
             try:
                 gene_dict['FUNCTION'] = self.gene_fullname_dict[result.Feature.uniquename]
