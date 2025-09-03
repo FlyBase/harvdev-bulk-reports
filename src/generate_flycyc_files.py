@@ -641,7 +641,7 @@ class FlyCycGenerator(object):
             if result.Feature.uniquename in self.gene_gcrp_trpts.keys():
                 gcrp_trpt_id = self.gene_gcrp_trpts[result.Feature.uniquename]
                 gene_dict['CODING-SEGMENT'].extend(self.trpt_cds_locs[gcrp_trpt_id])
-            elif gene_dict['PRODUCT-TYPE'] == 'P':
+            elif gene_dict['PRODUCT-TYPE'] == 'P' and result.Feature.uniquename in self.gene_gcrp_xrefs.keys():
                 log.warning(f'Coding gene has GCRP xref but no GCRP-associated transcript: {result.Feature.name} ({result.Feature.uniquename})')
             # Add fullname.
             try:
