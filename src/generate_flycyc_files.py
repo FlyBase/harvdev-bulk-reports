@@ -476,8 +476,10 @@ class FlyCycGenerator(object):
         STOP = 1
         for cds_segment_list in self.trpt_cds_locs.values():
             sample_segment = cds_segment_list[0]
+            start = int(sample_segment.split('-')[START])
+            stop = int(sample_segment.split('-')[STOP])
             # If the sample segment is on the plus strand, standard sorting.
-            if sample_segment[START] < sample_segment[STOP]:
+            if start < stop:
                 cds_segment_list.sort()
             # Otherwise, the list of CDS segments are on the minus strant, so reverse sort.
             else:
