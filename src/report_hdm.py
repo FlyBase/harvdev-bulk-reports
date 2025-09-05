@@ -87,7 +87,7 @@ def main():
     get_hdm_omim_pheno_series(hdm_dict)
     get_hdm_omim_pheno_xrefs(hdm_dict)
     get_hdm_omim_table_xrefs(hdm_dict)
-    get_hdm_omim_table_prop(hdm_dict)    # BOB
+    get_hdm_omim_table_prop(hdm_dict)
     hdm_relevant_gene_dict = build_hdm_gene_dict()
     get_hdm_genes(hdm_dict, hdm_relevant_gene_dict)
     get_hdm_do_terms(hdm_dict)
