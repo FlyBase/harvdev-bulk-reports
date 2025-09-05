@@ -14,6 +14,7 @@ Example:
 """
 
 import argparse
+from harvdev_utils.char_conversions import sub_sup_sgml_to_plain_text
 from harvdev_utils.general_functions import (
     generic_FB_tsv_dict, tsv_report_dump
 )
@@ -141,11 +142,11 @@ def get_stock_info(split_system_dict):
     STOCK_PROP = 1
     counter = 0
     for row in ret_ss_stock_info:
-        stock_prop = row[STOCK_PROP].split('\n')
-        stock_prop = [i.split('\t')[1].replace('@', '') for i in stock_prop]
-        log.debug(f'BOB: {stock_prop}')
-        split_system_dict[row[DB_ID]]['Stocks'].extend(stock_prop)
-        counter += len(stock_prop)
+        raw_stock_prop_list = row[STOCK_PROP].split('\n')
+        cleaned_stock_prop_list = [sub_sup_sgml_to_plain_text(i.split('\t')[1].replace('@', '')) for i in raw_stock_prop_list]
+        # log.debug(f'Found this stock prop: {cleaned_stock_prop_list}')
+        split_system_dict[row[DB_ID]]['Stocks'].extend(cleaned_stock_prop_list)
+        counter += len(cleaned_stock_prop_list)
     log.info(f'Found {counter} split system combination stocks in chado.')
     return
 
