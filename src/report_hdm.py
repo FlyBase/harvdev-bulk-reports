@@ -765,7 +765,7 @@ def get_hdm_omim_bdsc_links(hdm_dict):
     global CONN
     log.info('Retrieve human disease model BDSC links.')
     fb_hdm_bdsc_link_query = """
-        SELECT DISTINCT hh.humanhealth_id, db.urlprefix||dbx.description
+        SELECT DISTINCT hh.humanhealth_id, db.urlprefix||dbx.accession
         FROM humanhealth hh
         JOIN humanhealth_dbxref hhdbx ON hhdbx.humanhealth_id = hh.humanhealth_id
         JOIN humanhealth_dbxrefprop hhdbxp ON hhdbxp.humanhealth_dbxref_id = hhdbx.humanhealth_dbxref_id
