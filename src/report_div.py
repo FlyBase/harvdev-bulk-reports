@@ -24,7 +24,7 @@ from harvdev_utils.psycopg_functions import (
 )
 
 # Global variables for the output file. Header order will match list order below.
-report_label = 'divs'
+report_label = 'disease_implicated_variants'
 report_title = 'FlyBase disease implicated variants report'
 header_list = [
     'FB_name',
