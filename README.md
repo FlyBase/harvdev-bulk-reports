@@ -79,3 +79,4 @@ https://docs.google.com/spreadsheets/d/1JRdVJezUPZPxlPJhHSE0bJ73aA5Yw8FlBR5ASkNm
 
 ## TroubleShooting
 The [Reporting Build SOP](https://github.com/FlyBase/harvdev-docs/blob/master/reporting_build/reporting_build_sop.md#TroubleShooting) discusses various troubleshooting scenarios for dealing with failed scripts and GoCD pipelines.
+If a file size check fails, see the [Reporting Build SOP](https://github.com/FlyBase/harvdev-docs/blob/master/reporting_build/reporting_build_sop.md#TroubleShooting) for a discussion on what to do. In summary, if the file needs fixing, fix it. If the file is too small (<95% normal), but still ok, use the `-o` override command to re-run the script and bypass the error (take out `-o` after the override is done).
