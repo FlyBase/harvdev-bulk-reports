@@ -508,3 +508,27 @@ Ecol\lexA[GAD.ple.Tag:NLS(SV40-largeT)]	FBal0340314_1.png	FBrf0255192	Figure 5I	
 Ecol\lexA[GAD.ple.Tag:NLS(SV40-largeT)]	FBal0340314_2.png	FBrf0235538	Figure 1B	open access
 Ecol\lexA[GMR60D05]	FBal0289861_1.png	FBrf0241592	Figure 1D	open access
 Ecol\lexA[GMR60D05]	FBal0289861_2.png	FBrf0258237	Figure 7A	open access
+Scer\GAL4[sev.PM181]	FBal0124005_1.png	FBrf0237674	Figure 4B	open access		Images and image metadata will be updated at the end of every FlyBase release cycle.
+Scer\GAL4[sev.PM181]	FBal0124005_2.png	FBrf0183939	Figure 1A,A',C,C'	granted access
+Scer\GAL4[sev.PM181]	FBal0124005_3.png	FBrf0180165	Figure 8A	granted access
+Scer\GAL4[Or42a.PF]	FBal0190110_1.png	FBrf0248118	Figure 1A-D	open access
+Scer\GAL4[bab1-Gal4]	FBal0242651_1.png	FBrf0261882	Figure 5A	open access
+Scer\GAL4[bab1-Gal4]	FBal0242651_2.png	FBrf0260550	Figure S6c, c'	open access
+Scer\GAL4[bab1-Gal4]	FBal0242651_3.png	FBrf0245963	Figure S4A	open access
+Scer\GAL4[GMR16A06]	FBal0250081_1.png	FBrf0256502	Figure S1B	open access
+Scer\GAL4[GMR16A06]	FBal0250081_2.png	FBrf0235522	Figure S4K	open access
+Scer\GAL4[VT064246]	FBal0263730_1.png	FBrf0227376	Figure 6A	open access
+Scer\GAL4[SPARC-MI00329-GAL4]	FBal0269317_1.png	FBrf0254711	Figure 5A	open access
+Scer\GAL4[SPARC-MI00329-GAL4]	FBal0269317_2.png	FBrf0254711	Figure 2D	open access
+Scer\GAL4[SPARC-MI00329-GAL4]	FBal0269317_3.png	FBrf0259000	Figure 2A	open access
+Scer\GAL4[bun-GSG5961]	FBal0280521_1.png	FBrf0212112	Figure 4A	open access
+Scer\GAL4[bun-GSG5961]	FBal0280521_2.png	FBrf0212112	Figure 4B	open access
+Scer\GAL4[Crz.391]	FBal0283229_1.png	FBrf0238868	Figure 1B	open access
+Scer\GAL4[Crz.391]	FBal0283229_2.png	FBrf0249161	Figure 2 supplement 1C	open access
+Scer\GAL4[Crz.391]	FBal0283229_3.png	FBrf0249161	Figure 2 supplement 3B,D	open access
+Scer\GAL4[Ir76b.1.5]	FBal0285659_1.png	FBrf0240353	Figure 1 supplement 1D-F	open access
+Scer\GAL4[Ir76b.1.5]	FBal0285659_2.png	FBrf0234535	Figure 6A-C	open access
+Scer\GAL4[Ir76b.1.5]	FBal0285659_3.png	FBrf0234535	Figure 3A	open access
+Scer\GAL4[Ir76b.1.5]	FBal0285659_4.png	FBrf0243644	Figure 2A,C,E	open access
+Scer\GAL4[VT030559]	FBal0309382_1.png	FBrf0235701	Figure 2A	open access
+Scer\GAL4[VT030559]	FBal0309382_2.png	FBrf0235701	Figure S1A	open access
