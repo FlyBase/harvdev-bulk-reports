@@ -477,6 +477,17 @@ print "Finished report_funcomps $jetzt\n";
 # $jetzt = scalar localtime;
 # print "Finished report_gene_expression_annotations $jetzt\n";
 
+## SCRIPT: report_fbab_fbgn_rels
+## Reports experimental aberration gene deletion/duplication information
+## USAGE: report_fbab_fbgn_rels pg_server db_name pg_username pg_password output_filename
+$jetzt = scalar localtime;
+print "Calling report_fbab_fbgn_rels.pl $jetzt\n";
+my $outfile = $repdir . 'aberration_experimental_gene_del_dup_data.' . $db . '.tsv';
+my $call = sprintf("perl report_fbab_fbgn_rels.pl %s %s %s %s %s",$server,$db,$user,$pwd,$outfile);
+print "\t.$call.\n";
+system($call);
+$jetzt = scalar localtime;
+print "Finished report_fbab_fbgn_rels.pl $jetzt\n";
 
 
 $jetzt = scalar localtime;
