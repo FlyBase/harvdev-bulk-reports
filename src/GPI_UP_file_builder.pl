@@ -29,7 +29,7 @@ my $outfile = shift @ARGV;
 
 # connect to db
 ################################ db connection ############################
-my $chado="dbi:Pg:dbname=$dbname; host=$server;port=9090";
+my $chado="dbi:Pg:dbname=$dbname; host=$server;port=5432";
 my $dbh = DBI->connect($chado,$user,$pass) or die "cannot connect to $chado";
 print STDOUT "Connected to $chado\n";
 ##########################################################################
