@@ -107,12 +107,12 @@ Arguments:
 	foreach my $supplier (@{$supplier_list}) {
 	
 
-	my $sql_query =sprintf("SELECT distinct f.uniquename, f.name, dbxp.value, db.name, dbx.accession FROM feature f, feature_dbxref fdbx, dbxref dbx, dbxrefprop dbxp, db WHERE db.name = '%s' and fdbx.is_current='true' and f.is_obsolete = 'f' and f.uniquename like '%s' and f.feature_id = fdbx.feature_id and fdbx.dbxref_id = dbx.dbxref_id and dbx.db_id=db.db_id and dbxp.dbxref_id = dbx.dbxref_id", $supplier, 'FBgn%');
+	my $sql_query =sprintf("SELECT distinct f.uniquename, f.name, dbxp.value, dbx.accession FROM feature f, feature_dbxref fdbx, dbxref dbx, dbxrefprop dbxp, db WHERE db.name = '%s' and fdbx.is_current='true' and f.is_obsolete = 'f' and f.uniquename like '%s' and f.feature_id = fdbx.feature_id and fdbx.dbxref_id = dbx.dbxref_id and dbx.db_id=db.db_id and dbxp.dbxref_id = dbx.dbxref_id", $supplier, 'FBgn%');
 
 	my $db_query = $dbh->prepare($sql_query);
 	$db_query->execute or warn "WARNING: ERROR: Unable to execute get_commercial_antibody_info query ($!)\n";
 
-		while (my ($FBid, $symbol, $clonality, $supplier, $product_number) = $db_query->fetchrow_array) {
+		while (my ($FBid, $symbol, $clonality, $product_number) = $db_query->fetchrow_array) {
 
 
 			$clonality =~ s/\n/ /g;
@@ -120,6 +120,8 @@ Arguments:
 
 
 		}
+		$db_query->finish();
+
 	}
 
 	return $data;
@@ -167,10 +169,11 @@ Arguments:
 	while (my ($FBid, $symbol, $clonality, $FBrf, $miniref) = $db_query->fetchrow_array) {
 
 		$clonality =~ s/\n/ /g;
-		push @{$data}, "$FBid\t$symbol\tlab generated\t$clonality\t$FBrf\t$miniref";
+		push @{$data}, "$FBid\t$symbol\tlab generated\t$clonality\t$FBrf\t$miniref\t\t";
 
 
 	}
+	$db_query->finish();
 
 	return $data;
 
