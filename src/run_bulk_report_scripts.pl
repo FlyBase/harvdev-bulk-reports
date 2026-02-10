@@ -490,6 +490,18 @@ $jetzt = scalar localtime;
 print "Finished report_fbab_fbgn_rels.pl $jetzt\n";
 
 
+## SCRIPT: report_antibody_information
+## Reports antibody information
+## USAGE: report_antibody_information pg_server db_name pg_username pg_password output_filename
+$jetzt = scalar localtime;
+print "Calling report_antibody_information.pl $jetzt\n";
+my $outfile = $repdir . 'antibody_information_' . $db . '.tsv';
+my $call = sprintf("perl report_antibody_information.pl %s %s %s %s %s",$server,$db,$user,$pwd,$outfile);
+print "\t.$call.\n";
+system($call);
+$jetzt = scalar localtime;
+print "Finished report_antibody_information.pl $jetzt\n";
+
 $jetzt = scalar localtime;
 print "Finished run_bulk_report_scripts $jetzt...\n";
 
