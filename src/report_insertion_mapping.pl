@@ -65,7 +65,7 @@ print "##insertion_symbol\tFBti#\tgenomic_location\trange\torientation\tpublicat
 
 my $fbtiwc = 'FBti%';
 ## Main driver
-my $iq = $dbh->prepare(sprintf("SELECT i.uniquename, i.name, i.feature_id, cvt.name as ftype from feature i, cvterm cvt where i.type_id = cvt.cvterm_id and i.is_obsolete = 'f' and is_analysis = 'f' and cvt.name in ('transposable_element_insertion_site', 'insertion_site') and uniquename like '%s' ORDER BY i.uniquename",$fbtiwc));
+my $iq = $dbh->prepare(sprintf("SELECT i.uniquename, i.name, i.feature_id, cvt.name as ftype from feature i, cvterm cvt where i.type_id = cvt.cvterm_id and i.is_obsolete = 'f' and is_analysis = 'f' and cvt.name in ('transposable_element_insertion_site', 'insertion_site', 'transposable_element') and uniquename like '%s' ORDER BY i.uniquename",$fbtiwc));
 $iq->execute or die "WARNING: ERROR: Unable to execute TI query\n";
 while (my %ir = %{$iq->fetchrow_hashref}) {
     ## Get estimated & observed cytogenetic locations
