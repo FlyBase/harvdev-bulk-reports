@@ -72,6 +72,7 @@ push( @{ $fbids{'FBti'} },
 push(
     @{ $fbids{'FBtp'} },
     "'transgenic_transposable_element'",
+    "'engineered_region'",
     "'natural_transposon'"
 );
 
