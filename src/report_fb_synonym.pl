@@ -68,10 +68,11 @@ push( @{ $fbids{'FBal'} }, "'allele'" );
 push( @{ $fbids{'FBab'} }, "'chromosome_structure_variation'" );
 push( @{ $fbids{'FBba'} }, "'chromosome_structure_variation'" );
 push( @{ $fbids{'FBti'} },
-    "'transposable_element'", "'transposable_element_insertion_site'" );
+    "'transposable_element'", "'transposable_element_insertion_site'", "'insertion_site'" );
 push(
     @{ $fbids{'FBtp'} },
     "'transgenic_transposable_element'",
+    "'engineered_region'",
     "'natural_transposon'"
 );
 
