@@ -532,3 +532,15 @@ Scer\GAL4[Ir76b.1.5]	FBal0285659_3.png	FBrf0234535	Figure 3A	open access
 Scer\GAL4[Ir76b.1.5]	FBal0285659_4.png	FBrf0243644	Figure 2A,C,E	open access
 Scer\GAL4[VT030559]	FBal0309382_1.png	FBrf0235701	Figure 2A	open access
 Scer\GAL4[VT030559]	FBal0309382_2.png	FBrf0235701	Figure S1A	open access
+Scer\GAL4[DcG]	FBal0241328_1.png	FBrf0256550	Figure 1D	open access
+Scer\GAL4[DcG]	FBal0241328_2.png	FBrf0255992	Figure 3C	open access
+Scer\GAL4[GMR85G01]	FBal0255605_1.png	FBrf0263903	Figure S4A-C'''	open access
+Scer\GAL4[GMR85G01]	FBal0255605_2.png	FBrf0263244	Figure 1 Supplement 2E	open access
+Scer\GAL4[ple.TH-D']	FBal0282526_1.png	FBrf0263892	Figure 7D	open access
+Scer\GAL4[ple.TH-D']	FBal0282526_2.png	FBrf0256990	Figure 2C	open access
+Scer\GAL4[ple.TH-D']	FBal0282526_3.png	FBrf0238579	Figure 2C	open access
+Scer\GAL4[Lk]	FBal0288513_1.png	FBrf0261694	Figure 2A	open access
+Scer\GAL4[Lk]	FBal0288513_2.png	FBrf0256740	Figure 3A	open access
+Scer\GAL4[Su(H).GBE.cUa]	FBal0349908_1.png	FBrf0254659	Figure 1A	open access
+Scer\GAL4[Su(H).GBE.cUa]	FBal0349908_2.png	FBrf0254659	Figure 2A	open access
+Scer\GAL4[Su(H).GBE.cUa]	FBal0349908_3.png	FBrf0255060	Figure 2G	open access
