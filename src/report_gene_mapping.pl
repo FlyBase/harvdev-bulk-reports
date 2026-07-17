@@ -234,11 +234,16 @@ my %drosophilids_hash = (
 ## Get genes...
 my $fbgnwc = 'FBgn%';
 ## Main driver
-my $gq = $dbh->prepare(
-    sprintf(
-"SELECT f.uniquename, f.name, f.feature_id, cvt.name as ftype, abbreviation from feature f, organism o, cvterm cvt where f.organism_id = o.organism_id and f.type_id = cvt.cvterm_id and cvt.name = 'gene' and f.is_obsolete = 'f' and f.is_analysis = 'f' and f.uniquename like '%s'",
-        $fbgnwc )
-);
+my $gq = $dbh->prepare( sprintf( <<'SQL', $fbgnwc ) );
+SELECT f.uniquename, f.name, f.feature_id, cvt.name AS ftype, abbreviation
+FROM feature f
+JOIN organism o ON o.organism_id = f.organism_id
+JOIN cvterm cvt ON cvt.cvterm_id = f.type_id
+WHERE cvt.name = 'gene'
+  AND f.is_obsolete IS FALSE
+  AND f.is_analysis IS FALSE
+  AND f.uniquename LIKE '%s'
+SQL
 $gq->execute or die "WARNING: ERROR: Unable to execute gene query...\n";
 while ( my %gr = %{ $gq->fetchrow_hashref } ) {
 
@@ -249,11 +254,17 @@ while ( my %gr = %{ $gq->fetchrow_hashref } ) {
       ;                        ## Exclude non-drosophilid genes
 ## Exclude genes that are functional tags or engineered fusion genes
     my $isengineered = 'F';
-    my $eq           = $dbh4->prepare(
-        sprintf(
-"SELECT cvt.name from feature_cvterm fcv, feature_cvtermprop fcvp, cvterm cvt, cv, cvterm cvt2 where fcv.feature_id = %d and fcv.cvterm_id = cvt.cvterm_id and cvt.cv_id = cv.cv_id and cv.name = 'SO' and fcv.feature_cvterm_id = fcvp.feature_cvterm_id and fcvp.type_id = cvt2.cvterm_id and cvt2.name = 'gene_class'",
-            $gr{feature_id} )
-    );
+    my $eq = $dbh4->prepare( sprintf( <<'SQL', $gr{feature_id} ) );
+SELECT cvt.name
+FROM feature_cvterm fcv
+JOIN cvterm cvt ON cvt.cvterm_id = fcv.cvterm_id
+JOIN cv ON cv.cv_id = cvt.cv_id
+JOIN feature_cvtermprop fcvp ON fcvp.feature_cvterm_id = fcv.feature_cvterm_id
+JOIN cvterm cvt2 ON cvt2.cvterm_id = fcvp.type_id
+WHERE fcv.feature_id = %d
+  AND cv.name = 'SO'
+  AND cvt2.name = 'gene_class'
+SQL
     $eq->execute
       or die
       "WARNING: ERROR: Unable to execute feature_cvterm query for SO terms\n";
@@ -279,11 +290,12 @@ while ( my %gr = %{ $gq->fetchrow_hashref } ) {
     my $fmin;
     my $fmax;
     my $strand;
-    my $cq = $dbh2->prepare(
-        sprintf(
-"SELECT fmin, fmax, strand, c.uniquename from featureloc fl, feature c where fl.srcfeature_id = c.feature_id and fl.feature_id = %d",
-            $gr{feature_id} )
-    );
+    my $cq = $dbh2->prepare( sprintf( <<'SQL', $gr{feature_id} ) );
+SELECT fmin, fmax, strand, c.uniquename
+FROM featureloc fl
+JOIN feature c ON c.feature_id = fl.srcfeature_id
+WHERE fl.feature_id = %d
+SQL
     $cq->execute
       or die "WARNING: ERROR: Unable to execute genome location query\n";
     my $cq_cnt = $cq->rows;
@@ -311,11 +323,19 @@ while ( my %gr = %{ $gq->fetchrow_hashref } ) {
     my $recom;
     my $cyto;
     my $dcyto;
-    my $rq = $dbh3->prepare(
-        sprintf(
-"SELECT value, cvt.name from featureprop fp, cvterm cvt where fp.feature_id = %d and fp.type_id = cvt.cvterm_id and cvt.name in ('promoted_genetic_location','inferred_cyto','promoted_gene_type','cyto_range','derived_computed_cyto')",
-            $gr{feature_id} )
-    );
+    my $rq = $dbh3->prepare( sprintf( <<'SQL', $gr{feature_id} ) );
+SELECT value, cvt.name
+FROM featureprop fp
+JOIN cvterm cvt ON cvt.cvterm_id = fp.type_id
+WHERE fp.feature_id = %d
+  AND cvt.name IN (
+    'promoted_genetic_location',
+    'inferred_cyto',
+    'promoted_gene_type',
+    'cyto_range',
+    'derived_computed_cyto'
+  )
+SQL
     $rq->execute or die "WARNING: ERROR: Unable to execute recomb map query\n";
     my $rq_cnt = $rq->rows;
     if ( $rq_cnt > 0 ) {
