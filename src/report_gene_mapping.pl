@@ -231,6 +231,27 @@ my %drosophilids_hash = (
 #
 # Main method
 #
+## Collect Dmel genes with a 'derived_gene_model_status' featureprop of
+## 'Withdrawn'.  For these genes we suppress the cytogenetic_loc value below.
+my %withdrawn_hash;
+my $wq = $dbh4->prepare(<<'SQL');
+SELECT f.feature_id
+FROM feature f
+JOIN organism o ON o.organism_id = f.organism_id
+JOIN cvterm cvt ON cvt.cvterm_id = f.type_id
+JOIN featureprop fp ON fp.feature_id = f.feature_id
+JOIN cvterm cvt2 ON cvt2.cvterm_id = fp.type_id
+WHERE cvt.name = 'gene'
+  AND o.abbreviation = 'Dmel'
+  AND cvt2.name = 'derived_gene_model_status'
+  AND fp.value = 'Withdrawn'
+SQL
+$wq->execute
+  or die "WARNING: ERROR: Unable to execute withdrawn gene query\n";
+while ( my %wr = %{ $wq->fetchrow_hashref } ) {
+    $withdrawn_hash{ $wr{feature_id} } = 1;
+}
+
 ## Get genes...
 my $fbgnwc = 'FBgn%';
 ## Main driver
@@ -365,7 +386,11 @@ SQL
 ## Determine the cytogenetic_loc value by priority:
 ##   1. derived_computed_cyto
 ##   2. inferred_cyto
-        if ($dcyto) {
+## Skip cytogenetic_loc entirely for Withdrawn Dmel genes.
+        if ( $withdrawn_hash{ $gr{feature_id} } ) {
+            $cyto = undef;
+        }
+        elsif ($dcyto) {
             $cyto = $dcyto;
         }
         else {
