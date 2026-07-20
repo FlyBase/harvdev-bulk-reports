@@ -323,7 +323,6 @@ SQL
     my $recom;
     my $cyto;
     my $dcyto;
-    my $crange;
     my $icyto;
     my $rq = $dbh3->prepare( sprintf( <<'SQL', $gr{feature_id} ) );
 SELECT value, cvt.name
@@ -334,7 +333,6 @@ WHERE fp.feature_id = %d
     'promoted_genetic_location',
     'inferred_cyto',
     'promoted_gene_type',
-    'cyto_range',
     'derived_computed_cyto'
   )
 SQL
@@ -352,9 +350,6 @@ SQL
 
                 #		print "\ticyto is: $icyto\n";
             }
-            elsif ( $rr{name} eq 'cyto_range' ) {
-                $crange = $rr{value};
-            }
             elsif ( $rr{name} eq 'derived_computed_cyto' ) {
                 $dcyto = $rr{value};
                 $dcyto =~ s/\;.*$//;
@@ -369,13 +364,9 @@ SQL
         }
 ## Determine the cytogenetic_loc value by priority:
 ##   1. derived_computed_cyto
-##   2. cyto_range (only if the value is not simply "-")
-##   3. inferred_cyto
+##   2. inferred_cyto
         if ($dcyto) {
             $cyto = $dcyto;
-        }
-        elsif ( $crange && ( $crange ne '-' ) ) {
-            $cyto = $crange;
         }
         else {
             $cyto = $icyto;
