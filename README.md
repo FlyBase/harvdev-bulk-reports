@@ -59,7 +59,7 @@ Occasionally (up to once per FlyBase public release), Sian provides a flash driv
 ### Images
 1. Make a new directory for the images (where YYYY-MM-DD in the command below represents today's date).
 cd /data/harvcur/gal4images/
-mkdir -m "FUG4_YYYY-MM-DD"
+mkdir FUG4_YYYY-MM-DD
 2. Move all images from the most recent directory to the new one.
 mv FUG4_YYYY-MM-DD1/** FUG4_YYYY-MM-DD2
 3. Copy new images from the flash drive to the new directory (GUI is easiest).
@@ -67,8 +67,18 @@ mv FUG4_YYYY-MM-DD1/** FUG4_YYYY-MM-DD2
 cd /data/harvcur/gal4images/
 tar -zcvf FUG4_YYYY-MM-DD.tar.gz FUG4_YYYY-MM-DD
 5. Check the tarball (want to see that the directory holding the images is included).
-tar -tzf FUG4_YYYY-MM-DD
+tar -tzf FUG4_YYYY-MM-DD.tar.gz
 6. Copy the tarball to the internal FlyBase FTP site (foriu/gal4images directory).
+```
+sftp ftpsite
+sftp> cd foriu/gal4images
+sftp> put FUG4_YYYY-MM-DD.tar.gz
+sftp> ls -l
+sftp> bye
+```
+- `sftp ftpsite` is the simplest form and works from the harvdev network.
+- If the short name does not resolve, use the full account: `sftp ftpsite@flybase.harvard.edu` (its home is `/export/ftphome/ftpsite/`, so `foriu/...` paths are relative to that).
+- Non-interactive equivalent: `scp FUG4_YYYY-MM-DD.tar.gz ftpsite@flybase.harvard.edu:foriu/gal4images/`
 
 ## Metadata
 1. Make a new branch.

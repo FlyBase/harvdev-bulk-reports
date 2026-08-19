@@ -1,4 +1,4 @@
-#Last updated: 20240916
+#Last updated: 20260819
 #imageDescription	imageFileName	publicationId	pubFigure	permission
 GAL4[path-c135] carpet glia.jpg	FBal0042565_1.jpg	FBrf0242008	Figure 1B-C (top panels)	open access
 GAL4[path-c135] DH31 and copper cells.png	FBal0042565_2.png	FBrf0211737	Figure 1B	open access
@@ -508,7 +508,7 @@ Ecol\lexA[GAD.ple.Tag:NLS(SV40-largeT)]	FBal0340314_1.png	FBrf0255192	Figure 5I	
 Ecol\lexA[GAD.ple.Tag:NLS(SV40-largeT)]	FBal0340314_2.png	FBrf0235538	Figure 1B	open access
 Ecol\lexA[GMR60D05]	FBal0289861_1.png	FBrf0241592	Figure 1D	open access
 Ecol\lexA[GMR60D05]	FBal0289861_2.png	FBrf0258237	Figure 7A	open access
-Scer\GAL4[sev.PM181]	FBal0124005_1.png	FBrf0237674	Figure 4B	open access		Images and image metadata will be updated at the end of every FlyBase release cycle.
+Scer\GAL4[sev.PM181]	FBal0124005_1.png	FBrf0237674	Figure 4B	open access
 Scer\GAL4[sev.PM181]	FBal0124005_2.png	FBrf0183939	Figure 1A,A',C,C'	granted access
 Scer\GAL4[sev.PM181]	FBal0124005_3.png	FBrf0180165	Figure 8A	granted access
 Scer\GAL4[Or42a.PF]	FBal0190110_1.png	FBrf0248118	Figure 1A-D	open access
@@ -544,3 +544,10 @@ Scer\GAL4[Lk]	FBal0288513_2.png	FBrf0256740	Figure 3A	open access
 Scer\GAL4[Su(H).GBE.cUa]	FBal0349908_1.png	FBrf0254659	Figure 1A	open access
 Scer\GAL4[Su(H).GBE.cUa]	FBal0349908_2.png	FBrf0254659	Figure 2A	open access
 Scer\GAL4[Su(H).GBE.cUa]	FBal0349908_3.png	FBrf0255060	Figure 2G	open access
+Scer\GAL4[Adh.PF]	FBal0040473_1.png	FBrf0235198	Figure S3B	open access
+Scer\GAL4[Adh.PF]	FBal0040473_2.png	FBrf0229285	Figure 2 i,ii	open access
+Scer\GAL4[c527]	FBal0063314_1.png	FBrf0250313	Figure 4G-I'	open access
+Scer\GAL4[c527]	FBal0063314_2.png	FBrf0228629	Figure 2E-F	open access
+Scer\GAL4[bap.3]	FBal0128067_1.png	FBrf0264632	Figure 2K-N'	open access
+Scer\GAL4[srp.D.cCa]	FBal0181585_1.png	FBrf0264945	Extended Data Figure 1B	open access
+Scer\GAL4[srp.D.cCa]	FBal0181585_2.png	FBrf0213211	Figure 3A-D	open access
