@@ -239,12 +239,17 @@ class SummaryHandler(object):
         except (TypeError, FileNotFoundError):
             log.error('Could not get Alliance summary file: {}'.format(input_filename))
             raise Exception
-        FBGN_ID = 0
-        GENE_SYMBOL = 1
-        SUMMARY_TEXT = 2
+        FBGN_ID = 2
+        GENE_SYMBOL = 4
+        SUMMARY_TEXT = 11
         for line in input_file:
+            # Skip header lines.
             if line.startswith('#'):
                 continue
+            # Skip column label line (which lacks a # at the start).
+            if 'FB:FBgn' not in line:
+                continue
+            # Skip empty lines.
             if line == '\n':
                 continue
             line_parts = line.split('\t')
