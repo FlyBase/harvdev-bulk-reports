@@ -256,7 +256,7 @@ class SummaryHandler(object):
             fbgn_id = line_parts[FBGN_ID].replace('FB:', '')
             symbol = line_parts[GENE_SYMBOL]
             summary_text = line_parts[SUMMARY_TEXT].strip()
-            if summary_text.startswith('No description available'):
+            if not summary_text or summary_text.startswith('No description available'):
                 continue
             if fbgn_id not in self.summary_dict.keys():
                 log.warning('The gene "{}" ({}) does not correspond to a current FBgn ID.'.format(symbol, fbgn_id))
