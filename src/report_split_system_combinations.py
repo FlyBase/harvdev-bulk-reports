@@ -11,6 +11,11 @@ Usage:
 Example:
     python report_split_system_combinations.py -v -c /path/to/config.cfg
 
+Notes:
+    Component_Alleles are the "partially_produced_by" FBal of the FBco.
+    Component_Insertions are the "has_insertion_component" FBti that define an FBti pair-based FBco (FTA-268/FTA-272);
+    the column is empty for FBco without FBti components.
+
 """
 
 import argparse
@@ -29,6 +34,7 @@ HEADER_LIST = [
     'FB_id',
     'Symbol',
     'Component_Alleles',
+    'Component_Insertions',
     'Stocks',
     'Synonyms',
     'References',
@@ -54,6 +60,7 @@ def main():
     log.info('Started main function.')
     split_system_dict = get_initial_split_system_info()
     get_component_info(split_system_dict)
+    get_insertion_component_info(split_system_dict)
     get_stock_info(split_system_dict)
     get_split_system_synonyms(split_system_dict)
     get_split_system_references(split_system_dict)
@@ -87,6 +94,7 @@ def get_initial_split_system_info():
             'FB_id': row[UNAME],
             'Symbol': row[NAME],
             'Component_Alleles': [],
+            'Component_Insertions': [],
             'Stocks': [],
             'Synonyms': [],
             'References': [],
@@ -121,6 +129,33 @@ def get_component_info(split_system_dict):
         split_system_dict[row[DB_ID]]['Component_Alleles'].append(row[COMPONENT])
         counter += 1
     log.info(f'Found {counter} split system combination components in chado.')
+    return
+
+
+def get_insertion_component_info(split_system_dict):
+    """Retrieve split system combination insertion components (the defining FBti pair)."""
+    global CONN
+    log.info('Retrieve split system combination insertion components.')
+    fb_ss_insertion_query = """
+        SELECT DISTINCT s.feature_id, o.uniquename||';'||o.name
+        FROM feature s
+        JOIN feature_relationship fr ON fr.subject_id = s.feature_id
+        JOIN feature o ON o.feature_id = fr.object_id
+        JOIN cvterm c ON c.cvterm_id = fr.type_id
+        WHERE s.is_obsolete IS FALSE
+          AND s.uniquename ~ '^FBco[0-9]{7}$'
+          AND o.is_obsolete IS FALSE
+          AND o.uniquename ~ '^FBti[0-9]{7}$'
+          AND c.name = 'has_insertion_component';
+    """
+    ret_ss_insertion_info = connect(fb_ss_insertion_query, 'no_query', CONN)
+    DB_ID = 0
+    COMPONENT = 1
+    counter = 0
+    for row in ret_ss_insertion_info:
+        split_system_dict[row[DB_ID]]['Component_Insertions'].append(row[COMPONENT])
+        counter += 1
+    log.info(f'Found {counter} split system combination insertion components in chado.')
     return
 
 
