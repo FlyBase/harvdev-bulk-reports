@@ -12,9 +12,9 @@ Example:
     python report_split_system_combinations.py -v -c /path/to/config.cfg
 
 Notes:
+    Component_Insertions are the "has_insertion_component" FBti that define an FBti pair-based FBco (FTA-268/FTA-272),
+    listed in the order of the FBco symbol (DBD first); the column is empty for FBco without FBti components.
     Component_Alleles are the "partially_produced_by" FBal of the FBco.
-    Component_Insertions are the "has_insertion_component" FBti that define an FBti pair-based FBco (FTA-268/FTA-272);
-    the column is empty for FBco without FBti components.
 
 """
 
@@ -33,8 +33,8 @@ REPORT_TITLE = 'FlyBase Split System Combination Report'
 HEADER_LIST = [
     'FB_id',
     'Symbol',
-    'Component_Alleles',
     'Component_Insertions',
+    'Component_Alleles',
     'Stocks',
     'Synonyms',
     'References',
@@ -93,8 +93,8 @@ def get_initial_split_system_info():
             'db_id': row[DB_ID],
             'FB_id': row[UNAME],
             'Symbol': row[NAME],
-            'Component_Alleles': [],
             'Component_Insertions': [],
+            'Component_Alleles': [],
             'Stocks': [],
             'Synonyms': [],
             'References': [],
@@ -248,6 +248,9 @@ def process_database_info(input_data):
                 else:
                     value = list(set(value))
                     value.sort()
+                    if key == 'Component_Insertions':
+                        # List FBti in the order of the FBco symbol (DBD first); values are "uniquename;name".
+                        value.sort(key=lambda x: i['Symbol'].find(x.split(';', 1)[1]) % (len(i['Symbol']) + 1))
                     i[key] = '|'.join(value)
         data_list.append(i)
         counter += 1
