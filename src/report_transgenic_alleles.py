@@ -45,6 +45,8 @@ header_list = [
     'Description (supporting reference)',
     'Stocks (number)',
     # 'Stock (list)'
+    'Rescue region (symbol)',
+    'Rescue region (id)',
 ]
 
 # Proceed with generic setup.
@@ -121,6 +123,8 @@ def get_alleles():
             'Description (supporting reference)': [],
             'Stocks (number)': 0,
             'Stock (list)': [],
+            'Rescue region (symbol)': [],
+            'Rescue region (id)': [],
         }
     log.info(f'Found {len(ret_fb_alleles)} current alleles in chado.')
     return fb_allele_dict
@@ -331,6 +335,38 @@ def get_direct_component_info(fb_allele_dict):
     return
 
 
+def get_rescue_region_info(fb_allele_dict):
+    """Get rescue region FBsf features that are "partof" the allele (DB-1055)."""
+    global conn
+    log.info('Get rescue region info.')
+    fb_allele_rescue_region_query = """
+        SELECT DISTINCT a.feature_id, rr.name, rr.uniquename
+        FROM feature a
+        JOIN feature_relationship fr ON fr.object_id = a.feature_id
+          AND fr.type_id IN (SELECT cvterm_id FROM cvterm WHERE name = 'partof')
+        JOIN feature rr ON rr.feature_id = fr.subject_id
+          AND rr.type_id IN (SELECT cvterm_id FROM cvterm WHERE name = 'rescue_region')
+        WHERE a.is_obsolete IS FALSE
+          AND a.uniquename ~ '^FBal[0-9]{7}$'
+          AND rr.is_obsolete IS FALSE
+          AND rr.uniquename ~ '^FBsf[0-9]{10}$'
+        ORDER BY rr.name;
+    """
+    ret_fb_allele_rescue_regions = connect(fb_allele_rescue_region_query, 'no_query', conn)
+    FEAT_ID = 0
+    RR_NAME = 1
+    RR_CURIE = 2
+    counter = 0
+    for result in ret_fb_allele_rescue_regions:
+        if fb_allele_dict[result[FEAT_ID]]['is_transgenic'] is False:
+            continue
+        fb_allele_dict[result[FEAT_ID]]['Rescue region (symbol)'].append(result[RR_NAME])
+        fb_allele_dict[result[FEAT_ID]]['Rescue region (id)'].append(result[RR_CURIE])
+        counter += 1
+    log.info(f'Found {counter} current rescue regions for current transgenic alleles.')
+    return
+
+
 def get_database_info():
     """Run chado db queries in sequence."""
     global conn
@@ -342,6 +378,7 @@ def get_database_info():
     get_allele_descriptions(allele_dict)
     get_allele_stock_info(allele_dict)
     get_direct_component_info(allele_dict)
+    get_rescue_region_info(allele_dict)
     return allele_dict.values()
 
 
