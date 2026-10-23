@@ -41,12 +41,12 @@ header_list = [
     'Tagged with (id)',
     'Also carries (symbol)',
     'Also carries (id)',
+    'Rescue region (symbol)',
+    'Rescue region (id)',
     'Description (text)',
     'Description (supporting reference)',
     'Stocks (number)',
     # 'Stock (list)'
-    'Rescue region (symbol)',
-    'Rescue region (id)',
 ]
 
 # Proceed with generic setup.
@@ -119,12 +119,12 @@ def get_alleles():
             'Tagged with (id)': [],
             'Also carries (symbol)': [],
             'Also carries (id)': [],
+            'Rescue region (symbol)': [],
+            'Rescue region (id)': [],
             'Description (text)': [],
             'Description (supporting reference)': [],
             'Stocks (number)': 0,
             'Stock (list)': [],
-            'Rescue region (symbol)': [],
-            'Rescue region (id)': [],
         }
     log.info(f'Found {len(ret_fb_alleles)} current alleles in chado.')
     return fb_allele_dict
