@@ -50,8 +50,8 @@ engine = create_engine(engine_var_rep)
 SUMMARY_PREFIX = '**Summary of modENCODE Temporal Expression Profile:**  '
 # "{}" is filled in with "dicistronic" or "polycistronic", based on the gene's SO term.
 POLYCIS_TXT = (
-    'This gene is annotated by FlyBase as a {} gene, meaning that some or all of its transcripts encode two '
-    'or more polypeptide-coding open reading frames (ORFs), with each ORF assigned to a different gene. The distribution '
+    'This gene is annotated by FlyBase as a {} gene, meaning that some or all of its transcripts encode multiple '
+    'polypeptide-coding open reading frames (ORFs), with each ORF assigned to a different gene. The distribution '
     'of RNA-Seq coverage data amongst the different encoded genes cannot be determined.'
 )
 POLYCIS_REGEX = re.compile(r'\s*This gene is annotated by FlyBase as a [a-z]+cistronic gene.*?cannot be determined\.?')
