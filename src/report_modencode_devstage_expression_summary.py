@@ -48,12 +48,13 @@ engine = create_engine(engine_var_rep)
 
 # Text as in "derive_timecourse_rpkm_summaries" (harvdev-production-bulk-update repo).
 SUMMARY_PREFIX = '**Summary of modENCODE Temporal Expression Profile:**  '
+# "{}" is filled in with "dicistronic" or "polycistronic", based on the gene's SO term.
 POLYCIS_TXT = (
-    'This gene is annotated by FlyBase as a polycistronic gene, meaning that some or all of its transcripts encode two '
+    'This gene is annotated by FlyBase as a {} gene, meaning that some or all of its transcripts encode two '
     'or more polypeptide-coding open reading frames (ORFs), with each ORF assigned to a different gene. The distribution '
     'of RNA-Seq coverage data amongst the different encoded genes cannot be determined.'
 )
-POLYCIS_REGEX = re.compile(r'\s*This gene is annotated by FlyBase as a polycistronic gene.*?cannot be determined\.?')
+POLYCIS_REGEX = re.compile(r'\s*This gene is annotated by FlyBase as a [a-z]+cistronic gene.*?cannot be determined\.?')
 
 
 def main():
@@ -108,7 +109,7 @@ def get_polycistronic_genes(session):
         session (Session): SQLAlchemy session for the database.
 
     Returns:
-        polycistronic_genes (set): FBgn IDs of di/polycistronic genes.
+        polycistronic_genes (dict): FBgn ID-keyed dict of "dicistronic" or "polycistronic".
 
     """
     log.info('Get di/polycistronic genes.')
@@ -119,7 +120,7 @@ def get_polycistronic_genes(session):
         Db.name == 'SO',
         Cvterm.name.like('%cistronic%'),
     )
-    results = session.query(Feature.uniquename).\
+    results = session.query(Feature.uniquename, Cvterm.name).\
         join(Organism, (Organism.organism_id == Feature.organism_id)).\
         join(FeatureCvterm, (FeatureCvterm.feature_id == Feature.feature_id)).\
         join(Cvterm, (Cvterm.cvterm_id == FeatureCvterm.cvterm_id)).\
@@ -127,25 +128,31 @@ def get_polycistronic_genes(session):
         join(Db, (Db.db_id == Dbxref.db_id)).\
         filter(*filters).\
         distinct()
-    polycistronic_genes = {result.uniquename for result in results}
+    # Use "polycistronic" for gene_with_polycistronic_transcript, "dicistronic" for any other %cistronic% term.
+    polycistronic_genes = {}
+    for result in results:
+        if 'polycistronic' in result.name:
+            polycistronic_genes[result.uniquename] = 'polycistronic'
+        else:
+            polycistronic_genes.setdefault(result.uniquename, 'dicistronic')
     log.info('Found {} di/polycistronic genes.'.format(len(polycistronic_genes)))
     return polycistronic_genes
 
 
-def refresh_polycistronic_statement(summary, is_polycistronic):
+def refresh_polycistronic_statement(summary, cistronic_word):
     """Remove any di/polycistronic statement from a summary, then add it back if the gene is di/polycistronic.
 
     Args:
         summary (str): The summary text from chado.
-        is_polycistronic (bool): True if the gene currently has a di/polycistronic SO term.
+        cistronic_word (str|None): "dicistronic" or "polycistronic" per the gene's current SO term, else None.
 
     Returns:
         summary (str): The refreshed summary text.
 
     """
     summary = POLYCIS_REGEX.sub('', summary).strip()
-    if is_polycistronic:
-        summary = '{}  {}'.format(summary, POLYCIS_TXT)
+    if cistronic_word:
+        summary = '{}  {}'.format(summary, POLYCIS_TXT.format(cistronic_word))
     return summary
 
 
@@ -154,7 +161,7 @@ def export_summaries(summaries, polycistronic_genes):
 
     Args:
         summaries (dict): FBgn ID-keyed dict of summary text.
-        polycistronic_genes (set): FBgn IDs of di/polycistronic genes.
+        polycistronic_genes (dict): FBgn ID-keyed dict of "dicistronic" or "polycistronic".
 
     """
     log.info('Write summaries to {}'.format(output_filename))
@@ -162,7 +169,7 @@ def export_summaries(summaries, polycistronic_genes):
     with open(output_filename, 'w') as outfile:
         for fbgn_id in sorted(summaries.keys()):
             summary = ' '.join(summaries[fbgn_id].split('\n')).strip()
-            refreshed_summary = refresh_polycistronic_statement(summary, fbgn_id in polycistronic_genes)
+            refreshed_summary = refresh_polycistronic_statement(summary, polycistronic_genes.get(fbgn_id))
             if refreshed_summary != summary:
                 changed_counter += 1
                 log.debug('Refreshed di/polycistronic statement for {}.'.format(fbgn_id))
