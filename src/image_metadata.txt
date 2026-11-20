@@ -1,4 +1,4 @@
-#Last updated: 20260819
+#Last updated: 20261120
 #imageDescription	imageFileName	publicationId	pubFigure	permission
 GAL4[path-c135] carpet glia.jpg	FBal0042565_1.jpg	FBrf0242008	Figure 1B-C (top panels)	open access
 GAL4[path-c135] DH31 and copper cells.png	FBal0042565_2.png	FBrf0211737	Figure 1B	open access
@@ -551,3 +551,9 @@ Scer\GAL4[c527]	FBal0063314_2.png	FBrf0228629	Figure 2E-F	open access
 Scer\GAL4[bap.3]	FBal0128067_1.png	FBrf0264632	Figure 2K-N'	open access
 Scer\GAL4[srp.D.cCa]	FBal0181585_1.png	FBrf0264945	Extended Data Figure 1B	open access
 Scer\GAL4[srp.D.cCa]	FBal0181585_2.png	FBrf0213211	Figure 3A-D	open access
+Scer\GAL4[Poxn.14]	FBal0144589_1.png	FBrf0220269	Figure 1 B-D	open access
+Scer\GAL4[Poxn.14]	FBal0144589_2.png	FBrf0238151	Figure 2 supplement 2C	open access
+Scer\GAL4[Poxn.14]	FBal0144589_3.png	FBrf0237277	Figure 3A	open access
+Scer\GAL4[Tk.PS]	FBal0301645_1.png	FBrf0260735	Figure 2A	open access
+Scer\GAL4[Tk.PS]	FBal0301645_2.png	FBrf0226450	Figure 1A-H	open access
+Ecol\lexA[dsx-lexA::p65]	FBal0343781_1.png	FBrf0263634	Figure S4A	open access
